@@ -10,9 +10,15 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    concurrency:
+      group: claystory-narration-push
+      cancel-in-progress: false
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -25,8 +31,26 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add audio/
-          if ! git diff --cached --quiet; then
+          # Save the generated files before refreshing the branch.
+          mkdir -p /tmp/claystory-audio
+          cp -a audio/. /tmp/claystory-audio/
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git checkout -B main origin/main
+            mkdir -p audio
+            cp -a /tmp/claystory-audio/. audio/
+            git add audio/
+            if git diff --cached --quiet; then
+              echo "Narration files already match the remote branch."
+              exit 0
+            fi
             git commit -m "Generate scene narration audio"
-            git push
-          fi
+            if git push origin HEAD:main; then
+              echo "Narration published successfully."
+              exit 0
+            fi
+            echo "Push conflict on attempt $attempt; refreshing main and retrying..."
+            sleep 3
+          done
+          echo "Could not publish narration after 5 attempts."
+          exit 1
