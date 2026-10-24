@@ -330,3 +330,191 @@ subprocess.run([
 ], check=True)
 test_wave.unlink(missing_ok=True)
 print("V16 reliable soundscape published: 3 voice+FX strengths and a test track.")
+
+
+# V17 — Te Ika-a-Māui / The Great Fish: a second complete curated story.
+# These new voices and effects are kept separate from the existing sun story.
+fish_section = html.split("const fishStory=", 1)[1].split(";\nconst fishChoice=", 1)[0]
+fish_scenes = json.loads(fish_section)
+if len(fish_scenes) != 6:
+    raise RuntimeError(f"Expected six Great Fish scenes, got {len(fish_scenes)}")
+
+FISH_DELIVERY = [
+    ("+9%", "+0Hz"),     # surprise and scale of the fish
+    ("+11%", "-1Hz"),    # quick, mischievous journey
+    ("+9%", "+0Hz"),     # determination
+    ("+11%", "-1Hz"),    # urgency as the line pulls tight
+    ("+10%", "+0Hz"),    # dramatic reveal
+    ("+6%", "-1Hz"),     # slower reflection and moral
+]
+
+async def fish_voice():
+    for i, scene in enumerate(fish_scenes):
+        rate, pitch = FISH_DELIVERY[i]
+        raw_file = out / f"fish-nz-{i+1}-raw.mp3"
+        destination = out / f"fish-nz-{i+1}.mp3"
+        await edge_tts.Communicate(
+            scene["narration"], voice="en-NZ-MitchellNeural", rate=rate, pitch=pitch
+        ).save(str(raw_file))
+        subprocess.run([
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-i", str(raw_file),
+            "-af", "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,"
+                   "areverse,"
+                   "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,"
+                   "areverse",
+            "-c:a", "libmp3lame", "-q:a", "3", str(destination)
+        ], check=True)
+        raw_file.unlink(missing_ok=True)
+        if media_duration(destination) < 3:
+            raise RuntimeError(f"Great Fish scene {i+1} has too little audio.")
+
+asyncio.run(fish_voice())
+fish_raw_durations = [media_duration(out / f"fish-nz-{j}.mp3") for j in range(1, 7)]
+fish_durations = [round(d + (0.15 if i < 5 else 0.22), 3)
+                  for i, d in enumerate(fish_raw_durations)]
+fish_total = round(sum(fish_durations), 3)
+(out / "fish-nz-timing.json").write_text(json.dumps({
+    "durations": fish_durations,
+    "voice": "en-NZ-MitchellNeural",
+    "description": "Narration-based scene cuts for Te Ika-a-Māui",
+    "revision": 17
+}, ensure_ascii=False, indent=2), encoding="utf-8")
+print("Great Fish duration:", fish_total, "scene durations:", fish_durations)
+
+# A single continuous track for iPad, with short scene gaps.
+args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
+for j in range(1, 7):
+    args += ["-i", str(out / f"fish-nz-{j}.mp3")]
+filter_parts = []
+start_ms = 0
+for i in range(6):
+    filter_parts.append(f"[{i}:a]adelay={start_ms}|{start_ms}[a{i}]")
+    start_ms += round(fish_durations[i] * 1000)
+filter_parts.append("".join(f"[a{i}]" for i in range(6)) +
+                    f"amix=inputs=6:duration=longest:normalize=0,"
+                    f"highpass=f=72,acompressor=threshold=0.15:ratio=1.4:"
+                    f"attack=25:release=190,alimiter=limit=0.96,"
+                    f"apad,atrim=duration={fish_total}[out]")
+args += ["-filter_complex", ";".join(filter_parts),
+         "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3",
+         str(out / "fish-nz-full.mp3")]
+subprocess.run(args, check=True)
+
+# Ocean-themed sound design: waves, paddles, hull creaks, the hook descending,
+# a colossal underwater pull, fish breach, and the landscape taking form.
+saved_samples = sfx_samples
+sfx_samples = array.array("f", [0.0]) * (math.ceil(fish_total * SFX_RATE) + SFX_RATE // 3)
+fish_starts = []
+cursor = 0.0
+for duration in fish_durations:
+    fish_starts.append(cursor)
+    cursor += duration
+
+def fish_seabird(at):
+    for j in range(3):
+        add_sfx_tone(at + j * .16, .18, 930 + j * 65, 680 + j * 45, .12)
+        add_sfx_tone(at + j * .16 + .15, .1, 690, 950 + j * 25, .07)
+
+def fish_water(at, duration=.6, level=.11):
+    add_sfx_noise(at, duration, level, "wind")
+    add_sfx_tone(at, duration, 142, 118, level * .22)
+
+def fish_paddle(at):
+    add_sfx_noise(at, .19, .22, "crackle")
+    add_sfx_tone(at, .33, 215, 128, .11)
+
+def fish_wood(at):
+    add_sfx_tone(at, .23, 162, 103, .13, "retro")
+    add_sfx_noise(at + .04, .09, .08, "crackle")
+
+for i, (base, duration) in enumerate(zip(fish_starts, fish_durations)):
+    # Continuous layered sea is quiet enough to keep the narrator intelligible.
+    add_sfx_noise(base, max(.1, duration - .06), .052 if i in (3, 4) else .030, "wind")
+    add_sfx_tone(base, max(.1, duration - .06),
+                 [155,164,177,98,92,192][i],
+                 [163,156,157,76,121,219][i],
+                 .016 if i not in (3, 4) else .038)
+    if i == 0:
+        fish_water(base + .55, 2.1, .09)
+        fish_seabird(base + 1.0)
+        add_sfx_tone(base + duration * .38, 1.5, 93, 59, .16, "retro")
+        add_sfx_chime(base + duration * .75, 445, .13)
+    elif i == 1:
+        for offset in (0.8, 2.4, 4.2, 6.1, 7.7, 9.4):
+            fish_paddle(base + offset)
+        fish_wood(base + duration * .51)
+        fish_seabird(base + duration * .75)
+    elif i == 2:
+        for offset in (1.1, 2.8, 4.5, 6.8):
+            fish_paddle(base + offset)
+        add_sfx_tone(base + duration * .67, .75, 760, 310, .17, "retro")
+        fish_water(base + duration * .80, .46, .15)
+    elif i == 3:
+        fish_water(base + 1.5, 1.2, .16)
+        add_sfx_tone(base + duration * .28, 1.3, 158, 59, .20, "retro")
+        fish_wood(base + duration * .38)
+        add_sfx_rope(base + duration * .45)
+        add_sfx_impact(base + duration * .67)
+        for frac in (.77, .84, .91):
+            fish_water(base + duration * frac, .36, .18)
+    elif i == 4:
+        add_sfx_tone(base + 1.0, 2.5, 82, 170, .20, "retro")
+        fish_water(base + duration * .24, 1.0, .24)
+        add_sfx_impact(base + duration * .33)
+        for frac in (.53, .68, .84):
+            add_sfx_noise(base + duration * frac, .23, .14, "crackle")
+            fish_wood(base + duration * frac + .12)
+    else:
+        add_sfx_tone(base + 1.0, 2.8, 94, 205, .19)
+        fish_water(base + duration * .21, 1.0, .08)
+        add_sfx_chime(base + duration * .48, 392, .15)
+        add_sfx_chime(base + duration * .65, 494, .10)
+        fish_seabird(base + duration * .77)
+
+fish_wav = out / "fish-nz-sfx.wav"
+write_pcm_wave(fish_wav, sfx_samples)
+fish_sfx_mp3 = out / "fish-nz-sfx.mp3"
+subprocess.run([
+    "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+    "-i", str(fish_wav), "-c:a", "libmp3lame", "-q:a", "4",
+    str(fish_sfx_mp3)
+], check=True)
+fish_wav.unlink(missing_ok=True)
+sfx_samples = saved_samples
+
+for mix_name, fx_gain in (("soft", .45), ("balanced", 1.0), ("bold", 1.55)):
+    destination = out / f"fish-nz-mix-{mix_name}.mp3"
+    subprocess.run([
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+        "-i", str(out / "fish-nz-full.mp3"),
+        "-i", str(fish_sfx_mp3),
+        "-filter_complex",
+        "[0:a]volume=0.90[voice];"
+        f"[1:a]volume={fx_gain}[effects];"
+        "[voice][effects]amix=inputs=2:duration=first:normalize=0,"
+        "alimiter=limit=0.95[out]",
+        "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3",
+        str(destination)
+    ], check=True)
+    if abs(media_duration(destination) - fish_total) > .7 or destination.stat().st_size < 10000:
+        raise RuntimeError(f"Great Fish effects mix is invalid: {destination}")
+    print("Mixed Great Fish audio:", destination, destination.stat().st_size)
+
+# Short, audible sample for the browser's Test sound effects control.
+fish_test_duration = 3.3
+sfx_samples = array.array("f", [0.0]) * round(fish_test_duration * SFX_RATE)
+fish_water(.05, 1.0, .25)
+fish_paddle(1.0)
+add_sfx_rope(1.55)
+add_sfx_impact(2.3)
+fish_test_wav = out / "fish-nz-fx-test.wav"
+write_pcm_wave(fish_test_wav, sfx_samples)
+sfx_samples = saved_samples
+subprocess.run([
+    "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+    "-i", str(fish_test_wav), "-c:a", "libmp3lame", "-q:a", "3",
+    str(out / "fish-nz-fx-test.mp3")
+], check=True)
+fish_test_wav.unlink(missing_ok=True)
+print("V17 Great Fish soundtrack is ready. This narration is NZ English; te reo Māori should be reviewed by a fluent speaker.")
