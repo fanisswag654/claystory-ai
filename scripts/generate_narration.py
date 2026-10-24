@@ -1,6 +1,7 @@
 """Generate narrated scene audio from the existing curated JavaScript stories."""
 import asyncio
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -48,9 +49,33 @@ async def main():
             spoken = perform(phrase, i)
             await edge_tts.Communicate(spoken, voice="en-US-GuyNeural", rate=rate, pitch=pitch).save(str(destination))
 asyncio.run(main())
+
+# Optional script supplied in GitHub Actions: split into six storyboard scenes.
+custom = os.environ.get("CUSTOM_SCRIPT", "").strip()
+if custom:
+    paragraphs = [p.strip() for p in re.split(r"\\n\\s*\\n|\\s*\\|\\s*", custom.replace("\\n", "\n")) if p.strip()]
+    if len(paragraphs) == 1:
+        sentences = re.split(r"(?<=[.!?])\\s+", paragraphs[0])
+        paragraphs = [" ".join(sentences[i::6]) for i in range(6)]
+    if len(paragraphs) > 6:
+        paragraphs = paragraphs[:5] + [" ".join(paragraphs[5:])]
+    while len(paragraphs) < 6:
+        paragraphs.append("")
+    scenes = []
+    for i, paragraph in enumerate(paragraphs):
+        text = paragraph or " "
+        scenes.append({"title": f"Scene {i+1}", "caption": " ".join(paragraph.split()[:6]).upper() or "THE STORY CONTINUES", "narration": paragraph, "color": "#293451"})
+    Path("custom-story.json").write_text(json.dumps({"scenes": scenes}, ensure_ascii=False), encoding="utf-8")
+    async def custom_voice():
+        for i, paragraph in enumerate(paragraphs):
+            text = paragraph or " "
+            rate, pitch = DELIVERY[i]
+            await edge_tts.Communicate(text, voice="en-US-GuyNeural", rate=rate, pitch=pitch).save(str(out / f"custom-{i+1}.mp3"))
+    asyncio.run(custom_voice())
+
 # Build a single continuous 48-second timeline: each scene starts at 0,8,16... seconds.
 # Mix instead of concatenating so speech is not cut off at scene boundaries.
-for name in ("sun", "moon", "ocean"):
+for name in (("sun", "moon", "ocean", "custom") if custom else ("sun", "moon", "ocean")):
     args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
     for i in range(1, 7):
         args += ["-i", str(out / f"{name}-{i}.mp3")]
