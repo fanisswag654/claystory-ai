@@ -180,7 +180,7 @@ for(let i=0;i<7;i++)pTree((i*41+7)%210-15,261,Math.round(Math.sin(t+i)*1));
    for(let j=0;j<7;j++){const x=(j*37+Math.round(t*2))%200-10,y=116+(j*29)%100;px(x,y,2,2,j%3?'#f8edd0':'#e8c774')}
  }
 }
-function pCaption(scene){const txt=scenes[scene].caption||'';px(0,0,180,19,'#182b39');px(0,18,180,2,'#ddaa64');pix.textAlign='left';pix.fillStyle='#f3d59d';pix.font='bold 8px monospace';pix.fillText('MĀUI  /  TAMA-NUI-TE-RĀ',6,12);pix.textAlign='right';pix.fillStyle='#c9d3cb';pix.font='7px monospace';pix.fillText((scene+1)+'/6',174,12);
+function pCaption(scene){const txt=scenes[scene].caption||'';px(0,0,180,19,'#182b39');px(0,18,180,2,'#ddaa64');pix.textAlign='left';pix.fillStyle='#f3d59d';pix.font=chosen===fishChoice?'bold 7px monospace':'bold 8px monospace';pix.fillText(chosen===fishChoice?'TE IKA-A-MĀUI  /  GREAT FISH':'MĀUI  /  TAMA-NUI-TE-RĀ',6,12);pix.textAlign='right';pix.fillStyle='#c9d3cb';pix.font='7px monospace';pix.fillText((scene+1)+'/6',174,12);
 px(0,288,180,32,'#142431');px(0,287,180,2,'#e2ae69');pix.textAlign='center';pix.fillStyle='#fff2d8';pix.font='bold 8px monospace';
 const words=txt.split(/\s+/);let lines=[''];for(let word of words){let n=lines[lines.length-1];let candidate=n?n+' '+word:word;if(pix.measureText(candidate).width>166&&n)lines.push(word);else lines[lines.length-1]=candidate}for(let i=0;i<Math.min(2,lines.length);i++)pix.fillText(lines[i],90,302+i*10)}
 
@@ -215,7 +215,166 @@ if(s===5){pBasket(65,281,t);pBird(38+Math.sin(t*.3)*20,126,t);pBird(131-Math.sin
 pTimberDetails();pCaption(s);ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,540,960);ctx.drawImage(pixelStage,0,0,540,960);ctx.restore();
 }
 
-function draw(t){const sceneTime=timelineAt(t);let dur=sceneTime.duration,index=sceneTime.index,s=scenes[index],local=sceneTime.local;if(chosen===mauiChoice){drawMauiPixelScene(index,t);return}ctx.save();ctx.translate(270+Math.sin(t*.2)*9,480+Math.cos(t*.16)*7);let zoom=1.04+.045*Math.sin(t*.23)+.045*(local/8);ctx.scale(zoom,zoom);ctx.translate(-270,-480);sceneSet(index,t);if(index===0||index===2||index===5){earth(270+Math.sin(t)*8,375,143,t);character(125,560,.48,t,'explorer',s.mood|| (index===0?'surprised':index===2?'worried':'excited'))}else if(index===1||index===3){character(268,435,1.05,t,'scientist',s.mood|| (index===1?'thinking':'surprised'));ctx.fillStyle='#f7c468';blob(430,240,62,'#f7c468',2)}else{character(270,445,1.06,t,'explorer',s.mood|| (index===4?'sad':'happy'));ctx.fillStyle='#c8d6e8';for(let i=0;i<8;i++)blob(60+i*60,220+(i%3)*30,14,'#b7d9e5',i)}ctx.restore();motionEffects(index,t);let vignette=ctx.createRadialGradient(270,390,170,270,420,660);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(7,8,18,.58)');ctx.fillStyle=vignette;ctx.fillRect(0,0,540,960);ctx.fillStyle='rgba(255,246,224,.05)';for(let i=0;i<140;i++){let xx=(i*149)%540,yy=(i*263)%960;ctx.fillRect(xx,yy,1,1)}ctx.fillStyle='rgba(14,17,29,.48)';round(16,18,508,74,20);ctx.fillStyle='#fff8e7';ctx.font='bold 27px system-ui';ctx.textAlign='center';ctx.fillText('CLAYSTORY AI • V3',270,65);ctx.fillStyle='rgba(10,15,28,.72)';round(18,670,504,220,22);ctx.fillStyle='#ffc76b';ctx.font='bold 33px system-ui';wrap(s.caption.toUpperCase(),270,713,466,39);ctx.fillStyle='#fff';ctx.font='23px system-ui';wrap(s.narration,270,786,463,31);ctx.fillStyle='#f5dfb8';ctx.font='17px system-ui';ctx.fillText('SCENE '+(index+1)+' / 6',270,926);ctx.fillStyle='#f8b95a';ctx.fillRect(0,949,540*Math.min(1,t/48),11)}
+
+// Te Ika-a-Māui: six separate underwater / fishing / island-formation pixel scenes.
+function fishOceanBackdrop(scene,t){
+ const night=scene===3,dramatic=scene===4,daybreak=scene===5;
+ const sky=night?['#253c61','#3f6489','#66959e']:dramatic?['#344e77','#668ba3','#aacbbd']:daybreak?['#527aa4','#7eaac2','#c4cdb1']:['#466d96','#659bb2','#8ec3c6'];
+ for(let j=0;j<3;j++)px(0,j*54,180,55,sky[j]);
+ pDisk(daybreak?136:23+(t*.6)%115,47,night?9:14,night?'#d3e0de':'#f6df9a');
+ for(let k=0;k<5;k++){const cx=(k*57+12-t*(night?.4:1.1))%240-30,cy=37+(k%3)*22;px(cx,cy,24,4,night?'#637b94':'#d3e0da');px(cx+6,cy-4,12,5,night?'#637b94':'#e4e6d7')}
+ px(0,141,180,5,night?'#375773':'#6cb6c7');
+ for(let j=0;j<7;j++){const y=146+j*22;px(0,y,180,23,j%2?(night?'#26496b':'#247a99'):(night?'#1b3f61':'#266f91'))}
+ // Side-scrolling water texture and distant glints.
+ for(let j=0;j<62;j++){
+   const x=((j*37+Math.sin(t*.7+j)*4-t*(j%3+1)*2)%203+203)%203-12;
+   const y=148+(j*29)%143;
+   px(x,y,2+(j%4)*2,1,j%3?'#5dabc1':'#b0d5ca');
+ }
+ const surface=151+Math.sin(t*2)*2;
+ for(let x=-8;x<190;x+=10){
+   const yy=surface+Math.sin(t*2+x*.1)*2;
+   px(x,yy,8,2,'#d1e8dc');
+ }
+ for(let k=0;k<12;k++){
+   const x=(k*63+41)%180,y=176+(k*41+Math.floor(t*6))%103;
+   px(x,y,2,2,k%2?'#64a6bd':'#91bdc4')
+ }
+ if(scene===3){for(let j=0;j<7;j++){let x=22+j*26;px(x,224+(j%3)*12,16,2,'#193450')}}
+}
+function fishCanoe(x,y,t,scale=1,crew=true,hidden=false){
+ pix.save();pix.translate(Math.round(x),Math.round(y+Math.sin(t*2.4)*2.4));pix.scale(scale,scale);
+ // Characters sit behind the gunwale and animate their paddles.
+ if(crew){
+   for(let j=0;j<3;j++){
+     const actorX=-35+j*34;
+     pActor(actorX,-8,t+j*.8,j===1?'#8b695d':'#547c80',j===1?'angry':'neutral',.63,false);
+     const swing=Math.sin(t*2+j)*6;
+     pLine(actorX+7,-22,actorX+17+swing,36,'#a77555',3);
+     pPolygon([[actorX+14+swing,26],[actorX+20+swing,29],[actorX+24+swing,49],[actorX+15+swing,44]],'#d0b485')
+   }
+ }
+ pPolygon([[-74,-15],[-65,6],[-50,23],[44,23],[66,11],[76,-15]],'#2e3546');
+ pPolygon([[-68,-13],[-57,7],[-43,16],[44,16],[58,6],[68,-13]],'#9b603e');
+ px(-65,-12,130,4,'#ddad78');
+ px(-46,12,86,4,'#bd8556');
+ for(let j=0;j<17;j++)px(-55+j*7,1+(j%3)*3,4,2,j%2?'#e5bc87':'#684d40');
+ pLine(-72,-14,-81,-29,'#ce9c65',3);pLine(70,-13,81,-27,'#ce9c65',3);
+ if(hidden){px(-16,-7,24,11,'#382f3c');px(-13,-11,12,7,'#b57e5c');px(-12,-14,12,5,'#2a2c37');px(-9,-8,2,2,'#27262c');px(-2,-8,2,2,'#27262c')}
+ pix.restore()
+}
+function fishCreature(x,y,w,h,t,marks=0){
+ pix.save();pix.translate(x,y+Math.sin(t*1.8)*2.3);
+ pix.rotate(Math.sin(t*.74)*.028);pix.scale(w/110,h/68);
+ pPolygon([[34,-10],[83,-37],[73,0],[84,32],[37,14]],'#37687b');
+ pPolygon([[-33,-26],[-18,-47],[4,-28]],'#3f8694');
+ pPolygon([[-3,14],[17,39],[27,13]],'#3a8998');
+ pPolygon([[-54,0],[-43,-21],[-19,-29],[23,-29],[49,-16],[55,1],[40,23],[-9,27],[-42,19]],'#274e66');
+ pPolygon([[-52,0],[-42,-17],[-9,-26],[26,-24],[49,-12],[51,1],[37,16],[-11,23],[-39,15]],'#498f9c');
+ pPolygon([[-44,3],[-29,13],[5,18],[41,8],[36,18],[-11,25],[-44,15]],'#93c7bc');
+ for(let k=0;k<23;k++){
+   const sx=-30+(k*17)%70,sy=-17+(k*11)%26;
+   px(sx,sy,5,2,k%3?'#74b1b3':'#c2d7be')
+ }
+ pDisk(-37,-8,4,'#e9daa8');px(-39,-9,3,3,'#24333e');
+ pLine(-49,8,-36,11,'#244b56',2);
+ pLine(-29,-18,-22,8,'#326b7a',2);
+ if(marks>0){
+   for(let j=0;j<Math.floor(8*marks);j++){
+     const sx=-17+j*7;
+     pLine(sx,-16,sx+3,0,'#7d5655',2);
+   }
+ }
+ pix.restore()
+}
+function fishHook(x,y,t){
+ pLine(x,y,x+3,y+21,'#e4d3a5',2);
+ pLine(x+3,y+21,x-4,y+23,'#eddfb7',3);
+ pLine(x-4,y+23,x-8,y+17,'#d5b98f',2);
+ px(x-2,y+6,3,5,'#af9172');
+ px(x+3,y+15,4,3,'#914d52')
+}
+function fishCoast(x,y,phase){
+ // Terraced peaks and deep valleys gradually emerge from the fish's back.
+ let rise=Math.min(1,Math.max(0,phase*1.8-.35));
+ if(rise<=0)return;
+ const top=213-35*rise;
+ const points=[[0,237],[0,228],[15,222],[27,top-14],[39,top+17],[52,top-32],
+ [71,top+18],[87,top-46],[106,top+4],[119,top-19],[135,top+12],
+ [155,top-31],[172,top+8],[180,226],[180,282],[0,282]];
+ pPolygon(points,'#416854');
+ pPolygon([[0,239],[19,230],[30,top+2],[40,top+23],[52,top-32],[64,top+12],[86,top-46],[96,top+12],[113,top+12],[136,top+20],[180,235],[180,277],[0,277]],'#6d9775');
+ for(let j=0;j<6;j++){
+   let x=[27,52,87,120,155,167][j],peak=top-([14,32,46,19,31,8][j]);
+   pPolygon([[x-6,peak+8],[x,peak],[x+7,peak+9]],'#b4baa3');
+ }
+ for(let j=0;j<23;j++){const x=(j*43)%179,y=235+(j*17)%43;px(x,y,4,2,j%2?'#a1b790':'#d1b792')}
+ for(let j=0;j<9;j++){const x=(j*19+13)%179,y=250+(j%3)*8;pLine(x,y,x+(j%2)*3,y-9,'#355a4a',2)}
+}
+function fishSpray(t,x=85,y=155,amount=18){
+ for(let k=0;k<amount;k++){
+  const offset=(t*17+k*13)%40;
+  px(x+Math.sin(k*9.7)*40,y+offset+(k%3)*6,(k%3)+1,1+(k%2),k%2?'#d9e9d7':'#a4d1d6');
+ }
+}
+function drawFishPixelScene(scene,t){
+ const {phase,local}=timelineAt(t);pix.clearRect(0,0,180,320);
+ fishOceanBackdrop(scene,t);
+ if(scene===0){
+   // Begin below the surface: the fish dwarfs a far-away canoe.
+   fishCreature(87,234,190,97,t,.03);
+   fishCanoe(96,137,t,.5,false,false);
+   pLine(97,138,84,211,'#ebd6a9',2);
+   for(let j=0;j<5;j++)px(47+j*21,170+(j%2)*8,15,2,'#4a96a8');
+ }
+ else if(scene===1){
+   fishCanoe(90+Math.sin(t*.5)*3,163,t,1,true,phase>.46);
+   if(phase<.5){px(77,158,29,3,'#dfb486');for(let j=0;j<5;j++)px(80+j*5,161,2,3,'#714b38')}
+   for(let j=0;j<3;j++)fishSpray(t+j*.13,55+j*34,180,6)
+   pBird(137+Math.sin(t)*14,91,t)
+ }
+ else if(scene===2){
+   fishCanoe(82,164,t,.98,true,false);
+   pActor(87,140,t,'#b78e65','angry',.85,true);
+   pLine(99,128,118,152,'#cfad78',2);fishHook(118,148,t);
+   // Three small beads of red on the hook, restrained and non-graphic.
+   px(111,145,3,3,'#a75550');px(114,148,2,2,'#a75550');
+   for(let j=0;j<9;j++){let x=15+j*22,y=211+j%4*15;px(x,y,5,2,'#71aebe')}
+ }
+ else if(scene===3){
+   fishCanoe(90+Math.sin(t*3)*6,146+Math.sin(t*4)*4,t,1,true,false);
+   const hx=100+Math.sin(t*3)*2;
+   pLine(hx,125,hx+2,257,'#ecdaab',2);fishHook(hx+2,251,t);
+   fishCreature(91+Math.sin(t*1.1)*6,278,170,56,t,.0);
+   fishSpray(t,98,174,25);
+   pRope(91,145,hx,227,t)
+ }
+ else if(scene===4){
+   // The great fish breaches, while the brothers begin carving.
+   const breach=Math.min(1,phase*2.3+.08);
+   fishCreature(82,281-breach*84,232,108,t,phase>.65?.5:0);
+   fishCanoe(83,124,t,.73,true,false);
+   pLine(112,134,114,210-breach*19,'#f1d6a5',3);
+   if(phase>.6){
+      pActor(37,202,t,'#8c745b','angry',.68,true);
+      pActor(147,211,t+.6,'#70868a','angry',.65,true);
+      for(let j=0;j<10;j++){let x=(j*27)%170,y=196+(j%4)*13;px(x,y,2,2,'#fff0d0')}
+   }
+   fishSpray(t,86,178,34)
+ }
+ else{
+   fishCreature(91,253,212,88,t,phase*.8);
+   fishCoast(0,0,phase);
+   // Ocean withdraws as land forms and birds return.
+   if(phase>.25)for(let j=0;j<3;j++)pBird(35+j*54+Math.sin(t+j)*8,107+j*7,t+j);
+   for(let j=0;j<11;j++){const x=(j*17)%180,y=214+(j%3)*14;px(x,y,4,2,'#d9d1b1')}
+ }
+ pCaption(scene);
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;
+ ctx.clearRect(0,0,540,960);ctx.drawImage(pixelStage,0,0,540,960);ctx.restore()
+}
+
+function draw(t){const sceneTime=timelineAt(t);let dur=sceneTime.duration,index=sceneTime.index,s=scenes[index],local=sceneTime.local;if(chosen===mauiChoice){drawMauiPixelScene(index,t);return}if(chosen===fishChoice){drawFishPixelScene(index,t);return}ctx.save();ctx.translate(270+Math.sin(t*.2)*9,480+Math.cos(t*.16)*7);let zoom=1.04+.045*Math.sin(t*.23)+.045*(local/8);ctx.scale(zoom,zoom);ctx.translate(-270,-480);sceneSet(index,t);if(index===0||index===2||index===5){earth(270+Math.sin(t)*8,375,143,t);character(125,560,.48,t,'explorer',s.mood|| (index===0?'surprised':index===2?'worried':'excited'))}else if(index===1||index===3){character(268,435,1.05,t,'scientist',s.mood|| (index===1?'thinking':'surprised'));ctx.fillStyle='#f7c468';blob(430,240,62,'#f7c468',2)}else{character(270,445,1.06,t,'explorer',s.mood|| (index===4?'sad':'happy'));ctx.fillStyle='#c8d6e8';for(let i=0;i<8;i++)blob(60+i*60,220+(i%3)*30,14,'#b7d9e5',i)}ctx.restore();motionEffects(index,t);let vignette=ctx.createRadialGradient(270,390,170,270,420,660);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(7,8,18,.58)');ctx.fillStyle=vignette;ctx.fillRect(0,0,540,960);ctx.fillStyle='rgba(255,246,224,.05)';for(let i=0;i<140;i++){let xx=(i*149)%540,yy=(i*263)%960;ctx.fillRect(xx,yy,1,1)}ctx.fillStyle='rgba(14,17,29,.48)';round(16,18,508,74,20);ctx.fillStyle='#fff8e7';ctx.font='bold 27px system-ui';ctx.textAlign='center';ctx.fillText('CLAYSTORY AI • V3',270,65);ctx.fillStyle='rgba(10,15,28,.72)';round(18,670,504,220,22);ctx.fillStyle='#ffc76b';ctx.font='bold 33px system-ui';wrap(s.caption.toUpperCase(),270,713,466,39);ctx.fillStyle='#fff';ctx.font='23px system-ui';wrap(s.narration,270,786,463,31);ctx.fillStyle='#f5dfb8';ctx.font='17px system-ui';ctx.fillText('SCENE '+(index+1)+' / 6',270,926);ctx.fillStyle='#f8b95a';ctx.fillRect(0,949,540*Math.min(1,t/48),11)}
 function wrap(txt,x,y,max,line){let words=txt.split(' '),str='';for(const w of words){let trial=str?str+' '+w:w;if(ctx.measureText(trial).width>max&&str){ctx.fillText(str,x,y);y+=line;str=w}else str=trial}ctx.fillText(str,x,y)}
 let cloudAudioAvailable=false,cloudAudioFiles=[],cloudAudioGeneration=0,continuousNarration=null, narrationOverrideUrl=null;
 const cloudStatus=document.querySelector('#cloudstatus');
