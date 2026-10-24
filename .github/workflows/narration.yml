@@ -1,6 +1,11 @@
 name: Generate ClayStory neural narration
 on:
   workflow_dispatch:
+    inputs:
+      custom_script:
+        description: "Optional custom story script (paste up to 6 paragraphs; blank = built-in stories)"
+        required: false
+        type: string
   push:
     paths:
       - 'scripts/generate_narration.py'
@@ -26,6 +31,8 @@ jobs:
       - name: Install audio tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Generate MP3 voice for each scene
+        env:
+          CUSTOM_SCRIPT: ${{ inputs.custom_script }}
         run: python scripts/generate_narration.py
       - name: Commit narration audio
         run: |
@@ -34,12 +41,14 @@ jobs:
           # Save the generated files before refreshing the branch.
           mkdir -p /tmp/claystory-audio
           cp -a audio/. /tmp/claystory-audio/
+          if [ -f custom-story.json ]; then cp custom-story.json /tmp/claystory-custom-story.json; fi
           for attempt in 1 2 3 4 5; do
             git fetch origin main
             git checkout -B main origin/main
             mkdir -p audio
             cp -a /tmp/claystory-audio/. audio/
-            git add audio/
+            if [ -f /tmp/claystory-custom-story.json ]; then cp /tmp/claystory-custom-story.json custom-story.json; fi
+            git add audio/ custom-story.json 2>/dev/null || git add audio/
             if git diff --cached --quiet; then
               echo "Narration files already match the remote branch."
               exit 0
