@@ -21,5 +21,5 @@ async def main():
             phrase = json.loads('"' + raw + '"')
             destination = out / f"{name}-{i+1}.mp3"
             print(f"Generating {destination}")
-            await edge_tts.Communicate(phrase, voice="en-US-AriaNeural", rate="+0%").save(str(destination))
+            await edge_tts.Communicate(phrase, voice="en-US-JennyNeural", rate="-6%", pitch="+0Hz").save(str(destination))
 asyncio.run(main())
