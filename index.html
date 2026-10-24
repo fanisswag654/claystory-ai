@@ -254,12 +254,12 @@ let currentAudio=null,voiceRequest=0;function stopAudio(){voiceRequest++;if(curr
 function startContinuousNarration(){
  if(!cloudAudioAvailable&&!narrationOverrideUrl)return;
  if(continuousNarration){continuousNarration.pause();continuousNarration=null}
- continuousNarration=new Audio(narrationOverrideUrl||fullAudioUrl());
+ continuousNarration=new Audio(narrationOverrideUrl||(fullAudioUrl()+'?revision=14'));
  continuousNarration.preload='auto';
  continuousNarration.playbackRate=Number(document.querySelector('#pace').value)||1;
  continuousNarration.play().catch(e=>{cloudStatus.textContent='Narration playback failed: '+e.message;continuousNarration=null});
 }
-function frame(now){if(!playing)return;let total=timelineTotal(),t=Math.min(total,continuousNarration?continuousNarration.currentTime:(now-start)/1000),index=timelineAt(t).index;if(index!==lastSpoken){lastSpoken=index;speakScene(index)}draw(t);if(t<total)raf=requestAnimationFrame(frame);else{playing=false;if(continuousNarration){continuousNarration.pause();continuousNarration=null}stopAudio();if('speechSynthesis'in window)speechSynthesis.cancel();status.textContent='Preview complete.'}}
+function frame(now){if(!playing)return;let total=timelineTotal(),t=Math.min(total,continuousNarration?(continuousNarration.ended?total:continuousNarration.currentTime):(now-start)/1000),index=timelineAt(t).index;if(index!==lastSpoken){lastSpoken=index;speakScene(index)}draw(t);if(t<total)raf=requestAnimationFrame(frame);else{playing=false;if(continuousNarration){continuousNarration.pause();continuousNarration=null}stopAudio();if('speechSynthesis'in window)speechSynthesis.cancel();status.textContent='Preview complete.'}}
 function stop(){playing=false;if(continuousNarration){continuousNarration.pause();continuousNarration.currentTime=0;continuousNarration=null}stopAudio();cancelAnimationFrame(raf);if('speechSynthesis'in window)speechSynthesis.cancel();lastSpoken=-1;draw(0)}
 document.querySelector('#generate').onclick=()=>{if(selectStory())document.querySelector('#play').click()};
 document.querySelector('#play').onclick=()=>{stop();playing=true;startContinuousNarration();start=performance.now();raf=requestAnimationFrame(frame);status.textContent=narrationOverrideUrl?'Playing your recorded narration.':cloudAudioAvailable?'Playing narrator-synced animation with quick cuts.':chosen===mauiChoice?'Playing pixel animation silently until the narration is ready.':'Playing preview. Check cloud voice status.'};
