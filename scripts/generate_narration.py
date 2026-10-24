@@ -17,6 +17,11 @@ if len(narrations) != 18:
     raise RuntimeError(f"Expected 18 narration scenes, found {len(narrations)}")
 out = Path("audio")
 out.mkdir(exist_ok=True)
+# Read the six dedicated Māui pūrākau scenes from the app.
+maui_section = html.split("const mauiStory=",1)[1].split(";\nconst mauiChoice=",1)[0]
+maui_scenes = json.loads(maui_section)
+if len(maui_scenes) != 6:
+    raise RuntimeError("Expected six Māui scenes")
 # Scene-by-scene performance direction: subtle variations sound less robotic
 # than forcing the same slow rate and low pitch onto every line.
 DELIVERY = [
@@ -49,6 +54,11 @@ async def main():
             spoken = perform(phrase, i)
             await edge_tts.Communicate(spoken, voice="en-US-GuyNeural", rate=rate, pitch=pitch).save(str(destination))
 asyncio.run(main())
+async def maui_voice():
+    for i, scene in enumerate(maui_scenes):
+        rate, pitch = DELIVERY[i]
+        await edge_tts.Communicate(scene["narration"], voice="en-US-GuyNeural", rate=rate, pitch=pitch).save(str(out / f"maui-{i+1}.mp3"))
+asyncio.run(maui_voice())
 
 # Optional script supplied in GitHub Actions: split into six storyboard scenes.
 custom = os.environ.get("CUSTOM_SCRIPT", "").strip()
@@ -75,14 +85,15 @@ if custom:
 
 # Build a single continuous 48-second timeline: each scene starts at 0,8,16... seconds.
 # Mix instead of concatenating so speech is not cut off at scene boundaries.
-for name in (("sun", "moon", "ocean", "custom") if custom else ("sun", "moon", "ocean")):
+for name in (("sun", "moon", "ocean", "maui", "custom") if custom else ("sun", "moon", "ocean", "maui")):
     args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
     for i in range(1, 7):
         args += ["-i", str(out / f"{name}-{i}.mp3")]
     filters = []
+    seconds = 22 if name == "maui" else 8
     for i in range(6):
-        filters.append(f"[{i}:a]adelay={i*8000}|{i*8000}[a{i}]")
-    filters.append("".join(f"[a{i}]" for i in range(6)) + "amix=inputs=6:duration=longest:normalize=0,highpass=f=75,equalizer=f=2800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.12:ratio=1.6:attack=20:release=180,alimiter=limit=0.95,apad,atrim=duration=48[out]")
+        filters.append(f"[{i}:a]adelay={i*seconds*1000}|{i*seconds*1000}[a{i}]")
+    filters.append("".join(f"[a{i}]" for i in range(6)) + "amix=inputs=6:duration=longest:normalize=0,highpass=f=75,equalizer=f=2800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.12:ratio=1.6:attack=20:release=180,alimiter=limit=0.95,apad,atrim=duration={seconds*6}[out]")
     args += ["-filter_complex", ";".join(filters), "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", str(out / f"{name}-full.mp3")]
     subprocess.run(args, check=True)
     print(f"Created {name}-full.mp3")
