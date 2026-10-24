@@ -54,14 +54,63 @@ async def main():
             spoken = perform(phrase, i)
             await edge_tts.Communicate(spoken, voice="en-US-GuyNeural", rate=rate, pitch=pitch).save(str(destination))
 asyncio.run(main())
+# Speedier, more conversational delivery with restrained scene-specific variation.
+# These are New Zealand English voices, not certified te reo Māori pronunciation.
+MAUI_DELIVERY = [
+    ("+8%", "+0Hz"),   # conversational setup
+    ("+10%", "+1Hz"),  # curious, purposeful discovery
+    ("+7%", "-1Hz"),   # scepticism, preparation
+    ("+11%", "+0Hz"),  # a journey that builds suspense
+    ("+9%", "+1Hz"),   # lively confrontation
+    ("+5%", "-1Hz"),   # warm conclusion
+]
+
+def media_duration(path):
+    output = subprocess.check_output([
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", str(path)
+    ], text=True)
+    return float(output.strip())
+
 async def maui_voice():
-    # A New Zealand English voice is more appropriate for this local pūrākau.
-    # Te reo Māori pronunciation is not guaranteed; the player also supports
-    # a recording by a fluent speaker, which takes priority over this file.
     for i, scene in enumerate(maui_scenes):
-        rate, pitch = DELIVERY[i]
-        await edge_tts.Communicate(scene["narration"], voice="en-NZ-MitchellNeural", rate=rate, pitch=pitch).save(str(out / f"maui-nz-{i+1}.mp3"))
+        rate, pitch = MAUI_DELIVERY[i]
+        file = out / f"maui-nz-{i+1}.mp3"
+        temp = out / f"maui-nz-{i+1}-raw.mp3"
+        # Preserve Māori spelling and wording in the spoken text. A fluent
+        # human narrator is preferable to synthetic pronunciation if possible.
+        await edge_tts.Communicate(
+            scene["narration"], voice="en-NZ-MitchellNeural", rate=rate, pitch=pitch
+        ).save(str(temp))
+        # Remove ONLY silence at the start and end of the clip. Reverse between
+        # passes to retain the natural pauses between spoken sentences.
+        subprocess.run([
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(temp),
+            "-af", "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,"
+                   "areverse,"
+                   "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,"
+                   "areverse",
+            "-c:a", "libmp3lame", "-q:a", "3", str(file)
+        ], check=True)
+        temp.unlink(missing_ok=True)
+        if media_duration(file) < 2:
+            raise RuntimeError(f"Unusually short narration for scene {i+1}")
+
 asyncio.run(maui_voice())
+
+# Record narration-accurate cut points rather than leaving 22 seconds per scene.
+# A very small transition pause feels natural without seconds of dead air.
+maui_gap = 0.16
+maui_clip_durations = [media_duration(out / f"maui-nz-{i}.mp3") for i in range(1, 7)]
+maui_timing = [round(d + (maui_gap if i < 5 else 0.25), 3)
+               for i, d in enumerate(maui_clip_durations)]
+(out / "maui-nz-timing.json").write_text(json.dumps({
+    "durations": maui_timing,
+    "voice": "en-NZ-MitchellNeural",
+    "description": "Clip-length-driven scene timing with 0.16 second gaps",
+    "revision": 14
+}, ensure_ascii=False, indent=2), encoding="utf-8")
+print("Māui timing:", maui_timing, "total", round(sum(maui_timing), 2), "seconds")
 
 # Optional script supplied in GitHub Actions: split into six storyboard scenes.
 custom = os.environ.get("CUSTOM_SCRIPT", "").strip()
@@ -86,18 +135,31 @@ if custom:
             await edge_tts.Communicate(text, voice="en-US-GuyNeural", rate=rate, pitch=pitch).save(str(out / f"custom-{i+1}.mp3"))
     asyncio.run(custom_voice())
 
-# Build a single continuous 48-second timeline: each scene starts at 0,8,16... seconds.
-# Mix instead of concatenating so speech is not cut off at scene boundaries.
-for name in (("sun", "moon", "ocean", "maui-nz", "custom") if custom else ("sun", "moon", "ocean", "maui-nz")):
+# Mix each scene into one continuous track, respecting its actual duration.
+# Built-in library stories retain their existing 8-second staging.
+for name in (("sun", "moon", "ocean", "maui-nz", "custom") if custom else
+             ("sun", "moon", "ocean", "maui-nz")):
     args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
     for i in range(1, 7):
         args += ["-i", str(out / f"{name}-{i}.mp3")]
     filters = []
-    seconds = 22 if name == "maui-nz" else 8
-    for i in range(6):
-        filters.append(f"[{i}:a]adelay={i*seconds*1000}|{i*seconds*1000}[a{i}]")
-    filters.append("".join(f"[a{i}]" for i in range(6)) + f"amix=inputs=6:duration=longest:normalize=0,highpass=f=75,equalizer=f=2800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.12:ratio=1.6:attack=20:release=180,alimiter=limit=0.95,apad,atrim=duration={seconds*6}[out]")
-    args += ["-filter_complex", ";".join(filters), "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", str(out / f"{name}-full.mp3")]
+    if name == "maui-nz":
+        start_ms = 0
+        for i in range(6):
+            filters.append(f"[{i}:a]adelay={start_ms}|{start_ms}[a{i}]")
+            start_ms += round(maui_timing[i] * 1000)
+        total_duration = round(sum(maui_timing), 3)
+    else:
+        for i in range(6):
+            filters.append(f"[{i}:a]adelay={i*8000}|{i*8000}[a{i}]")
+        total_duration = 48
+    filters.append("".join(f"[a{i}]" for i in range(6)) +
+                   f"amix=inputs=6:duration=longest:normalize=0,"
+                   f"highpass=f=72,acompressor=threshold=0.15:ratio=1.4:"
+                   f"attack=25:release=190,alimiter=limit=0.96,"
+                   f"apad,atrim=duration={total_duration}[out]")
+    args += ["-filter_complex", ";".join(filters),
+             "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3",
+             str(out / f"{name}-full.mp3")]
     subprocess.run(args, check=True)
-    print(f"Created {name}-full.mp3")
-
+    print(f"Created {name}-full.mp3 (duration {total_duration:.2f}s)")
