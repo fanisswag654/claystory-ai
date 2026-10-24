@@ -17,6 +17,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install 'edge-tts>=7,<8'
+      - name: Install audio tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Generate MP3 voice for each scene
         run: python scripts/generate_narration.py
       - name: Commit narration audio
