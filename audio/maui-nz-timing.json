@@ -1,0 +1,13 @@
+{
+  "durations": [
+    10.792,
+    11.392,
+    12.208,
+    9.76,
+    11.176,
+    11.314
+  ],
+  "voice": "en-NZ-MitchellNeural",
+  "description": "Clip-length-driven scene timing with 0.16 second gaps",
+  "revision": 14
+}
