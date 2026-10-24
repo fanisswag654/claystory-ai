@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ClayStory AI</title><style>
-:root{font-family:system-ui,sans-serif;color:#f7f1e9;background:#15171f}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:2.4rem;margin-bottom:6px}p{color:#bbb}section{background:#222632;padding:18px;border-radius:16px;margin:16px 0}input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #51576b}input,textarea{background:#11141c;color:white;width:100%}textarea{min-height:90px}button{background:#f8b95a;color:#151515;font-weight:700;cursor:pointer;margin:4px}button:disabled{opacity:.5}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:20px}canvas{width:100%;aspect-ratio:9/16;border-radius:12px;background:#090d20}.scene{border:1px solid #44495b;border-radius:10px;padding:10px;margin:10px 0}.small{font-size:.8rem;color:#b5b9c8}@media(max-width:720px){.layout{grid-template-columns:1fr}} </style></head><body><main><h1>🎬 ClayStory AI <span style="font-size:15px;color:#f8b95a">V15 SOUND DESIGN</span></h1><p>Original animated Māori pūrākau in 2D pixel art, with cinematic and retro sound design.</p><section><label>Story topic<input id="topic" value="What if the Sun disappeared for 24 hours?"></label><label style="display:block;margin-top:12px">Your video script<textarea id="customscript" placeholder="Paste your script here. Use a blank line between scenes, or paste a full story to split it automatically." rows="8"></textarea></label><button id="loadmaui">🌞 Load Māui pixel animation</button><button id="buildscript">🎬 Build animation from script</button><button id="generate">⚡ Create video automatically</button><button id="record">⬇ Export video</button><p class="small">The featured Māui story uses its own original pixel-art scenes. Other story templates are unchanged.</p></section><div class="layout"><section><canvas id="stage" width="540" height="960"></canvas><div><button id="play">▶ Preview with sound</button><div style="margin:8px 0;padding:12px;border-radius:12px;border:1px solid #51576b;background:#1a202c"><label style="display:flex;align-items:center;gap:10px;font-size:15px"><input id="sfxenabled" type="checkbox" checked style="width:auto;accent-color:#f8b95a"> 🎧 Sound FX: cinematic + retro</label><label style="display:block;margin-top:8px;font-size:13px;color:#d7d1c9">Effects volume <input id="sfxlevel" aria-label="Sound effects volume" type="range" min="0" max="100" value="55" style="width:100%;padding:0;border:0;accent-color:#f8b95a"></label><p id="sfxstatus" class="small" style="margin:6px 0 0">Village ambience, wind, weaving, night insects, rope tension and pixel-action cues. Preview only.</p></div><label style="display:block;margin:8px 0 4px">Pacing <select id="pace" style="padding:8px;background:#11141c;color:white;border-radius:8px"><option value="1">Fast cuts (narrator-paced)</option><option value="1.08">Even quicker (1.08×)</option><option value="1.15">Very quick (1.15×)</option></select></label><button id="stop">■ Stop</button><label style="display:block;margin-top:10px">Narrator voice <select id="voice" style="width:100%;padding:10px;border-radius:10px;background:#11141c;color:white;border:1px solid #51576b"><option value="">Best available English voice</option></select></label><button id="testvoice" type="button">🔊 Test iPad voice</button><div style="border:1px solid #51576b;border-radius:12px;padding:12px;margin-top:12px"><strong>☁️ Cloud-generated neural narration</strong><p class="small">GitHub Actions generates MP3 files remotely. For your own script, open the workflow, paste the same script into custom_script, and run it. Then return here and tap Check audio.</p><label style="display:block;margin:12px 0 4px">Optional: use a recorded narration (especially recommended for te reo Māori pronunciation).<input type="file" accept="audio/*" id="mauiaudio" style="margin-top:6px"></label><p class="small">A human narrator fluent in te reo Māori is best for cultural and pronunciation accuracy. A New Zealand English synthetic voice is not a substitute for that review.</p><button id="checkaudio" type="button">Check audio availability</button><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/narration.yml" target="_blank" rel="noopener" style="color:#f8b95a">Open GitHub voice generator ↗</a><p class="small" id="cloudstatus">No audio checked yet. Until generated, iPad voices remain available.</p></div><p class="small">Voice quality is limited by your iPad’s installed voices. Selecting a different voice only helps when the device offers one.</p></div><p id="status" class="small">Ready. Choose a supported topic and press Create video automatically. Export remains a silent WebM on compatible browsers; preview narration is not yet embedded in exports.</p></section><section><h2>Storyboard</h2><div id="scenes"></div><p class="small">Edit narration and captions before previewing. Māui scenes cut automatically to match each narrated line. Audio effects play in Preview, not in the silent WebM export.</p></section></div></main><script>
+:root{font-family:system-ui,sans-serif;color:#f7f1e9;background:#15171f}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:2.4rem;margin-bottom:6px}p{color:#bbb}section{background:#222632;padding:18px;border-radius:16px;margin:16px 0}input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #51576b}input,textarea{background:#11141c;color:white;width:100%}textarea{min-height:90px}button{background:#f8b95a;color:#151515;font-weight:700;cursor:pointer;margin:4px}button:disabled{opacity:.5}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:20px}canvas{width:100%;aspect-ratio:9/16;border-radius:12px;background:#090d20}.scene{border:1px solid #44495b;border-radius:10px;padding:10px;margin:10px 0}.small{font-size:.8rem;color:#b5b9c8}@media(max-width:720px){.layout{grid-template-columns:1fr}} </style></head><body><main><h1>🎬 ClayStory AI <span style="font-size:15px;color:#f8b95a">V16 AUDIBLE SOUND FX</span></h1><p>Original animated Māori pūrākau in 2D pixel art, with cinematic and retro sound design.</p><section><label>Story topic<input id="topic" value="What if the Sun disappeared for 24 hours?"></label><label style="display:block;margin-top:12px">Your video script<textarea id="customscript" placeholder="Paste your script here. Use a blank line between scenes, or paste a full story to split it automatically." rows="8"></textarea></label><button id="loadmaui">🌞 Load Māui pixel animation</button><button id="buildscript">🎬 Build animation from script</button><button id="generate">⚡ Create video automatically</button><button id="record">⬇ Export video</button><p class="small">The featured Māui story uses its own original pixel-art scenes. Other story templates are unchanged.</p></section><div class="layout"><section><canvas id="stage" width="540" height="960"></canvas><div><button id="play">▶ Preview with sound</button><button id="testfx" type="button">🔊 Test sound effects</button><div style="margin:8px 0;padding:12px;border-radius:12px;border:1px solid #51576b;background:#1a202c"><label style="display:flex;align-items:center;gap:10px;font-size:15px"><input id="sfxenabled" type="checkbox" checked style="width:auto;accent-color:#f8b95a"> 🎧 Sound FX: cinematic + retro</label><label style="display:block;margin-top:8px;font-size:13px;color:#d7d1c9">Effects volume <input id="sfxlevel" aria-label="Sound effects volume" type="range" min="0" max="100" value="55" style="width:100%;padding:0;border:0;accent-color:#f8b95a"></label><p id="sfxstatus" class="small" style="margin:6px 0 0">Scene effects are mixed into the same MP3 as narration for reliable iPad playback.</p></div><label style="display:block;margin:8px 0 4px">Pacing <select id="pace" style="padding:8px;background:#11141c;color:white;border-radius:8px"><option value="1">Fast cuts (narrator-paced)</option><option value="1.08">Even quicker (1.08×)</option><option value="1.15">Very quick (1.15×)</option></select></label><button id="stop">■ Stop</button><label style="display:block;margin-top:10px">Narrator voice <select id="voice" style="width:100%;padding:10px;border-radius:10px;background:#11141c;color:white;border:1px solid #51576b"><option value="">Best available English voice</option></select></label><button id="testvoice" type="button">🔊 Test iPad voice</button><div style="border:1px solid #51576b;border-radius:12px;padding:12px;margin-top:12px"><strong>☁️ Cloud-generated neural narration</strong><p class="small">GitHub Actions generates MP3 files remotely. For your own script, open the workflow, paste the same script into custom_script, and run it. Then return here and tap Check audio.</p><label style="display:block;margin:12px 0 4px">Optional: use a recorded narration (especially recommended for te reo Māori pronunciation).<input type="file" accept="audio/*" id="mauiaudio" style="margin-top:6px"></label><p class="small">A human narrator fluent in te reo Māori is best for cultural and pronunciation accuracy. A New Zealand English synthetic voice is not a substitute for that review.</p><button id="checkaudio" type="button">Check audio availability</button><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/narration.yml" target="_blank" rel="noopener" style="color:#f8b95a">Open GitHub voice generator ↗</a><p class="small" id="cloudstatus">No audio checked yet. Until generated, iPad voices remain available.</p></div><p class="small">Voice quality is limited by your iPad’s installed voices. Selecting a different voice only helps when the device offers one.</p></div><p id="status" class="small">Ready. Choose a supported topic and press Create video automatically. Export remains a silent WebM on compatible browsers; preview narration is not yet embedded in exports.</p></section><section><h2>Storyboard</h2><div id="scenes"></div><p class="small">Edit narration and captions before previewing. Māui scenes cut automatically to match each narrated line. Audio effects play in Preview, not in the silent WebM export.</p></section></div></main><script>
 const story=[
 {title:"The hook",caption:"WHAT IF THE SUN VANISHED?",narration:"Imagine waking up, and the Sun has vanished. Would Earth freeze instantly? Not quite!",color:"#252346"},
 {title:"Eight-minute delay",caption:"8 MINUTES, 20 SECONDS",narration:"Sunlight takes about eight minutes and twenty seconds to reach Earth. So we'd still see sunlight briefly.",color:"#293451"},
@@ -214,12 +214,20 @@ function storyAudioName(){return customMode?'custom':chosen.audioKey|| (chosen==
 function sceneAudioUrl(index){return './audio/'+storyAudioName()+'-'+(index+1)+'.mp3'}
 function fullAudioUrl(){return './audio/'+storyAudioName()+'-full.mp3'}
 async function checkCloudAudio(){
- const generation=++cloudAudioGeneration;cloudAudioAvailable=false;cloudAudioFiles=[];
+ const generation=++cloudAudioGeneration;cloudAudioAvailable=false;cloudAudioFiles=[];mixedFxReady=false;
  cloudStatus.textContent='Checking continuous neural narration...';
  try{
  const r=await fetch(fullAudioUrl()+'?check='+Date.now(),{cache:'no-store'});
  if(generation!==cloudAudioGeneration)return;
  cloudAudioAvailable=r.ok&&/audio|mpeg|octet-stream/.test(r.headers.get('content-type')||'');
+  mixedFxReady=false;
+  if(chosen===mauiChoice){
+    try{
+      const fxResult=await fetch('./audio/maui-nz-mix-balanced.mp3?check='+Date.now(),{cache:'no-store'});
+      if(generation!==cloudAudioGeneration)return;
+      mixedFxReady=fxResult.ok&&/audio|mpeg|octet-stream/.test(fxResult.headers.get('content-type')||'');
+    }catch(err){mixedFxReady=false}
+  }
   if(chosen===mauiChoice){
     try {
       const timingResponse=await fetch('./audio/maui-nz-timing.json?check='+Date.now(),{cache:'no-store'});
@@ -233,7 +241,7 @@ async function checkCloudAudio(){
       }
     }catch(error){console.warn('Narration timing manifest not available yet',error)}
   }
- cloudStatus.textContent=cloudAudioAvailable?'Matching narration ready. Tap Preview.':'Matching narration is not published yet. Open GitHub voice generator, wait for its green check, then tap Check audio.';
+ cloudStatus.textContent=cloudAudioAvailable?(chosen===mauiChoice?(mixedFxReady?'Voice + sound effects are ready in one audio track. Tap Preview.':'Narration ready; effects mix is still being published.'):'Narration ready. Tap Preview.'):'Narration not published yet. Check GitHub Actions.';
  }catch(e){if(generation===cloudAudioGeneration)cloudStatus.textContent='Unable to check narration: '+e.message}
 }
 document.querySelector('#checkaudio').onclick=checkCloudAudio;
@@ -258,6 +266,7 @@ let fxContext=null,fxMaster=null,fxNoise=null,fxRunning=false,fxScene=-1,fxAmbie
 const fxEnabled=document.querySelector('#sfxenabled');
 const fxLevel=document.querySelector('#sfxlevel');
 const fxStatus=document.querySelector('#sfxstatus');
+let mixedFxReady=false,testFxAudio=null;
 function fxVolume(){return fxLevel.valueAsNumber/100*.23}
 function fxNodeCleanup(...nodes){for(const node of nodes)try{node.disconnect()}catch(e){}}
 function fxInit(){
@@ -394,26 +403,43 @@ function fxUpdate(t){
   }
 }
 fxEnabled.addEventListener('change',()=>{
-  if(!fxEnabled.checked){fxStop();fxStatus.textContent='Sound FX are off.'}
-  else if(playing){fxStart();fxStatus.textContent='Sound FX on.'}
-  else{fxStatus.textContent='Sound FX on. Tap Preview to hear them.'}
+  if(!fxEnabled.checked){fxStop();fxStatus.textContent='Sound FX off. Tap Preview for narration only.'}
+  else if(playing){fxStatus.textContent='Sound FX on. Restart Preview to hear the mixed audio.'}
+  else{fxStatus.textContent='Sound FX on. Tap Preview to hear the mixed audio.'}
 });
 fxLevel.addEventListener('input',()=>{
-  if(fxMaster&&fxContext)fxMaster.gain.setTargetAtTime(fxVolume(),fxContext.currentTime,.018)
+  if(fxMaster&&fxContext)fxMaster.gain.setTargetAtTime(fxVolume(),fxContext.currentTime,.018);
+  fxStatus.textContent='Effects level updated. Restart Preview to hear '+(Number(fxLevel.value)<34?'soft':Number(fxLevel.value)<73?'balanced':'bold')+' mix.'
 });
 
+function selectedMixUrl(){
+ if(narrationOverrideUrl)return narrationOverrideUrl;
+ if(chosen===mauiChoice&&fxEnabled.checked&&mixedFxReady){
+   const volume=Number(fxLevel.value);
+   const flavor=volume<34?'soft':volume<73?'balanced':'bold';
+   return './audio/maui-nz-mix-'+flavor+'.mp3?revision=16';
+ }
+ return fullAudioUrl()+'?revision=16';
+}
+function stopFxTest(){if(testFxAudio){testFxAudio.pause();testFxAudio.currentTime=0;testFxAudio=null}}
+document.querySelector('#testfx').onclick=()=>{
+ stopFxTest();
+ testFxAudio=new Audio('./audio/maui-nz-fx-test.mp3?revision=16');
+ testFxAudio.volume=.95;
+ testFxAudio.play().then(()=>{fxStatus.textContent='Playing a short sound-effects sample. If you hear it, your iPad audio is working.'}).catch(e=>{fxStatus.textContent='Effects test unavailable: '+e.message+'. Wait for the newest GitHub audio workflow.'});
+};
 function startContinuousNarration(){
  if(!cloudAudioAvailable&&!narrationOverrideUrl)return;
  if(continuousNarration){continuousNarration.pause();continuousNarration=null}
- continuousNarration=new Audio(narrationOverrideUrl||(fullAudioUrl()+'?revision=14'));
+ continuousNarration=new Audio(selectedMixUrl());
  continuousNarration.preload='auto';
  continuousNarration.playbackRate=Number(document.querySelector('#pace').value)||1;
  continuousNarration.play().catch(e=>{cloudStatus.textContent='Narration playback failed: '+e.message;continuousNarration=null});
 }
-function frame(now){if(!playing)return;let total=timelineTotal(),t=Math.min(total,continuousNarration?(continuousNarration.ended?total:continuousNarration.currentTime):(now-start)/1000),index=timelineAt(t).index;if(index!==lastSpoken){lastSpoken=index;speakScene(index)}draw(t);fxUpdate(t);if(t<total)raf=requestAnimationFrame(frame);else{playing=false;fxStop();if(continuousNarration){continuousNarration.pause();continuousNarration=null}stopAudio();if('speechSynthesis'in window)speechSynthesis.cancel();status.textContent='Preview complete.'}}
-function stop(){playing=false;fxStop();if(continuousNarration){continuousNarration.pause();continuousNarration.currentTime=0;continuousNarration=null}stopAudio();cancelAnimationFrame(raf);if('speechSynthesis'in window)speechSynthesis.cancel();lastSpoken=-1;draw(0)}
+function frame(now){if(!playing)return;let total=timelineTotal(),t=Math.min(total,continuousNarration?(continuousNarration.ended?total:continuousNarration.currentTime):(now-start)/1000),index=timelineAt(t).index;if(index!==lastSpoken){lastSpoken=index;speakScene(index)}draw(t);if(t<total)raf=requestAnimationFrame(frame);else{playing=false;fxStop();if(continuousNarration){continuousNarration.pause();continuousNarration=null}stopAudio();if('speechSynthesis'in window)speechSynthesis.cancel();status.textContent='Preview complete.'}}
+function stop(){playing=false;fxStop();stopFxTest();if(continuousNarration){continuousNarration.pause();continuousNarration.currentTime=0;continuousNarration=null}stopAudio();cancelAnimationFrame(raf);if('speechSynthesis'in window)speechSynthesis.cancel();lastSpoken=-1;draw(0)}
 document.querySelector('#generate').onclick=()=>{if(selectStory())document.querySelector('#play').click()};
-document.querySelector('#play').onclick=()=>{stop();playing=true;fxStart();startContinuousNarration();start=performance.now();raf=requestAnimationFrame(frame);status.textContent=narrationOverrideUrl?'Playing your recorded narration.':cloudAudioAvailable?'Playing narrator-synced animation with quick cuts.':chosen===mauiChoice?'Playing pixel animation silently until the narration is ready.':'Playing preview. Check cloud voice status.'};
+document.querySelector('#play').onclick=()=>{stop();playing=true;startContinuousNarration();start=performance.now();raf=requestAnimationFrame(frame);status.textContent=narrationOverrideUrl?'Playing your recorded narration.':cloudAudioAvailable?(chosen===mauiChoice&&fxEnabled.checked&&mixedFxReady?'Playing voice and effects together (single iPad-safe audio track).':'Playing narration-only audio.'):'Playing preview. Check cloud voice status.'};
 document.querySelector('#stop').onclick=stop;
 document.querySelector('#record').onclick=()=>{if(!canvas.captureStream||typeof MediaRecorder==='undefined'){status.textContent='This browser cannot record canvas video. Try desktop Chrome.';return}stop();let stream=canvas.captureStream(30);let type=['video/webm;codecs=vp9','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!type){status.textContent='WebM recording unsupported in this browser.';return}let chunks=[];recorder=new MediaRecorder(stream,{mimeType:type});recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{let url=URL.createObjectURL(new Blob(chunks,{type}));let a=document.createElement('a');a.href=url;a.download='claystory-demo.webm';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);stream.getTracks().forEach(t=>t.stop());status.textContent='WebM exported (silent). MP4 and voice export are planned.'};recorder.start();playing=true;start=performance.now();function render(now){let total=timelineTotal(),t=Math.min(total,(now-start)/1000);draw(t);if(t<total)requestAnimationFrame(render);else{playing=false;recorder.stop()}}requestAnimationFrame(render);status.textContent='Recording '+Math.ceil(timelineTotal())+'-second silent WebM...'};
 editors();openMauiStory();
