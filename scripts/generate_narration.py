@@ -93,7 +93,7 @@ for name in (("sun", "moon", "ocean", "maui", "custom") if custom else ("sun", "
     seconds = 22 if name == "maui" else 8
     for i in range(6):
         filters.append(f"[{i}:a]adelay={i*seconds*1000}|{i*seconds*1000}[a{i}]")
-    filters.append("".join(f"[a{i}]" for i in range(6)) + "amix=inputs=6:duration=longest:normalize=0,highpass=f=75,equalizer=f=2800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.12:ratio=1.6:attack=20:release=180,alimiter=limit=0.95,apad,atrim=duration={seconds*6}[out]")
+    filters.append("".join(f"[a{i}]" for i in range(6)) + f"amix=inputs=6:duration=longest:normalize=0,highpass=f=75,equalizer=f=2800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.12:ratio=1.6:attack=20:release=180,alimiter=limit=0.95,apad,atrim=duration={seconds*6}[out]")
     args += ["-filter_complex", ";".join(filters), "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", str(out / f"{name}-full.mp3")]
     subprocess.run(args, check=True)
     print(f"Created {name}-full.mp3")
