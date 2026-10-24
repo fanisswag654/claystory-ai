@@ -2,6 +2,7 @@
 import asyncio
 import json
 import re
+import subprocess
 from pathlib import Path
 import edge_tts
 
@@ -23,3 +24,17 @@ async def main():
             print(f"Generating {destination}")
             await edge_tts.Communicate(phrase, voice="en-US-JennyNeural", rate="-6%", pitch="+0Hz").save(str(destination))
 asyncio.run(main())
+# Build a single continuous 48-second timeline: each scene starts at 0,8,16... seconds.
+# Mix instead of concatenating so speech is not cut off at scene boundaries.
+for name in ("sun", "moon", "ocean"):
+    args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
+    for i in range(1, 7):
+        args += ["-i", str(out / f"{name}-{i}.mp3")]
+    filters = []
+    for i in range(6):
+        filters.append(f"[{i}:a]adelay={i*8000}|{i*8000}[a{i}]")
+    filters.append("".join(f"[a{i}]" for i in range(6)) + "amix=inputs=6:duration=longest:normalize=0,apad,atrim=duration=48[out]")
+    args += ["-filter_complex", ";".join(filters), "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", str(out / f"{name}-full.mp3")]
+    subprocess.run(args, check=True)
+    print(f"Created {name}-full.mp3")
+
