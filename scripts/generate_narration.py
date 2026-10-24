@@ -19,23 +19,23 @@ out.mkdir(exist_ok=True)
 # Scene-by-scene performance direction: subtle variations sound less robotic
 # than forcing the same slow rate and low pitch onto every line.
 DELIVERY = [
-    ("-3%", "-4Hz"),   # intriguing hook
-    ("+2%", "-2Hz"),   # engaging discovery
-    ("-2%", "-5Hz"),   # dramatic reveal
-    ("-1%", "-3Hz"),   # confident explanation
-    ("-5%", "-5Hz"),   # reflective moment
-    ("-2%", "-3Hz"),   # warm conclusion
+    ("-2%", "-1Hz"),   # curious, intimate hook
+    ("+1%", "+0Hz"),   # discovery, brighter and quicker
+    ("-4%", "-2Hz"),   # give the reveal room
+    ("+0%", "+0Hz"),   # confident explanation
+    ("-3%", "-1Hz"),   # reflective moment
+    ("-1%", "+0Hz"),   # reassuring conclusion
 ]
 
 # Punctuation gives the TTS engine natural places to breathe and emphasize.
 # Keep the factual content unchanged; only refine spoken delivery.
 def perform(text: str, scene: int) -> str:
-    text = text.replace("Not quite!", "Well... not quite!")
+    text = text.replace("Not quite!", "Actually, not quite.")
     text = text.replace("The consequences would be enormous.", "And the consequences? They'd be enormous.")
-    text = text.replace("What would change?", "So... what would actually change?")
-    text = text.replace("Would Earth freeze instantly?", "Would Earth freeze... instantly?")
+    text = text.replace("What would change?", "So what would actually change?")
+    text = text.replace("Would Earth freeze instantly?", "Would Earth freeze instantly?")
     text = text.replace("But Earth would not instantly be destroyed.", "But here's the thing: Earth wouldn't instantly be destroyed.")
-    text = text.replace("Thankfully, this is just a thought experiment!", "And thankfully... this is only a thought experiment.")
+    text = text.replace("Thankfully, this is just a thought experiment!", "Thankfully, this is only a thought experiment.")
     return text
 
 async def main():
@@ -57,7 +57,7 @@ for name in ("sun", "moon", "ocean"):
     filters = []
     for i in range(6):
         filters.append(f"[{i}:a]adelay={i*8000}|{i*8000}[a{i}]")
-    filters.append("".join(f"[a{i}]" for i in range(6)) + "amix=inputs=6:duration=longest:normalize=0,apad,atrim=duration=48[out]")
+    filters.append("".join(f"[a{i}]" for i in range(6)) + "amix=inputs=6:duration=longest:normalize=0,highpass=f=75,equalizer=f=2800:t=q:w=1.2:g=-1.5,acompressor=threshold=0.12:ratio=1.6:attack=20:release=180,alimiter=limit=0.95,apad,atrim=duration=48[out]")
     args += ["-filter_complex", ";".join(filters), "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", str(out / f"{name}-full.mp3")]
     subprocess.run(args, check=True)
     print(f"Created {name}-full.mp3")
