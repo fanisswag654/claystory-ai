@@ -22,7 +22,7 @@ async def main():
             phrase = json.loads('"' + raw + '"')
             destination = out / f"{name}-{i+1}.mp3"
             print(f"Generating {destination}")
-            await edge_tts.Communicate(phrase, voice="en-US-JennyNeural", rate="-6%", pitch="+0Hz").save(str(destination))
+            await edge_tts.Communicate(phrase, voice="en-US-GuyNeural", rate="-12%", pitch="-12Hz").save(str(destination))
 asyncio.run(main())
 # Build a single continuous 48-second timeline: each scene starts at 0,8,16... seconds.
 # Mix instead of concatenating so speech is not cut off at scene boundaries.
