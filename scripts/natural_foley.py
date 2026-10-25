@@ -195,11 +195,13 @@ def render_fish_foley(destination, durations, name="fish-nz"):
             "-c:a", "libmp3lame", "-q:a", "3", fx)
     wav.unlink()
     # Duck effects in real time underneath speech. Single MP3 is iPad-safe.
-    for mix, strength in (("soft", .72), ("balanced", 1.15), ("bold", 1.60)):
+    # V21: restore presence to the natural foley without looping noises. Higher
+    # base gain plus gentler voice-triggered ducking helps on iPad speakers.
+    for mix, strength in (("soft", .95), ("balanced", 1.50), ("bold", 2.05)):
         output = destination / f"{name}-mix-{mix}.mp3"
         graph = (f"[1:a]volume={strength},highpass=f=70[foley];"
-                 "[foley][0:a]sidechaincompress=threshold=0.028:ratio=6:"
-                 "attack=18:release=260[ducked];"
+                 "[foley][0:a]sidechaincompress=threshold=0.060:ratio=3.8:"
+                 "attack=18:release=230[ducked];"
                  "[0:a]volume=0.96[narrator];"
                  "[narrator][ducked]amix=inputs=2:duration=first:normalize=0,"
                  "alimiter=limit=0.92:level=0:latency=1[out]")
@@ -223,4 +225,4 @@ def render_fish_foley(destination, durations, name="fish-nz"):
             destination / f"{name}-fx-test.mp3")
     wav.unlink()
     audio = array("f")
-    print("V20: Great Fish uses sparse acoustic foley; no electronic background.", flush=True)
+    print("V21: Great Fish foley lifted gently, with narration ducking preserved.", flush=True)

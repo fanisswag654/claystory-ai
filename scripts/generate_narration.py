@@ -50,17 +50,18 @@ def ffmpeg(*args):
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *map(str, args)], check=True)
 
 
-# Mature storyteller character: deeper but still clear, with measured dramatic pacing.
-# Keep the same NZ English narrator rather than swapping to an unfamiliar accent.
+# V21: retain the natural NZ male neural voice without artificial octave-like
+# lowering. A small scene-to-scene change in rate/pitch gives expressive delivery.
+# Allow the native voice's natural rhythm and articulation to come through.
 FISH_DELIVERY = [
-    ("+4%", "-17Hz"),  # dramatic opening
-    ("+7%", "-16Hz"),  # brothers at the shore
-    ("+6%", "-18Hz"),  # concealed passenger
-    ("+7%", "-17Hz"),  # discovery at sea
-    ("+3%", "-20Hz"),  # ancestral hook, reflective
-    ("+8%", "-18Hz"),  # sudden powerful catch
-    ("+6%", "-19Hz"),  # fish rises
-    ("+1%", "-22Hz"),  # warm, deliberate conclusion
+    ("+5%", "-4Hz"),   # curious opening
+    ("+9%", "-2Hz"),   # active brothers leaving
+    ("+7%", "-3Hz"),   # conspiratorial hiding
+    ("+9%", "-2Hz"),   # surprise at sea
+    ("+4%", "-4Hz"),   # deliberate ancestral hook
+    ("+10%", "-3Hz"),  # urgency when the line takes
+    ("+8%", "-4Hz"),   # powerful fish reveal
+    ("+3%", "-5Hz"),   # warm, considered moral
 ]
 MAUI_DELIVERY = [("+8%", "+0Hz"), ("+10%", "+1Hz"), ("+7%", "-1Hz"),
                  ("+11%", "+0Hz"), ("+9%", "+1Hz"), ("+5%", "-1Hz")]
@@ -83,13 +84,9 @@ async def voices(name, scenes, voice, delivery):
             "areverse,silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,areverse"
         )
         if name == "fish-nz":
-            # Gentle extra pitch drop (about one semitone), preserving natural
-            # vocal formants and duration. A small low-mid boost adds warmth.
-            # ffmpeg on GitHub Actions' Ubuntu runner includes rubberband.
-            voice_filter += (
-                ",rubberband=pitch=0.92:formant=preserved"
-                ",equalizer=f=140:t=q:w=0.85:g=1.7"
-            )
+            # V21: remove rubberband pitch lowering that made the narrator sound
+            # artificially elderly/processed. Very subtle EQ only.
+            voice_filter += ",equalizer=f=155:t=q:w=1.0:g=0.5"
         ffmpeg("-i", temporary, "-af", voice_filter,
                "-c:a", "libmp3lame", "-q:a", "3", destination)
         temporary.unlink()
