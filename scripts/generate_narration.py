@@ -88,7 +88,7 @@ def continuous(name, durations):
     parts.append("".join(f"[a{i}]" for i in range(len(durations))) +
                  f"amix=inputs={len(durations)}:duration=longest:normalize=0,"
                  "highpass=f=72,acompressor=threshold=0.15:ratio=1.4:attack=25:release=190,"
-                 f"alimiter=limit=0.96:latency=1,apad,atrim=duration={cursor}[out]")
+                 f"alimiter=limit=0.90:level=0:latency=1,apad,atrim=duration={cursor}[out]")
     ffmpeg(*args, "-filter_complex", ";".join(parts), "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", out / f"{name}-full.mp3")
 
 
@@ -238,7 +238,7 @@ def soundtrack(name, durations):
         destination = out / f"{name}-mix-{mix}.mp3"
         ffmpeg("-i", out / f"{name}-full.mp3", "-i", effects,
                "-filter_complex", f"[0:a]volume=0.9[v];[1:a]volume={gain}[s];"
-               "[v][s]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95:latency=1[out]",
+               "[v][s]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.85:level=0:latency=1[out]",
                "-map", "[out]", "-c:a", "libmp3lame", "-q:a", "3", destination)
         if abs(media_duration(destination)-total) > .15:
             raise RuntimeError(f"Mix timing mismatch: {destination}")
