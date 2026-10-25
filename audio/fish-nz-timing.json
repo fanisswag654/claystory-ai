@@ -1,13 +1,15 @@
 {
   "durations": [
-    9.198,
-    11.046,
-    11.718,
-    12.75,
-    12.222,
-    13.396
+    9.942,
+    8.382,
+    10.278,
+    11.19,
+    9.462,
+    12.366,
+    10.134,
+    14.644
   ],
   "voice": "en-NZ-MitchellNeural",
-  "description": "Narration-based scene cuts for Te Ika-a-Māui",
-  "revision": 17
+  "revision": 18,
+  "description": "Narration-length cuts; 0.15-second transitions; pronunciation requires human review"
 }
