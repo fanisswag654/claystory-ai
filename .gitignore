@@ -4,3 +4,4 @@ __pycache__/
 _site/
 audio/*-raw.mp3
 audio/*.wav
+videos/

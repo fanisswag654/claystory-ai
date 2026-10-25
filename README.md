@@ -48,6 +48,14 @@ steps are illustrated or invented. This is one telling of the pūrākau, not a
 claim to represent every iwi tradition. All pixel art and synthesized effects
 are original; no Terraria assets are used.
 
-Export retains the existing silent WebM behavior on supported browsers; MP4
-with embedded audio is not implemented. Preview plays narration and effects.
+Save film to Photos prepares a pre-rendered portrait H.264/AAC MP4 for either
+featured story, with soft/balanced/bold effects or voice only. Tap Share video,
+then Save Video on iPad. A download fallback supports Files → Share → Save Video.
+The browser cannot write to Photos without this system share action. Finished
+MP4s use the original story at normal speed; edits and uploaded audio affect
+Preview only. Silent WebM recording remains available.
+
+`python scripts/render_films.py` renders both featured films into ignored
+`videos/` outputs. It requires Playwright Chromium and FFmpeg. The narration
+workflow renders and deploys those MP4s after generating audio.
 Physical iPad testing and fluent-speaker pronunciation review remain necessary.
