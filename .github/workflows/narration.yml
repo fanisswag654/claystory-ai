@@ -2,12 +2,18 @@ name: Generate ClayStory neural narration
 on:
   workflow_dispatch:
     inputs:
+      story:
+        description: "Stories to regenerate (choose all for custom scripts)"
+        type: choice
+        options: [fish, all]
+        default: fish
       custom_script:
         description: "Optional custom story script (paste up to 6 paragraphs; blank = built-in stories)"
         required: false
         type: string
   push:
     paths:
+      - 'index.html'
       - 'scripts/generate_narration.py'
       - '.github/workflows/narration.yml'
 permissions:
@@ -33,7 +39,10 @@ jobs:
       - name: Generate MP3 voice for each scene
         env:
           CUSTOM_SCRIPT: ${{ inputs.custom_script }}
-        run: python scripts/generate_narration.py
+          STORY: ${{ inputs.story || 'fish' }}
+        run: |
+          if [ -n "$CUSTOM_SCRIPT" ]; then STORY=all; fi
+          python scripts/generate_narration.py --story "$STORY"
       - name: Commit narration audio
         run: |
           git config user.name "github-actions[bot]"
@@ -63,3 +72,34 @@ jobs:
           done
           echo "Could not publish narration after 5 attempts."
           exit 1
+
+  deploy:
+    needs: generate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: claystory-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/configure-pages@v5
+      - name: Assemble static site
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -a audio _site/audio
+          if [ -f custom-story.json ]; then cp custom-story.json _site/; fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
