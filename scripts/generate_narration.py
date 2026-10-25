@@ -193,6 +193,12 @@ def fish_wood(at):
 
 
 def soundtrack(name, durations):
+    # V20 uses an entirely new restrained acoustic foley track for the Great Fish.
+    # No continuous synth drones, beeps, chiming melodies, or repetitive bird calls.
+    if name == "fish-nz":
+        from natural_foley import render_fish_foley
+        render_fish_foley(out, durations, name)
+        return
     global sfx_samples
     total = sum(durations)
     sfx_samples = array.array("f", [0.0]) * math.ceil(total * SFX_RATE)
