@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ClayStory AI</title><style>
-:root{font-family:system-ui,sans-serif;color:#f7f1e9;background:#15171f}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:2.4rem;margin-bottom:6px}p{color:#bbb}section{background:#222632;padding:18px;border-radius:16px;margin:16px 0}input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #51576b}input,textarea{background:#11141c;color:white;width:100%}textarea{min-height:90px}button{background:#f8b95a;color:#151515;font-weight:700;cursor:pointer;margin:4px}button:disabled{opacity:.5}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:20px}canvas{width:100%;aspect-ratio:9/16;border-radius:12px;background:#090d20}.scene{border:1px solid #44495b;border-radius:10px;padding:10px;margin:10px 0}.small{font-size:.8rem;color:#b5b9c8}@media(max-width:720px){.layout{grid-template-columns:1fr}} </style></head><body><main><h1>🎬 ClayStory AI <span style="font-size:15px;color:#f8b95a">V21 NATURAL VOICE</span></h1><p>Original Māori pūrākau in detailed 2D pixel art, with a warmer, more natural NZ male storyteller voice and clearer, occasional environmental effects.</p><section><label>Story topic<input id="topic" value="Māui and the Great Fish"></label><label style="display:block;margin-top:12px">Your video script<textarea id="customscript" placeholder="Paste your script here. Use a blank line between scenes, or paste a full story to split it automatically." rows="8"></textarea></label><button id="loadfish">🐟 Load Great Fish story</button><button id="loadmaui">🌞 Load Māui pixel animation</button><button id="buildscript">🎬 Build animation from script</button><button id="generate">⚡ Create video automatically</button><button id="savefilm">📲 Save film to Photos</button><button id="record">⬇ Record silent WebM</button><div id="savepanel" hidden><p id="savestatus" class="small" role="status"></p><button id="sharefilm" hidden>Share video / Save Video</button><a id="downloadfilm" hidden style="color:#f8b95a">Download MP4</a><p class="small">On iPad: tap Share video, then Save Video to add it to Photos. If unavailable, download the MP4, open it in Files, tap Share, then Save Video. Finished MP4s include narration and your selected effects mix. Edits, uploaded recordings and speed changes apply to Preview only.</p></div><p class="small">Choose either featured Māui story. The Great Fish has eight scenes; the Sun story has six original pixel-art scenes, NZ narration, and effects.</p></section><div class="layout"><section><canvas id="stage" width="540" height="960"></canvas><div><button id="play">▶ Preview with sound</button><button id="testfx" type="button">🔊 Test sound effects</button><div style="margin:8px 0;padding:12px;border-radius:12px;border:1px solid #51576b;background:#1a202c"><label style="display:flex;align-items:center;gap:10px;font-size:15px"><input id="sfxenabled" type="checkbox" checked style="width:auto;accent-color:#f8b95a"> 🎧 Natural sound effects — no electronic ambience</label><label style="display:block;margin-top:8px;font-size:13px;color:#d7d1c9">Effects strength (restart Preview to apply) <input id="sfxlevel" aria-label="Sound effects strength" type="range" min="0" max="100" value="55" style="width:100%;padding:0;border:0;accent-color:#f8b95a"></label><p id="sfxstatus" class="small" style="margin:6px 0 0">Natural ocean and canoe sounds are a little more present, with automatic ducking under the narrator. No electronic drones or repetitive beeps.</p></div><label style="display:block;margin:8px 0 4px">Pacing <select id="pace" style="padding:8px;background:#11141c;color:white;border-radius:8px"><option value="1">Fast cuts (narrator-paced)</option><option value="1.08">Even quicker (1.08×)</option><option value="1.15">Very quick (1.15×)</option></select></label><button id="stop">■ Stop</button><label style="display:block;margin-top:10px">Narrator voice <select id="voice" style="width:100%;padding:10px;border-radius:10px;background:#11141c;color:white;border:1px solid #51576b"><option value="">Best available English voice</option></select></label><button id="testvoice" type="button">🔊 Test iPad voice</button><div style="border:1px solid #51576b;border-radius:12px;padding:12px;margin-top:12px"><strong>☁️ Cloud-generated neural narration</strong><p class="small" style="color:#f5d39f">Great Fish: natural New Zealand male narrator, with subtle warmth and varied storytelling pace.</p><p class="small">GitHub Actions generates MP3 files remotely. For your own script, open the workflow, paste the same script into custom_script, and run it. Then return here and tap Check audio.</p><label style="display:block;margin:12px 0 4px">Optional: use a recorded narration (especially recommended for te reo Māori pronunciation).<input type="file" accept="audio/*" id="mauiaudio" style="margin-top:6px"></label><p class="small">A human narrator fluent in te reo Māori is best for cultural and pronunciation accuracy. A New Zealand English synthetic voice is not a substitute for that review.</p><button id="checkaudio" type="button">Check audio availability</button><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/narration.yml" target="_blank" rel="noopener" style="color:#f8b95a">Open GitHub voice generator ↗</a><p class="small" id="cloudstatus">No audio checked yet. Until generated, iPad voices remain available.</p></div><p class="small">Voice quality is limited by your iPad’s installed voices. Selecting a different voice only helps when the device offers one.</p></div><p id="status" class="small">Ready. Choose a supported topic and press Create video automatically. Save a finished MP4 with sound to Photos, or record a silent WebM on compatible browsers.</p></section><section><h2>Storyboard</h2><div id="scenes"></div><p class="small">Edit narration and captions before previewing. Featured Māui stories cut automatically to match each narrated line. Finished MP4s include narration and effects; WebM recordings are silent.</p></section></div></main><script>
+:root{font-family:system-ui,sans-serif;color:#f7f1e9;background:#15171f}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:2.4rem;margin-bottom:6px}p{color:#bbb}section{background:#222632;padding:18px;border-radius:16px;margin:16px 0}input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #51576b}input,textarea{background:#11141c;color:white;width:100%}textarea{min-height:90px}button{background:#f8b95a;color:#151515;font-weight:700;cursor:pointer;margin:4px}button:disabled{opacity:.5}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:20px}canvas{width:100%;aspect-ratio:9/16;border-radius:12px;background:#090d20}.scene{border:1px solid #44495b;border-radius:10px;padding:10px;margin:10px 0}.small{font-size:.8rem;color:#b5b9c8}@media(max-width:720px){.layout{grid-template-columns:1fr}} </style></head><body><main><h1>🎬 ClayStory AI <span style="font-size:15px;color:#f8b95a">V22 VISIBLE CAPTIONS</span></h1><p>Original Māori pūrākau in detailed 2D pixel art, with a warmer, more natural NZ male storyteller voice and clearer, occasional environmental effects.</p><section><label>Story topic<input id="topic" value="Māui and the Great Fish"></label><label style="display:block;margin-top:12px">Your video script<textarea id="customscript" placeholder="Paste your script here. Use a blank line between scenes, or paste a full story to split it automatically." rows="8"></textarea></label><button id="loadfish">🐟 Load Great Fish story</button><button id="loadmaui">🌞 Load Māui pixel animation</button><button id="buildscript">🎬 Build animation from script</button><button id="generate">⚡ Create video automatically</button><button id="savefilm">📲 Save film to Photos</button><button id="record">⬇ Record silent WebM</button><div id="savepanel" hidden><p id="savestatus" class="small" role="status"></p><button id="sharefilm" hidden>Share video / Save Video</button><a id="downloadfilm" hidden style="color:#f8b95a">Download MP4</a><p class="small">On iPad: tap Share video, then Save Video to add it to Photos. If unavailable, download the MP4, open it in Files, tap Share, then Save Video. Finished MP4s include narration and your selected effects mix. Edits, uploaded recordings and speed changes apply to Preview only.</p></div><p class="small">Choose either featured Māui story. The Great Fish has eight scenes; the Sun story has six original pixel-art scenes, NZ narration, and effects.</p></section><div class="layout"><section><canvas id="stage" width="540" height="960"></canvas><div><button id="play">▶ Preview with sound</button><button id="testfx" type="button">🔊 Test sound effects</button><div style="margin:9px 0;padding:11px;border:1px solid #596d75;border-radius:11px;background:#142831"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:#fbe6c7"><input id="captionsenabled" type="checkbox" checked style="width:22px;height:22px;accent-color:#f8b95a"><strong>CC — Show spoken captions</strong></label><p id="captionstatus" class="small" style="margin:5px 0 0">On by default. Spoken narration appears in a dedicated subtitle strip below the animation. Exported MP4 films also include captions.</p></div><div style="margin:8px 0;padding:12px;border-radius:12px;border:1px solid #51576b;background:#1a202c"><label style="display:flex;align-items:center;gap:10px;font-size:15px"><input id="sfxenabled" type="checkbox" checked style="width:auto;accent-color:#f8b95a"> 🎧 Natural sound effects — no electronic ambience</label><label style="display:block;margin-top:8px;font-size:13px;color:#d7d1c9">Effects strength (restart Preview to apply) <input id="sfxlevel" aria-label="Sound effects strength" type="range" min="0" max="100" value="55" style="width:100%;padding:0;border:0;accent-color:#f8b95a"></label><p id="sfxstatus" class="small" style="margin:6px 0 0">Natural ocean and canoe sounds are a little more present, with automatic ducking under the narrator. No electronic drones or repetitive beeps.</p></div><label style="display:block;margin:8px 0 4px">Pacing <select id="pace" style="padding:8px;background:#11141c;color:white;border-radius:8px"><option value="1">Fast cuts (narrator-paced)</option><option value="1.08">Even quicker (1.08×)</option><option value="1.15">Very quick (1.15×)</option></select></label><button id="stop">■ Stop</button><label style="display:block;margin-top:10px">Narrator voice <select id="voice" style="width:100%;padding:10px;border-radius:10px;background:#11141c;color:white;border:1px solid #51576b"><option value="">Best available English voice</option></select></label><button id="testvoice" type="button">🔊 Test iPad voice</button><div style="border:1px solid #51576b;border-radius:12px;padding:12px;margin-top:12px"><strong>☁️ Cloud-generated neural narration</strong><p class="small" style="color:#f5d39f">Great Fish: natural New Zealand male narrator, with subtle warmth and varied storytelling pace.</p><p class="small">GitHub Actions generates MP3 files remotely. For your own script, open the workflow, paste the same script into custom_script, and run it. Then return here and tap Check audio.</p><label style="display:block;margin:12px 0 4px">Optional: use a recorded narration (especially recommended for te reo Māori pronunciation).<input type="file" accept="audio/*" id="mauiaudio" style="margin-top:6px"></label><p class="small">A human narrator fluent in te reo Māori is best for cultural and pronunciation accuracy. A New Zealand English synthetic voice is not a substitute for that review.</p><button id="checkaudio" type="button">Check audio availability</button><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/narration.yml" target="_blank" rel="noopener" style="color:#f8b95a">Open GitHub voice generator ↗</a><p class="small" id="cloudstatus">No audio checked yet. Until generated, iPad voices remain available.</p></div><p class="small">Voice quality is limited by your iPad’s installed voices. Selecting a different voice only helps when the device offers one.</p></div><p id="status" class="small">Ready. Choose a supported topic and press Create video automatically. Save a finished MP4 with sound to Photos, or record a silent WebM on compatible browsers.</p></section><section><h2>Storyboard</h2><div id="scenes"></div><p class="small">Featured Māui stories show timed narration subtitles in a dedicated bottom safe area. Finished MP4s include spoken captions by default. Edits to narration affect Preview only.</p></section></div></main><script>
 const story=[
 {title:"The hook",caption:"WHAT IF THE SUN VANISHED?",narration:"Imagine waking up, and the Sun has vanished. Would Earth freeze instantly? Not quite!",color:"#252346"},
 {title:"Eight-minute delay",caption:"8 MINUTES, 20 SECONDS",narration:"Sunlight takes about eight minutes and twenty seconds to reach Earth. So we'd still see sunlight briefly.",color:"#293451"},
@@ -200,32 +200,61 @@ function subtitleLines(text,maxWidth){
  return lines;
 }
 
-function drawFeaturedSubtitle(scene,t){
- const text=scenes[scene].caption||'';
- ctx.save();ctx.setTransform(1,0,0,1,0,0);
- ctx.font='500 21px system-ui, -apple-system, sans-serif';
- const maxWidth=428,lineHeight=26,padX=14,padY=8,bottom=924;
- const allLines=subtitleLines(text,maxWidth);
- // Edited captions can be longer: show successive two-line cues instead of dropping words.
- const cueCount=Math.ceil(allLines.length/2),phase=timelineAt(t).phase;
- const cue=Math.min(cueCount-1,Math.floor(phase*cueCount));
- const lines=allLines.slice(Math.max(0,cue)*2,Math.max(0,cue)*2+2);
- if(lines.length){
-  const width=Math.ceil(Math.max(...lines.map(line=>ctx.measureText(line).width)))+padX*2;
-  const height=lines.length*lineHeight+padY*2,top=bottom-height;
-  ctx.fillStyle='rgba(8, 14, 22, 0.74)';
-  // Quadratic corners work on iPad Safari without relying on Canvas roundRect.
-  const x=(540-width)/2,r=7;
-  ctx.beginPath();ctx.moveTo(x+r,top);ctx.lineTo(x+width-r,top);
-  ctx.quadraticCurveTo(x+width,top,x+width,top+r);ctx.lineTo(x+width,bottom-r);
-  ctx.quadraticCurveTo(x+width,bottom,x+width-r,bottom);ctx.lineTo(x+r,bottom);
-  ctx.quadraticCurveTo(x,bottom,x,bottom-r);ctx.lineTo(x,top+r);
-  ctx.quadraticCurveTo(x,top,x+r,top);ctx.fill();
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff8ed';
-  lines.forEach((line,i)=>ctx.fillText(line,270,top+padY+lineHeight*(i+.5)));
+// V22: real spoken narration captions, rather than short scene titles.
+// Each film reserves the bottom 108 pixels, below the action, for subtitles.
+const featuredCaptionCache=new Map();
+function captionCues(scene){
+ const narration=String(scenes[scene]?.narration||scenes[scene]?.caption||'').trim();
+ const key=scene+'|'+narration;
+ if(featuredCaptionCache.has(key))return featuredCaptionCache.get(key);
+ ctx.save();ctx.font='600 27px system-ui, -apple-system, sans-serif';
+ const allLines=subtitleLines(narration,452);
+ ctx.restore();
+ const cues=[];
+ for(let i=0;i<allLines.length;i+=2){
+   const lines=allLines.slice(i,i+2);
+   const words=lines.join(' ').split(/\s+/).filter(Boolean).length;
+   const pauses=(lines.join(' ').match(/[,.!?;:]/g)||[]).length;
+   cues.push({lines,weight:Math.max(1,words)+pauses*.6});
  }
+ if(!cues.length)cues.push({lines:[''],weight:1});
+ featuredCaptionCache.set(key,cues);
+ return cues;
+}
+function drawFeaturedSubtitle(scene,t){
+ const cues=captionCues(scene),progress=Math.min(.999999,Math.max(0,timelineAt(t).phase));
+ const sum=cues.reduce((n,c)=>n+c.weight,0);
+ let target=progress*sum,shown=cues[cues.length-1];
+ for(const cue of cues){target-=cue.weight;if(target<0){shown=cue;break}}
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);
+ ctx.fillStyle='#10202d';ctx.fillRect(0,852,540,108);
+ ctx.fillStyle='#d9ae70';ctx.fillRect(0,852,540,2);
+ ctx.font='600 27px system-ui, -apple-system, sans-serif';
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fbf5eb';
+ ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=5;
+ const start=906-(shown.lines.length-1)*16;
+ shown.lines.forEach((line,i)=>ctx.fillText(line,270,start+i*32));
  ctx.restore();
 }
+function presentFeaturedFrame(scene,t){
+ const enabled=document.querySelector('#captionsenabled').checked;
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;
+ ctx.clearRect(0,0,540,960);
+ if(enabled){
+   // Crop only unused ground pixels; keep the art at its native 3x scale.
+   ctx.drawImage(pixelStage,0,0,180,284,0,0,540,852);
+ }else{ctx.drawImage(pixelStage,0,0,540,960)}
+ ctx.restore();
+ if(enabled)drawFeaturedSubtitle(scene,t);
+}
+document.querySelector('#captionsenabled').addEventListener('change',()=>{
+ const enabled=document.querySelector('#captionsenabled').checked;
+ document.querySelector('#captionstatus').textContent=enabled
+  ?'Spoken captions ON. They appear below the animation. Saved MP4s include captions.'
+  :'Preview captions OFF. Saved MP4s still include captions.';
+ const current=playing?(continuousNarration?.currentTime||Math.max(0,(performance.now()-start)/1000)):0;
+ if(chosen===fishChoice||chosen===mauiChoice)draw(current);
+});
 
 function pCookingFire(x,y,t){
  pDisk(x,y+6,10,'#584c45');
@@ -255,7 +284,7 @@ if(s===2){pBasket(90,278,t);for(let j=0;j<5;j++){let x=70+j*13,y=223+Math.sin(t*
 if(s===3){pWaterfall(171,247,t);for(let j=0;j<7;j++){let x=10+(j*41)%170,y=129+(j*23)%81;px(x,y,1,1,'#e3dbb3')}}
 if(s===4){for(let j=0;j<19;j++){const angle=j*2.4+t*.9,x=113+Math.cos(angle)*(44+(j%4)*7),y=113+Math.sin(angle)*(42+(j%3)*9);px(x,y,j%3?2:3,2,j%2?'#fff0b1':'#ffae64')}}
 if(s===5){pBasket(65,281,t);pBird(38+Math.sin(t*.3)*20,126,t);pBird(131-Math.sin(t*.5)*15,113,t+1);pCookingFire(153,268,t)}
-pTimberDetails();pCaption(s);ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,540,960);ctx.drawImage(pixelStage,0,0,540,960);ctx.restore();drawFeaturedSubtitle(scene,t);
+pTimberDetails();pCaption(s);presentFeaturedFrame(scene,t);
 }
 
 
@@ -439,8 +468,7 @@ function drawFishPixelScene(scene,t){
  // Short dip transitions continue moving beneath the fade.
  const fade=Math.max(0,1-local/.18,(local-duration+.18)/.18);
  if(fade>0){pix.fillStyle=`rgba(9,24,39,${Math.min(.8,fade)})`;pix.fillRect(0,20,180,267)}
- ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;
- ctx.clearRect(0,0,540,960);ctx.drawImage(pixelStage,0,0,540,960);ctx.restore();drawFeaturedSubtitle(scene,t);
+ presentFeaturedFrame(scene,t);
 }
 
 function draw(t){const sceneTime=timelineAt(t);let dur=sceneTime.duration,index=sceneTime.index,s=scenes[index],local=sceneTime.local;if(chosen===mauiChoice){drawMauiPixelScene(index,t);return}if(chosen===fishChoice){drawFishPixelScene(index,t);return}ctx.save();ctx.translate(270+Math.sin(t*.2)*9,480+Math.cos(t*.16)*7);let zoom=1.04+.045*Math.sin(t*.23)+.045*(local/8);ctx.scale(zoom,zoom);ctx.translate(-270,-480);sceneSet(index,t);if(index===0||index===2||index===5){earth(270+Math.sin(t)*8,375,143,t);character(125,560,.48,t,'explorer',s.mood|| (index===0?'surprised':index===2?'worried':'excited'))}else if(index===1||index===3){character(268,435,1.05,t,'scientist',s.mood|| (index===1?'thinking':'surprised'));ctx.fillStyle='#f7c468';blob(430,240,62,'#f7c468',2)}else{character(270,445,1.06,t,'explorer',s.mood|| (index===4?'sad':'happy'));ctx.fillStyle='#c8d6e8';for(let i=0;i<8;i++)blob(60+i*60,220+(i%3)*30,14,'#b7d9e5',i)}ctx.restore();motionEffects(index,t);let vignette=ctx.createRadialGradient(270,390,170,270,420,660);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(7,8,18,.58)');ctx.fillStyle=vignette;ctx.fillRect(0,0,540,960);ctx.fillStyle='rgba(255,246,224,.05)';for(let i=0;i<140;i++){let xx=(i*149)%540,yy=(i*263)%960;ctx.fillRect(xx,yy,1,1)}ctx.fillStyle='rgba(14,17,29,.48)';round(16,18,508,74,20);ctx.fillStyle='#fff8e7';ctx.font='bold 27px system-ui';ctx.textAlign='center';ctx.fillText('CLAYSTORY AI • V3',270,65);ctx.fillStyle='rgba(10,15,28,.72)';round(18,670,504,220,22);ctx.fillStyle='#ffc76b';ctx.font='bold 33px system-ui';wrap(s.caption.toUpperCase(),270,713,466,39);ctx.fillStyle='#fff';ctx.font='23px system-ui';wrap(s.narration,270,786,463,31);ctx.fillStyle='#f5dfb8';ctx.font='17px system-ui';ctx.fillText('SCENE '+(index+1)+' / 6',270,926);ctx.fillStyle='#f8b95a';ctx.fillRect(0,949,540*Math.min(1,t/48),11)}
