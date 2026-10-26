@@ -1,0 +1,235 @@
+{
+  "version": 25,
+  "duration_seconds": 87.262,
+  "cue_count": 38,
+  "cues": [
+    {
+      "scene": 1,
+      "scene_title": "Enormous fish beneath the sea",
+      "time_seconds": 1.302,
+      "effect": "Deep ocean current"
+    },
+    {
+      "scene": 1,
+      "scene_title": "Enormous fish beneath the sea",
+      "time_seconds": 5.107,
+      "effect": "Rising bubbles"
+    },
+    {
+      "scene": 1,
+      "scene_title": "Enormous fish beneath the sea",
+      "time_seconds": 8.111,
+      "effect": "Distant ocean swell"
+    },
+    {
+      "scene": 2,
+      "scene_title": "Brothers leave shore",
+      "time_seconds": 10.775,
+      "effect": "Footsteps on shoreline shingle"
+    },
+    {
+      "scene": 2,
+      "scene_title": "Brothers leave shore",
+      "time_seconds": 12.297,
+      "effect": "Woven fishing basket rustles"
+    },
+    {
+      "scene": 2,
+      "scene_title": "Brothers leave shore",
+      "time_seconds": 13.649,
+      "effect": "Timber waka creaks"
+    },
+    {
+      "scene": 2,
+      "scene_title": "Brothers leave shore",
+      "time_seconds": 15.594,
+      "effect": "Wooden paddles enter sea"
+    },
+    {
+      "scene": 2,
+      "scene_title": "Brothers leave shore",
+      "time_seconds": 17.454,
+      "effect": "A small wake"
+    },
+    {
+      "scene": 3,
+      "scene_title": "Māui hides in the waka",
+      "time_seconds": 19.308,
+      "effect": "Sneaking across shingle"
+    },
+    {
+      "scene": 3,
+      "scene_title": "Māui hides in the waka",
+      "time_seconds": 21.511,
+      "effect": "Floorboards lift"
+    },
+    {
+      "scene": 3,
+      "scene_title": "Māui hides in the waka",
+      "time_seconds": 23.61,
+      "effect": "Clothing brushes the hull"
+    },
+    {
+      "scene": 3,
+      "scene_title": "Māui hides in the waka",
+      "time_seconds": 25.604,
+      "effect": "Floorboards settle"
+    },
+    {
+      "scene": 3,
+      "scene_title": "Māui hides in the waka",
+      "time_seconds": 27.913,
+      "effect": "Paddle strokes carry waka away"
+    },
+    {
+      "scene": 4,
+      "scene_title": "Māui is discovered",
+      "time_seconds": 30.429,
+      "effect": "A board knocks as Māui emerges"
+    },
+    {
+      "scene": 4,
+      "scene_title": "Māui is discovered",
+      "time_seconds": 32.686,
+      "effect": "Māui shifts his weight"
+    },
+    {
+      "scene": 4,
+      "scene_title": "Māui is discovered",
+      "time_seconds": 35.169,
+      "effect": "Canoe timbers strain"
+    },
+    {
+      "scene": 4,
+      "scene_title": "Māui is discovered",
+      "time_seconds": 37.426,
+      "effect": "Urgent paddle strokes"
+    },
+    {
+      "scene": 4,
+      "scene_title": "Māui is discovered",
+      "time_seconds": 39.232,
+      "effect": "Open ocean water"
+    },
+    {
+      "scene": 5,
+      "scene_title": "The ancestral jawbone hook",
+      "time_seconds": 41.873,
+      "effect": "The ancestral hook is handled"
+    },
+    {
+      "scene": 5,
+      "scene_title": "The ancestral jawbone hook",
+      "time_seconds": 44.358,
+      "effect": "Fishing line slips over wood"
+    },
+    {
+      "scene": 5,
+      "scene_title": "The ancestral jawbone hook",
+      "time_seconds": 46.939,
+      "effect": "Small hook splash"
+    },
+    {
+      "scene": 5,
+      "scene_title": "The ancestral jawbone hook",
+      "time_seconds": 48.755,
+      "effect": "Bubbles trail behind the hook"
+    },
+    {
+      "scene": 6,
+      "scene_title": "The powerful catch",
+      "time_seconds": 51.316,
+      "effect": "The dark water moves"
+    },
+    {
+      "scene": 6,
+      "scene_title": "The powerful catch",
+      "time_seconds": 53.455,
+      "effect": "Rope suddenly pulls tight"
+    },
+    {
+      "scene": 6,
+      "scene_title": "The powerful catch",
+      "time_seconds": 55.468,
+      "effect": "Fishing line scrapes the waka"
+    },
+    {
+      "scene": 6,
+      "scene_title": "The powerful catch",
+      "time_seconds": 56.852,
+      "effect": "Hull creaks in protest"
+    },
+    {
+      "scene": 6,
+      "scene_title": "The powerful catch",
+      "time_seconds": 58.991,
+      "effect": "Powerful swell rocks the waka"
+    },
+    {
+      "scene": 6,
+      "scene_title": "The powerful catch",
+      "time_seconds": 61.13,
+      "effect": "A huge fish turns below"
+    },
+    {
+      "scene": 7,
+      "scene_title": "The great fish rises",
+      "time_seconds": 63.411,
+      "effect": "Giant fish bursts from the ocean"
+    },
+    {
+      "scene": 7,
+      "scene_title": "The great fish rises",
+      "time_seconds": 65.866,
+      "effect": "The fish slaps the waves"
+    },
+    {
+      "scene": 7,
+      "scene_title": "The great fish rises",
+      "time_seconds": 67.81,
+      "effect": "Water cascades down scales"
+    },
+    {
+      "scene": 7,
+      "scene_title": "The great fish rises",
+      "time_seconds": 69.651,
+      "effect": "First impatient cut"
+    },
+    {
+      "scene": 7,
+      "scene_title": "The great fish rises",
+      "time_seconds": 71.493,
+      "effect": "Second impatient cut"
+    },
+    {
+      "scene": 8,
+      "scene_title": "The North Island forms",
+      "time_seconds": 74.375,
+      "effect": "The great fish shudders"
+    },
+    {
+      "scene": 8,
+      "scene_title": "The North Island forms",
+      "time_seconds": 77.304,
+      "effect": "Stone mountains rise"
+    },
+    {
+      "scene": 8,
+      "scene_title": "The North Island forms",
+      "time_seconds": 80.086,
+      "effect": "Water runs from the new coastline"
+    },
+    {
+      "scene": 8,
+      "scene_title": "The North Island forms",
+      "time_seconds": 82.869,
+      "effect": "Leaves catch a coastal breeze"
+    },
+    {
+      "scene": 8,
+      "scene_title": "The North Island forms",
+      "time_seconds": 85.505,
+      "effect": "Final gentle shore swell"
+    }
+  ]
+}
