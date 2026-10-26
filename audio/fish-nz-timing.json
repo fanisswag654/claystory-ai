@@ -1,15 +1,15 @@
 {
   "durations": [
+    9.486,
+    8.022,
     10.014,
-    8.454,
-    10.494,
-    11.286,
-    9.558,
-    12.582,
-    10.23,
-    14.644
+    10.83,
+    8.91,
+    12.15,
+    9.702,
+    14.092
   ],
   "voice": "en-NZ-MitchellNeural",
-  "revision": 18,
-  "description": "Narration-length cuts; 0.15-second transitions; pronunciation requires human review"
+  "revision": 26,
+  "description": "Free NZ male neural narration in two conversational beats per scene; pronunciation needs fluent review"
 }
