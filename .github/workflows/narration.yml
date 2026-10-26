@@ -15,6 +15,7 @@ on:
     paths:
       - 'index.html'
       - 'scripts/generate_narration.py'
+      - 'scripts/natural_foley.py'
       - 'scripts/render_films.py'
       - '.github/workflows/narration.yml'
 permissions:

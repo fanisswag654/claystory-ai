@@ -1,4 +1,4 @@
-"""ClayStory AI V20: restrained, original acoustic-style foley for Te Ika-a-Māui.
+"""ClayStory AI V25: expanded, distinct natural sounds for all Great Fish scenes for Te Ika-a-Māui.
 
 No electronic drones, musical tones, retro bleeps, or endlessly repeated
 sound effects. This is sparse, sound-event-based foley, designed to sit UNDER
@@ -7,6 +7,7 @@ the older male narrator and to become quieter whenever he speaks.
 Only Python's standard library and the project's existing ffmpeg are needed.
 """
 from array import array
+import json
 import math
 from pathlib import Path
 import random
@@ -29,6 +30,7 @@ def _add_noise(at, length, loudness=0.055, cutoff=950, character="wash",
     alpha = 1.0 - math.exp(-2.0 * math.pi * cutoff / SAMPLE_RATE)
     slow = 0.0
     deep = 0.0
+    filtered = 0.0
     a_slow = 1.0 - math.exp(-2.0 * math.pi * 190.0 / SAMPLE_RATE)
     a_deep = 1.0 - math.exp(-2.0 * math.pi * 55.0 / SAMPLE_RATE)
     for k in range(n):
@@ -36,7 +38,18 @@ def _add_noise(at, length, loudness=0.055, cutoff=950, character="wash",
         white = rng.random() * 2.0 - 1.0
         slow += a_slow * (white - slow)
         deep += a_deep * (white - deep)
-        if character == "water":
+        filtered += alpha * (white - filtered)
+        if character == "gravel":
+            sound = filtered*1.3 + white*.27 + deep*.9
+        elif character == "cloth":
+            sound = filtered*.75 + slow*1.1 + deep*.95
+        elif character == "scrape":
+            sound = filtered*1.45 + slow*1.1 + deep*.65
+        elif character == "foliage":
+            sound = (white-filtered)*.55 + filtered*1.2 + slow*.65
+        elif character == "underwater":
+            sound = filtered*.2 + slow*.8 + deep*3.2
+        elif character == "water":
             sound = white * .28 + slow * 1.35 + deep * 1.65
         elif character == "wood":
             sound = white * .13 + slow * 2.4 + deep * 2.25
@@ -111,49 +124,140 @@ def _reef(at, level=.072, length=1.3):
                attack=.12, decay=.82)
 
 
+# V25 sound palette: quiet, unlooped accents, always paced to the narrator.
+def _shingle(at,level=.07):
+    _add_noise(at,.21,level,cutoff=1300,character="gravel",attack=.02,decay=.78)
+    for k in range(4):
+        _add_noise(at+.03+k*.049+rng.random()*.02,.035,level*.3,
+                   cutoff=2200,character="gravel",attack=.015,decay=.8)
+
+def _steps(at,level=.085):
+    _add_noise(at,.16,level,cutoff=340,character="wood",attack=.02,decay=.83)
+    _shingle(at+.055,level*.6)
+
+def _woven_basket(at,level=.067):
+    _add_noise(at,.34,level,cutoff=1000,character="scrape",attack=.14,decay=.77)
+    _add_noise(at+.13,.16,level*.5,cutoff=700,character="cloth",attack=.06,decay=.8)
+
+def _floorboard(at,level=.091):
+    _add_noise(at,.6,level,cutoff=570,character="scrape",attack=.18,decay=.57)
+    _low_knock(at+.3,level*.75)
+
+def _clothes(at,level=.07):
+    _add_noise(at,.45,level,cutoff=850,character="cloth",attack=.2,decay=.65)
+
+def _bubbles(at,level=.068):
+    _add_noise(at,.47,level*.52,cutoff=235,character="underwater",attack=.19,decay=.63)
+    for k in range(5):
+        _add_noise(at+.09+k*.102+rng.random()*.04,.044,
+                   level*.5,cutoff=1200,character="water",attack=.03,decay=.85)
+
+def _current(at,level=.046,length=1.6):
+    _add_noise(at,length,level,cutoff=360,character="underwater",
+               attack=.29,decay=.6)
+
+def _jawbone(at,level=.098):
+    _add_noise(at,.14,level,cutoff=1100,character="scrape",attack=.02,decay=.83)
+    _low_knock(at+.05,level*.68)
+    _add_noise(at+.23,.105,level*.52,cutoff=870,character="scrape",attack=.02,decay=.84)
+
+def _sliding_line(at,level=.095):
+    _add_noise(at,.63,level,cutoff=1040,character="scrape",attack=.13,decay=.67)
+    _add_noise(at+.29,.18,level*.48,cutoff=340,character="strain",
+               attack=.04,decay=.82)
+
+def _tail(at,level=.18):
+    _add_noise(at,.2,level,cutoff=225,character="underwater",attack=.03,decay=.84)
+    _splash(at+.08,level*.81,.85)
+
+def _cascading_water(at,level=.135):
+    _add_noise(at,1.55,level,cutoff=1230,character="water",
+               attack=.16,decay=.78)
+    for k in range(5):
+        _add_noise(at+.25+k*.19+rng.random()*.05,.09,level*.26,
+                   cutoff=1800,character="spray",attack=.04,decay=.82)
+
+def _cut(at,level=.084):
+    _add_noise(at,.29,level,cutoff=1150,character="scrape",attack=.09,decay=.82)
+    _add_noise(at+.17,.13,level*.42,cutoff=400,character="wood",
+               attack=.02,decay=.85)
+
+def _rocks(at,level=.105):
+    _add_noise(at,.75,level,cutoff=530,character="gravel",attack=.17,decay=.68)
+    for k in range(7):
+        _add_noise(at+.14+k*.078+rng.random()*.04,.046,level*.34,
+                   cutoff=1700,character="gravel",attack=.025,decay=.83)
+
+def _leaves(at,level=.052):
+    _add_noise(at,1.85,level,cutoff=1600,character="foliage",
+               attack=.31,decay=.64)
+
 def _schedule(durations):
-    start = 0.0
-    for scene, duration in enumerate(durations):
-        b = start
-        start += duration
-        # Intentionally NO full-scene continuous tone or constant noise bed.
-        # Intermittent, airy coast wash is low-level and leaves breathing space.
-        if scene in (0, 1, 2, 3, 4, 7):
-            _swell(b + duration*.12, .020, min(2.9, duration*.36))
-        if scene == 0:
-            # A subtle underwater introduction; fish itself has no robot voice.
-            _swell(b + duration*.63, .016, 2.1)
-        elif scene == 1:
-            # Brothers prepare and depart; only two distinct launch actions.
-            _hull(b + duration*.21, .075)
-            _paddle(b + duration*.72, .065)
-        elif scene == 2:
-            # Māui sneaks under the floorboards.
-            _hull(b + duration*.25, .070)
-            _hull(b + duration*.59, .060)
-            _paddle(b + duration*.81, .06)
-        elif scene == 3:
-            # Brothers spot their stowaway; rocking waka, one paddle.
-            _hull(b + duration*.23, .075)
-            _paddle(b + duration*.59, .071)
-        elif scene == 4:
-            # Preparing the hook, then its small entry into the sea.
-            _rope(b + duration*.29, .067)
-            _splash(b + duration*.77, power=.095, length=.61)
-        elif scene == 5:
-            # The line snags, creaks, snaps taut; a big single wave.
-            _rope(b + duration*.27, .12)
-            _hull(b + duration*.49, .10)
-            _splash(b + duration*.68, power=.17, length=1.15)
-        elif scene == 6:
-            # The huge fish breaches; this gets the strongest but brief foley.
-            _splash(b + duration*.28, power=.235, length=2.0)
-            _hull(b + duration*.45, .085)
-            _reef(b + duration*.79, level=.077, length=.8)
-        elif scene == 7:
-            # Quiet gritty earth shifting into a final coastal wash.
-            _reef(b + duration*.27, level=.095, length=1.85)
-            _swell(b + duration*.73, loudness=.025, length=2.25)
+    """Scene-specific accents; returns timing metadata for checking and reuse."""
+    titles=[
+      "Enormous fish beneath the sea","Brothers leave shore",
+      "Māui hides in the waka","Māui is discovered",
+      "The ancestral jawbone hook","The powerful catch",
+      "The great fish rises","The North Island forms"
+    ]
+    if len(durations)!=len(titles):
+        raise ValueError("The Great Fish soundtrack requires 8 scenes")
+    cue_sheet=[]
+    begin=0.0
+    def cue(scene,duration,fraction,label,fn,*args):
+        now=begin+duration*fraction
+        fn(now,*args)
+        cue_sheet.append({"scene":scene+1,"scene_title":titles[scene],
+                          "time_seconds":round(now,3),"effect":label})
+    for i,d in enumerate(durations):
+        if i==0:
+            cue(i,d,.13,"Deep ocean current",_current,.044,2.25)
+            cue(i,d,.51,"Rising bubbles",_bubbles,.085)
+            cue(i,d,.81,"Distant ocean swell",_swell,.027,1.5)
+        elif i==1:
+            cue(i,d,.09,"Footsteps on shoreline shingle",_steps,.110)
+            cue(i,d,.27,"Woven fishing basket rustles",_woven_basket,.089)
+            cue(i,d,.43,"Timber waka creaks",_hull,.103)
+            cue(i,d,.66,"Wooden paddles enter sea",_paddle,.105)
+            cue(i,d,.88,"A small wake",_swell,.043,1.1)
+        elif i==2:
+            cue(i,d,.08,"Sneaking across shingle",_steps,.069)
+            cue(i,d,.29,"Floorboards lift",_floorboard,.110)
+            cue(i,d,.49,"Clothing brushes the hull",_clothes,.085)
+            cue(i,d,.68,"Floorboards settle",_floorboard,.071)
+            cue(i,d,.90,"Paddle strokes carry waka away",_paddle,.088)
+        elif i==3:
+            cue(i,d,.13,"A board knocks as Māui emerges",_hull,.121)
+            cue(i,d,.33,"Māui shifts his weight",_clothes,.078)
+            cue(i,d,.55,"Canoe timbers strain",_floorboard,.096)
+            cue(i,d,.75,"Urgent paddle strokes",_paddle,.106)
+            cue(i,d,.91,"Open ocean water",_swell,.042,1.2)
+        elif i==4:
+            cue(i,d,.17,"The ancestral hook is handled",_jawbone,.119)
+            cue(i,d,.43,"Fishing line slips over wood",_sliding_line,.10)
+            cue(i,d,.70,"Small hook splash",_splash,.108,.72)
+            cue(i,d,.89,"Bubbles trail behind the hook",_bubbles,.07)
+        elif i==5:
+            cue(i,d,.12,"The dark water moves",_current,.059,1.25)
+            cue(i,d,.29,"Rope suddenly pulls tight",_rope,.175)
+            cue(i,d,.45,"Fishing line scrapes the waka",_sliding_line,.12)
+            cue(i,d,.56,"Hull creaks in protest",_hull,.122)
+            cue(i,d,.73,"Powerful swell rocks the waka",_splash,.216,1.3)
+            cue(i,d,.90,"A huge fish turns below",_current,.070,1.0)
+        elif i==6:
+            cue(i,d,.10,"Giant fish bursts from the ocean",_splash,.278,2.12)
+            cue(i,d,.34,"The fish slaps the waves",_tail,.208)
+            cue(i,d,.53,"Water cascades down scales",_cascading_water,.151)
+            cue(i,d,.71,"First impatient cut",_cut,.108)
+            cue(i,d,.89,"Second impatient cut",_cut,.078)
+        else:
+            cue(i,d,.12,"The great fish shudders",_reef,.12,1.25)
+            cue(i,d,.32,"Stone mountains rise",_rocks,.13)
+            cue(i,d,.51,"Water runs from the new coastline",_cascading_water,.118)
+            cue(i,d,.70,"Leaves catch a coastal breeze",_leaves,.065)
+            cue(i,d,.88,"Final gentle shore swell",_swell,.042,1.32)
+        begin+=d
+    return cue_sheet
 
 
 def _write_wav(path):
@@ -187,7 +291,13 @@ def render_fish_foley(destination, durations, name="fish-nz"):
         raise ValueError("The Great Fish soundtrack requires 8 scene durations")
     total = sum(durations)
     audio = array("f", [0.0]) * (math.ceil((total+.1) * SAMPLE_RATE))
-    _schedule(durations)
+    rng.seed(108207)
+    cue_sheet = _schedule(durations)
+    (destination / f"{name}-sfx-cues.json").write_text(
+        json.dumps({"version":25, "duration_seconds":round(total,3),
+                    "cue_count":len(cue_sheet), "cues":cue_sheet},
+                   indent=2, ensure_ascii=False)+"\n",
+        encoding="utf-8")
     wav = destination / (name + "-foley-temp.wav")
     fx = destination / (name + "-sfx.mp3")
     _write_wav(wav)
@@ -212,17 +322,20 @@ def render_fish_foley(destination, durations, name="fish-nz"):
             raise RuntimeError(f"Foley and narration out of sync: {output}")
         print(f"Natural foley mix {mix}: {output.name} / {total:.1f}s", flush=True)
 
-    # The test button now plays WAV-style Foley (paddle, splash, rope, boat),
-    # never synthesizer bleeps / whistles / chimes.
-    audio = array("f", [0.0]) * int(3.45 * SAMPLE_RATE)
-    _paddle(.08, .105)
-    _hull(.82, .11)
-    _rope(1.30, .12)
-    _splash(2.18, .19, .84)
+    # Test button: seven short, contrasting organic sounds.
+    audio = array("f", [0.0]) * int(7.6*SAMPLE_RATE)
+    rng.seed(108207)
+    _steps(.08,.12)
+    _floorboard(.99,.12)
+    _jawbone(1.89,.13)
+    _sliding_line(2.71,.12)
+    _tail(3.63,.21)
+    _rocks(5.09,.18)
+    _leaves(6.03,.09)
     _write_wav(wav)
-    _ffmpeg("-i", wav, "-af", "highpass=f=55,lowpass=f=6100",
+    _ffmpeg("-i", wav, "-af", "highpass=f=55,lowpass=f=6600",
             "-c:a", "libmp3lame", "-q:a", "3",
             destination / f"{name}-fx-test.mp3")
     wav.unlink()
     audio = array("f")
-    print("V21: Great Fish foley lifted gently, with narration ducking preserved.", flush=True)
+    print(f"V25: published {len(cue_sheet)} different timed Foley cues", flush=True)
