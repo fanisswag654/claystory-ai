@@ -1,7 +1,21 @@
-# ClayStory AI V18
+# ClayStory AI V24
 
 A static Canvas animation player for 9:16 short films. Open `index.html` through
 an HTTP server; no JavaScript build is required. Great Fish is the default.
+
+## Great Fish visual styles
+
+Pixel remains the default and the main finished-film style. The **Great Fish
+visual style** selector also offers **Woodblock — style test**: separate animated
+canvas artwork with ink contours, parchment grain, carved waves, Aotearoa
+headlands and a rising North Island. It keeps the Māori narrative and shares the
+same narration, eight-scene timeline and spoken captions. You can switch while
+Preview plays without restarting audio. The Sun story keeps its Pixel artwork.
+
+Woodblock currently supports Preview and compatible browsers' silent WebM
+recording. Photos MP4 downloads remain Pixel; select Pixel to enable that button.
+The renderer is inline in `index.html`, uses standard Canvas 2D, and needs no
+external artwork, fonts, network calls or additional deployment assets.
 
 ## Development
 
@@ -59,3 +73,15 @@ Preview only. Silent WebM recording remains available.
 `videos/` outputs. It requires Playwright Chromium and FFmpeg. The narration
 workflow renders and deploys those MP4s after generating audio.
 Physical iPad testing and fluent-speaker pronunciation review remain necessary.
+
+Run browser checks from the repository root with the HTTP server on port 8000:
+
+```sh
+/workspace/.venv/bin/python scripts/test_player.py
+/workspace/.venv/bin/python scripts/test_subtitles.py
+/workspace/.venv/bin/python scripts/test_fish_film.py
+/workspace/.venv/bin/python scripts/test_woodblock.py
+```
+
+The Woodblock test checks all eight compositions, deterministic frames, live
+style switching without audio restart, the shared captions, and Sun isolation.
