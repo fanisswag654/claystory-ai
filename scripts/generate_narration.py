@@ -1,4 +1,4 @@
-"""V18 narration and original synthesized audio. Run from the repository root.
+"""V26 natural free narration and original synthesized audio. Run from the repository root.
 
 --story fish regenerates only the eight Great Fish clips; default preserves the
 full built-in/custom generation workflow. --reuse-voice remixes existing clips.
@@ -50,21 +50,102 @@ def ffmpeg(*args):
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *map(str, args)], check=True)
 
 
-# V21: retain the natural NZ male neural voice without artificial octave-like
-# lowering. A small scene-to-scene change in rate/pitch gives expressive delivery.
-# Allow the native voice's natural rhythm and articulation to come through.
+# V26: a more relaxed, close-to-natural male NZ storyteller.
+# Avoid exaggerated pitch shifts and rushed uniform delivery.
+# Each scene has two conversational beats, with one natural pause between them.
 FISH_DELIVERY = [
-    ("+5%", "-4Hz"),   # curious opening
-    ("+9%", "-2Hz"),   # active brothers leaving
-    ("+7%", "-3Hz"),   # conspiratorial hiding
-    ("+9%", "-2Hz"),   # surprise at sea
-    ("+4%", "-4Hz"),   # deliberate ancestral hook
-    ("+10%", "-3Hz"),  # urgency when the line takes
-    ("+8%", "-4Hz"),   # powerful fish reveal
-    ("+3%", "-5Hz"),   # warm, considered moral
+    ("+2%", "+0Hz"),  # mysterious, curious opening
+    ("+4%", "+0Hz"),  # brothers preparing to depart
+    ("+3%", "-1Hz"),  # Māui hides quietly
+    ("+5%", "+1Hz"),  # surprise and discovery
+    ("+2%", "-1Hz"),  # ancestral hook, thoughtful
+    ("+6%", "+1Hz"),  # the line catches, urgent but clear
+    ("+4%", "+0Hz"),  # the great fish appears
+    ("+1%", "-1Hz"),  # measured, reflective ending
 ]
 MAUI_DELIVERY = [("+8%", "+0Hz"), ("+10%", "+1Hz"), ("+7%", "-1Hz"),
                  ("+11%", "+0Hz"), ("+9%", "+1Hz"), ("+5%", "-1Hz")]
+
+
+def conversational_beats(text):
+    """Split a short story scene at one natural sentence boundary.
+
+    Two meaningful narrative phrases give the voice a short, purposeful
+    pause without synthesizing every word or distorting the narrator's pitch.
+    Original wording is preserved for on-screen captions.
+    """
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    if len(sentences) < 2:
+        return [text.strip()]
+    counts = [len(sentence.split()) for sentence in sentences]
+    total = sum(counts)
+    best_cut = min(
+        range(1, len(sentences)),
+        key=lambda cut: abs(sum(counts[:cut]) - total / 2),
+    )
+    return [
+        " ".join(sentences[:best_cut]),
+        " ".join(sentences[best_cut:]),
+    ]
+
+
+async def conversational_fish_voice(scene, destination, rate, pitch, index, voice):
+    """Generate two naturally paced phrases using free NZ neural TTS.
+
+    Preserve each phrase's built-in intonation and original pitch. Make one
+    deliberate pause at a natural sentence boundary, and join without music
+    or synthetic pitch-shifting. Timing is measured from the finished MP3.
+    """
+    parts = conversational_beats(scene["narration"])
+    clean_parts = []
+    pause = 0.16 if index in (3, 5, 6) else (0.24 if index in (4, 7) else 0.20)
+    trim_filter = (
+        "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,"
+        "areverse,silenceremove=start_periods=1:start_duration=0.06:"
+        "start_threshold=-55dB,areverse"
+    )
+    try:
+        for j, phrase in enumerate(parts):
+            raw = out / f"fish-nz-{index+1}-phrase{j}-raw.mp3"
+            clean = out / f"fish-nz-{index+1}-phrase{j}.mp3"
+            # Small inflection shift in the second beat without "voice acting"
+            # with drastic pitch shifts, keeping words natural and intelligible.
+            base_rate = int(rate.replace("%", ""))
+            part_rate = f"{base_rate + (1 if j else 0):+d}%"
+            base_pitch = int(pitch.replace("Hz", ""))
+            part_pitch = f"{base_pitch + (1 if j and index in (3, 5) else 0):+d}Hz"
+            await edge_tts.Communicate(
+                phrase, voice=voice, rate=part_rate, pitch=part_pitch,
+                proxy=os.environ.get("HTTPS_PROXY"),
+            ).save(str(raw))
+            ffmpeg("-i", raw, "-af", trim_filter,
+                   "-c:a", "libmp3lame", "-q:a", "3", clean)
+            raw.unlink()
+            if media_duration(clean) < 0.5:
+                raise RuntimeError(f"Invalid narrator phrase {index+1}:{j+1}")
+            clean_parts.append(clean)
+
+        if len(clean_parts) == 1:
+            clean_parts[0].replace(destination)
+            return
+
+        delay_ms = round((media_duration(clean_parts[0]) + pause) * 1000)
+        total = delay_ms / 1000 + media_duration(clean_parts[1])
+        graph = (
+            f"[0:a]asetpts=PTS-STARTPTS[a0];"
+            f"[1:a]asetpts=PTS-STARTPTS,adelay={delay_ms}:all=1[a1];"
+            "[a0][a1]amix=inputs=2:duration=longest:normalize=0,"
+            f"alimiter=limit=0.94:level=0:latency=1,"
+            f"apad,atrim=duration={total:.3f}[voice]"
+        )
+        ffmpeg("-i", clean_parts[0], "-i", clean_parts[1],
+               "-filter_complex", graph, "-map", "[voice]",
+               "-c:a", "libmp3lame", "-q:a", "3", destination)
+        if media_duration(destination) < 1:
+            raise RuntimeError(f"Invalid finished narration {destination}")
+    finally:
+        for part in clean_parts:
+            part.unlink(missing_ok=True)
 
 
 async def voices(name, scenes, voice, delivery):
@@ -77,16 +158,21 @@ async def voices(name, scenes, voice, delivery):
         temporary = out / f"{name}-{i+1}-raw.mp3"
         rate, pitch = delivery[i % len(delivery)]
         print(f"Generating {destination}", flush=True)
-        await edge_tts.Communicate(scene["narration"], voice=voice, rate=rate, pitch=pitch, proxy=os.environ.get("HTTPS_PROXY")).save(str(temporary))
-        # Trim only outer silence; preserve storytelling pauses.
+        if name == "fish-nz":
+            await conversational_fish_voice(
+                scene, destination, rate, pitch, i, voice,
+            )
+            continue
+        # Preserve existing output for the Sun story and other templates.
+        await edge_tts.Communicate(
+            scene["narration"], voice=voice, rate=rate, pitch=pitch,
+            proxy=os.environ.get("HTTPS_PROXY"),
+        ).save(str(temporary))
         voice_filter = (
             "silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,"
-            "areverse,silenceremove=start_periods=1:start_duration=0.06:start_threshold=-55dB,areverse"
+            "areverse,silenceremove=start_periods=1:start_duration=0.06:"
+            "start_threshold=-55dB,areverse"
         )
-        if name == "fish-nz":
-            # V21: remove rubberband pitch lowering that made the narrator sound
-            # artificially elderly/processed. Very subtle EQ only.
-            voice_filter += ",equalizer=f=155:t=q:w=1.0:g=0.5"
         ffmpeg("-i", temporary, "-af", voice_filter,
                "-c:a", "libmp3lame", "-q:a", "3", destination)
         temporary.unlink()
@@ -284,8 +370,8 @@ def generate_featured(key):
     soundtrack(name, durations)
     # Publish timing last: a partially generated set must never advertise readiness.
     (out / f"{name}-timing.json").write_text(json.dumps({
-        "durations": durations, "voice": "en-NZ-MitchellNeural", "revision": 18,
-        "description": "Narration-length cuts; 0.15-second transitions; pronunciation requires human review"
+        "durations": durations, "voice": "en-NZ-MitchellNeural", "revision": 26,
+        "description": "Free NZ male neural narration in two conversational beats per scene; pronunciation needs fluent review"
     }, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     print(name, durations, "total", round(sum(durations), 3), flush=True)
     if key == "fish" and not 85 <= sum(durations) <= 100:
