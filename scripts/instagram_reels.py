@@ -67,6 +67,8 @@ def fingerprint_source(story_key: str) -> str:
     digest = hashlib.sha256()
     paths = [
         Path("index.html"),
+        Path("scripts/v29_motion.js"),
+        Path("vendor/tween.umd.js"),
         Path("scripts/render_films.py"),
         Path(f"audio/{story_key}-timing.json"),
         Path(f"audio/{story_key}-mix-balanced.mp3"),
