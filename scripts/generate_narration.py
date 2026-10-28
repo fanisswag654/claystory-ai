@@ -1,8 +1,10 @@
-"""V26 natural free narration and original synthesized audio. Run from the repository root.
+"""ClayStory V32: cinematic narration by default for every newly generated story.
 
---story fish regenerates only the eight Great Fish clips; default preserves the
-full built-in/custom generation workflow. --reuse-voice remixes existing clips.
-NZ English synthesis requires fluent te reo Māori pronunciation review.
+Uses the same en-GB-RyanNeural scene-by-scene delivery users reviewed in V31,
+including phrasing, dramatic pauses and voice processing. The former NZ voice
+is available explicitly with --narrator nz. No silent narrator substitution.
+--reuse-voice remixes existing clips without changing their identity.
+Māori pronunciation still requires fluent review before any new public post.
 """
 import argparse
 import array
@@ -15,13 +17,23 @@ import random
 import re
 import subprocess
 import sys
+import tempfile
 import wave
 import edge_tts
+
+from v31_storyteller import PROFILES, generate_edge
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--story", choices=("all", "fish"), default="all")
 parser.add_argument("--reuse-voice", action="store_true")
+parser.add_argument(
+    "--narrator", choices=("cinematic", "warm", "nz"),
+    default=os.environ.get("CLAYSTORY_NARRATOR", "cinematic"),
+    help="Default cinematic (V31 Ryan); warm (Christopher); nz (legacy Mitchell)"
+)
 options = parser.parse_args()
+if options.narrator not in ("cinematic", "warm", "nz"):
+    parser.error("CLAYSTORY_NARRATOR must be cinematic, warm, or nz")
 html = Path("index.html").read_text(encoding="utf-8")
 out = Path("audio")
 out.mkdir(exist_ok=True)
@@ -157,7 +169,19 @@ async def voices(name, scenes, voice, delivery):
             continue
         temporary = out / f"{name}-{i+1}-raw.mp3"
         rate, pitch = delivery[i % len(delivery)]
-        print(f"Generating {destination}", flush=True)
+        print(f"Generating {destination} with narrator={options.narrator}", flush=True)
+        if options.narrator != "nz":
+            # Reuse *exactly* the V31 narrator, speech inflections, sentence
+            # breaks, dramatic silence and mastering already approved by user.
+            profile = PROFILES[options.narrator]
+            with tempfile.TemporaryDirectory(prefix="claystory-cinematic-") as temp:
+                await generate_edge(
+                    scene["narration"], destination, profile["model"], i,
+                    profile, Path(temp),
+                )
+            if media_duration(destination) < 1:
+                raise RuntimeError(f"Invalid cinematic narration: {destination}")
+            continue
         if name == "fish-nz":
             await conversational_fish_voice(
                 scene, destination, rate, pitch, i, voice,
@@ -369,9 +393,27 @@ def generate_featured(key):
     continuous(name, durations)
     soundtrack(name, durations)
     # Publish timing last: a partially generated set must never advertise readiness.
-    (out / f"{name}-timing.json").write_text(json.dumps({
-        "durations": durations, "voice": "en-NZ-MitchellNeural", "revision": 26,
-        "description": "Free NZ male neural narration in two conversational beats per scene; pronunciation needs fluent review"
+    manifest_path = out / f"{name}-timing.json"
+    # Re-mixing existing audio must never falsely relabel a NZ performance as
+    # a new cinematic one (the V31 preview supplies its own verified metadata).
+    if options.reuse_voice and manifest_path.is_file():
+        old = json.loads(manifest_path.read_text(encoding="utf-8"))
+        narrator_voice = old.get("voice", "unknown-existing-voice")
+        narrator_desc = old.get("description", "Existing narration remixed, voice unchanged")
+        revision = old.get("revision", 26)
+    elif options.narrator == "nz":
+        narrator_voice = "en-NZ-MitchellNeural"
+        narrator_desc = "Legacy NZ male neural narrator; pronunciation requires fluent review"
+        revision = 26
+    else:
+        profile = PROFILES[options.narrator]
+        narrator_voice = profile["model"]
+        narrator_desc = profile["label"] + "; cinematic sentence pacing and pauses; Māori pronunciation requires review"
+        revision = 32
+    manifest_path.write_text(json.dumps({
+        "durations": durations, "voice": narrator_voice, "revision": revision,
+        "narrator_profile": options.narrator if not options.reuse_voice else "existing",
+        "description": narrator_desc
     }, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     print(name, durations, "total", round(sum(durations), 3), flush=True)
     if key == "fish" and not 85 <= sum(durations) <= 100:
@@ -389,7 +431,8 @@ if __name__ == "__main__":
         for j, name in enumerate(("sun", "moon", "ocean")):
             scenes = [{"narration": json.loads('"'+n+'"')} for n in narrations[j*6:(j+1)*6]]
             asyncio.run(voices(name, scenes, "en-US-GuyNeural", [("+0%", "+0Hz")]*6))
-            continuous(name, [8]*6)
+            durations = [round(media_duration(out / f"{name}-{i+1}.mp3") + .15, 3) for i in range(len(scenes))]
+            continuous(name, durations)
         custom = os.environ.get("CUSTOM_SCRIPT", "").strip()
         if custom:
             paragraphs = [p.strip() for p in re.split(r"\n\s*\n|\s*\|\s*", custom.replace("\\n", "\n")) if p.strip()]
@@ -401,4 +444,10 @@ if __name__ == "__main__":
             scenes = [{"title":f"Scene {i+1}","caption":" ".join(p.split()[:6]).upper(),"narration":p or "The story continues.","color":"#293451"} for i,p in enumerate(paragraphs)]
             Path("custom-story.json").write_text(json.dumps({"scenes":scenes},ensure_ascii=False),encoding="utf-8")
             asyncio.run(voices("custom", scenes, "en-US-GuyNeural", [("+0%", "+0Hz")]*6))
-            continuous("custom", [8]*6)
+            durations = [round(media_duration(out / f"custom-{i+1}.mp3") + .15, 3) for i in range(len(scenes))]
+            continuous("custom", durations)
+            (out / "custom-timing.json").write_text(json.dumps({
+                "durations": durations,
+                "voice": "en-NZ-MitchellNeural" if options.narrator == "nz" else PROFILES[options.narrator]["model"],
+                "revision": 32
+            }, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
