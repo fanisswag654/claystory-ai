@@ -1,6 +1,6 @@
 {
   "version": 25,
-  "duration_seconds": 82.366,
+  "duration_seconds": 82.39,
   "cue_count": 38,
   "cues": [
     {
@@ -114,121 +114,121 @@
     {
       "scene": 5,
       "scene_title": "The ancestral jawbone hook",
-      "time_seconds": 39.893,
+      "time_seconds": 39.897,
       "effect": "The ancestral hook is handled"
     },
     {
       "scene": 5,
       "scene_title": "The ancestral jawbone hook",
-      "time_seconds": 42.397,
+      "time_seconds": 42.407,
       "effect": "Fishing line slips over wood"
     },
     {
       "scene": 5,
       "scene_title": "The ancestral jawbone hook",
-      "time_seconds": 44.997,
+      "time_seconds": 45.014,
       "effect": "Small hook splash"
     },
     {
       "scene": 5,
       "scene_title": "The ancestral jawbone hook",
-      "time_seconds": 46.827,
+      "time_seconds": 46.848,
       "effect": "Bubbles trail behind the hook"
     },
     {
       "scene": 6,
       "scene_title": "The powerful catch",
-      "time_seconds": 49.053,
+      "time_seconds": 49.077,
       "effect": "The dark water moves"
     },
     {
       "scene": 6,
       "scene_title": "The powerful catch",
-      "time_seconds": 50.707,
+      "time_seconds": 50.731,
       "effect": "Rope suddenly pulls tight"
     },
     {
       "scene": 6,
       "scene_title": "The powerful catch",
-      "time_seconds": 52.263,
+      "time_seconds": 52.287,
       "effect": "Fishing line scrapes the waka"
     },
     {
       "scene": 6,
       "scene_title": "The powerful catch",
-      "time_seconds": 53.333,
+      "time_seconds": 53.357,
       "effect": "Hull creaks in protest"
     },
     {
       "scene": 6,
       "scene_title": "The powerful catch",
-      "time_seconds": 54.986,
+      "time_seconds": 55.01,
       "effect": "Powerful swell rocks the waka"
     },
     {
       "scene": 6,
       "scene_title": "The powerful catch",
-      "time_seconds": 56.639,
+      "time_seconds": 56.663,
       "effect": "A huge fish turns below"
     },
     {
       "scene": 7,
       "scene_title": "The great fish rises",
-      "time_seconds": 58.592,
+      "time_seconds": 58.616,
       "effect": "Giant fish bursts from the ocean"
     },
     {
       "scene": 7,
       "scene_title": "The great fish rises",
-      "time_seconds": 60.943,
+      "time_seconds": 60.967,
       "effect": "The fish slaps the waves"
     },
     {
       "scene": 7,
       "scene_title": "The great fish rises",
-      "time_seconds": 62.805,
+      "time_seconds": 62.829,
       "effect": "Water cascades down scales"
     },
     {
       "scene": 7,
       "scene_title": "The great fish rises",
-      "time_seconds": 64.569,
+      "time_seconds": 64.593,
       "effect": "First impatient cut"
     },
     {
       "scene": 7,
       "scene_title": "The great fish rises",
-      "time_seconds": 66.332,
+      "time_seconds": 66.356,
       "effect": "Second impatient cut"
     },
     {
       "scene": 8,
       "scene_title": "The North Island forms",
-      "time_seconds": 69.205,
+      "time_seconds": 69.229,
       "effect": "The great fish shudders"
     },
     {
       "scene": 8,
       "scene_title": "The North Island forms",
-      "time_seconds": 72.196,
+      "time_seconds": 72.22,
       "effect": "Stone mountains rise"
     },
     {
       "scene": 8,
       "scene_title": "The North Island forms",
-      "time_seconds": 75.038,
+      "time_seconds": 75.062,
       "effect": "Water runs from the new coastline"
     },
     {
       "scene": 8,
       "scene_title": "The North Island forms",
-      "time_seconds": 77.879,
+      "time_seconds": 77.903,
       "effect": "Leaves catch a coastal breeze"
     },
     {
       "scene": 8,
       "scene_title": "The North Island forms",
-      "time_seconds": 80.571,
+      "time_seconds": 80.595,
       "effect": "Final gentle shore swell"
     }
   ]
