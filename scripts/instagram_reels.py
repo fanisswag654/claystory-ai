@@ -191,6 +191,7 @@ def create_post(channel_id: str, video_url: str, caption: str) -> dict:
         + " channelId: " + json.dumps(channel_id)
         + " schedulingType: automatic"
         + " mode: addToQueue"
+        + " metadata: { instagram: { type: reel, shouldShareToFeed: true, isAiGenerated: true } }"
         + " saveToDraft: " + save_to_draft
         + " assets: [{ video: { url: " + json.dumps(video_url)
         + " metadata: { thumbnailOffset: 2000 } } }]"
