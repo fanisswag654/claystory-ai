@@ -17,6 +17,18 @@ recording. Photos MP4 downloads remain Pixel; select Pixel to enable that button
 The renderer is inline in `index.html`, uses standard Canvas 2D, and needs no
 external artwork, fonts, network calls or additional deployment assets.
 
+
+## Instagram Reels automation
+
+This repository now owns the Instagram workflow directly. The [Instagram Reels
+workflow](.github/workflows/instagram-reels.yml) checks the original animated
+films produced by ClayStory, and (after an Instagram Professional account and
+Buffer API key are configured) queues one new Reel at a time. It does not use
+TikTok, the old clip-farmer repository or Minecraft footage. Content hashes
+prevent repeated scheduling of unchanged videos. See
+[INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
+cultural review requirements.
+
 ## Development
 
 ```sh
