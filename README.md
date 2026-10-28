@@ -1,4 +1,4 @@
-# ClayStory AI V31
+# ClayStory AI V32
 
 A static Canvas animation player for 9:16 short films. Open `index.html` through
 an HTTP server; no JavaScript build is required. Great Fish is the default.
@@ -28,6 +28,30 @@ TikTok, the old clip-farmer repository or Minecraft footage. Content hashes
 prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
+
+## V32 production default — approved cinematic narrator
+
+The storyteller voice you preferred in V31 is now the **default for future
+ClayStory narration**: British male **en-GB-RyanNeural** with the same
+scene-by-scene dramatic pacing, deliberate pauses, and gentle audio mastering
+used in the reviewed V31 film. This applies to Great Fish, Māui and the Sun,
+three template stories, and new scripts passed to the narration GitHub workflow.
+Scene timings are calculated from the newly generated voice instead of fixed
+eight-second assumptions, and the player refreshes audio URLs to avoid old
+iPad Safari sound caches.
+
+Run [Generate ClayStory neural narration](.github/workflows/narration.yml)
+and select `story=all` for new custom scripts. The narrator defaults to
+`cinematic`; `warm` and the previous `nz` voice are optional.
+From the command line, use
+`python scripts/generate_narration.py --story all --narrator cinematic`.
+No narrator is silently substituted if the selected provider fails. Note that
+Māori names and words still require pronunciation review.
+
+Your previously approved Instagram Reel's versioned video is **not altered**.
+As before, new source/video fingerprints are not automatically authorized for
+Instagram publication. See [V32_NARRATION_DEFAULT.md](V32_NARRATION_DEFAULT.md)
+for testing and fallback details.
 
 ## V31 distinctly new cinematic narrator + complete preview film
 
