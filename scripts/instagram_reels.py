@@ -239,7 +239,7 @@ def main() -> None:
             film = Path(folder) / f"{key}.mp4"
             fingerprint = download_public_video(url, film)
             validation = validate_reel(film)
-            unique_key = f"{key}:{fingerprint}"
+            unique_key = f"{key}:{fingerprint}:{mode}"
             if unique_key in history:
                 print(f"Already submitted {story['name']}, {fingerprint[:12]}; skipping")
                 continue
