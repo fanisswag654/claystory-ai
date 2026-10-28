@@ -28,6 +28,12 @@ def render(story="all", mix="all"):
             browser = p.chromium.launch(executable_path=shutil.which("chromium"), args=["--no-sandbox"])
             page = browser.new_page()
             page.goto(f'http://127.0.0.1:{server.server_port}')
+            # Fail fast if the V29 vendor/script assets were not included in
+            # the local site, rather than producing silently unanimated MP4s.
+            page.wait_for_function(
+                '() => window.TWEEN && window.ClayMotionV29 && '
+                'window.ClayMotionV29.version === 29', timeout=15000
+            )
             stories = [('fish-nz', 'openFishStory'), ('maui-nz', 'openMauiStory')]
             if story != 'all':
                 stories = [item for item in stories if item[0] == story + '-nz']
