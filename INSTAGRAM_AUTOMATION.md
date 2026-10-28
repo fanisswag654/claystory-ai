@@ -85,6 +85,14 @@ queue schedule.
 
 ## Publish Now for approved Māui and the Great Fish
 
+**Buffer API validation fix:** Buffer validates the entire post when a draft
+is scheduled or published. Both `shareNow` and `addToQueue` draft edits now
+explicitly send the approved caption, public versioned MP4 asset and complete
+Instagram Reel metadata (`type: reel`, `shouldShareToFeed: true`,
+`isAiGenerated: true`). A regression test verifies these required fields
+before any Publish Now request. An accepted Buffer request is not itself
+proof of a publicly visible Instagram Reel; inspect its actual sent status.
+
 The one-time [Publish approved Great Fish Reel now](.github/workflows/publish-approved-fish.yml)
 workflow promotes **the existing reviewed Buffer draft**, using Buffer's
 `editPost(mode: shareNow)` mutation. It never uploads a second copy.
