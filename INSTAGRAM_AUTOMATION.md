@@ -29,16 +29,17 @@ does not invent culturally sensitive pūrākau automatically.
 - Instagram must be a **Professional (Creator or Business)** account for
   automatic publishing through Buffer. Personal accounts require manual
   notification publishing.
-- Connect the desired Instagram account to Buffer via
+- Connect **@purakaupixel** to Buffer via
   https://publish.buffer.com/channels . Confirm its Buffer queue is not paused.
 - In this repository's **Settings → Secrets and variables → Actions → Secrets**,
   add `BUFFER_API_KEY` using the key already available in your Buffer account.
   GitHub secrets do **not** transfer automatically between repositories.
   Never paste a secret into source code, issues, chat, or workflow inputs.
-- In this repository's **Settings → Secrets and variables → Actions → Variables**,
-  add `INSTAGRAM_USERNAME` with the intended handle, **without @**. If Buffer
-  cannot match the account by handle, add its `INSTAGRAM_CHANNEL_ID` as an
-  Actions secret instead (the script verifies that it belongs to Instagram).
+- The Instagram account is already locked to **@purakaupixel** in the workflow;
+  there is no need to add a username variable. The code checks both the
+  platform and matching handle before creating any Instagram post.
+  If Buffer cannot match the account by its display name, we can add
+  `INSTAGRAM_CHANNEL_ID` as an Actions secret after confirming its ID.
 - In the same Variables section, set `IG_AUTO_PUBLISH` to `true` only after
   confirming the account and reviewing your narration, captions and cultural
   accuracy. Until this variable is enabled, scheduled runs check media but do
