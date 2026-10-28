@@ -75,14 +75,18 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          from scripts.v31_storyteller import PROFILES
+          records = json.loads(Path("voice-previews/v31/comparison.json").read_text())
+          if len(records) != 8:
+              raise RuntimeError("Candidate narration is incomplete")
+          model, label = records[0]["model"], records[0]["label"]
+          if any(item["model"] != model for item in records):
+              raise RuntimeError("Mismatched narrator models across scenes")
           path = Path("audio/fish-nz-timing.json")
           timing = json.loads(path.read_text())
-          profile = PROFILES[os.environ["V31_PROFILE"]]
           timing.update(
-              voice=profile["model"],
+              voice=model,
               revision=31,
-              description=profile["label"] +
+              description=label +
                 ". Experimental non-NZ narrator, Māori pronunciation unverified.",
           )
           path.write_text(json.dumps(timing, ensure_ascii=False, indent=2) + "\n")
