@@ -39,10 +39,12 @@ does not invent culturally sensitive pūrākau automatically.
   platform and matching handle before creating any Instagram post.
   If Buffer cannot match the account by its display name, we can add
   `INSTAGRAM_CHANNEL_ID` as an Actions secret after confirming its ID.
-- In the same Variables section, set `IG_AUTO_PUBLISH` to `true` only after
-  confirming the account and reviewing your narration, captions and cultural
-  accuracy. Until this variable is enabled, scheduled runs check media but do
-  not schedule or publish posts.
+- Automatic queueing is now enabled by default following approval of the first
+  Instagram test draft. An Actions variable `IG_AUTO_PUBLISH=false` immediately
+  disables new automatic scheduling on subsequent runs. The scheduled workflow
+  targets only @purakaupixel, with a limit of one newly scheduled film per day.
+  Check each film's cultural accuracy and narration before or after scheduling;
+  publishing queued posts remains subject to Buffer's posting schedule.
 
 ## Test safely on iPad
 
@@ -51,9 +53,13 @@ Open the [Instagram Reels workflow](https://github.com/fanisswag654/claystory-ai
 1. Tap **Run workflow**, leave `mode=check`, and run. The workflow renders and publicly hosts a versioned MP4 using the repository's GitHub Actions token, without using Buffer or publishing to Instagram.
 2. Once Buffer and Instagram are connected, run `mode=draft`. Confirm the
    original video appears under **Buffer → Instagram → Drafts**.
-3. When satisfied, set `IG_AUTO_PUBLISH=true`. On the next scheduled run the
-   first unqueued film is added to Buffer's **Instagram** queue. Run with
-   `mode=queue` manually if you prefer not to wait.
+3. Following approval of the first test draft, the workflow queues the first
+   unscheduled film during its next daily run, unless `IG_AUTO_PUBLISH=false`
+   has been set. If you want to queue it immediately instead, choose `mode=queue`
+   in a manual workflow run. Buffer determines the public publishing time.
+4. A queued film that already has a matching Buffer draft is promoted to the
+   queue rather than creating a second copy; other newly rendered films receive
+   their own queue posts. Existing history prevents resubmission on later runs.
 
 Current daily cron: `20:30 UTC` (9:30am NZ daylight time / 8:30am NZ standard
 time). Buffer decides the actual publication time from the Instagram channel's
