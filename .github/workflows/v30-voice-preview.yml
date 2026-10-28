@@ -1,0 +1,111 @@
+name: ClayStory V30 narrator comparison (private samples)
+
+on:
+  workflow_dispatch:
+    inputs:
+      story:
+        description: Which original story to compare
+        type: choice
+        options: [fish, maui]
+        default: fish
+      engine:
+        description: Baseline NZ voice only, or also try Chatterbox Nano CPU
+        type: choice
+        options: [nano, edge]
+        default: nano
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v30_voice.py'
+      - 'scripts/test_v30_voice.py'
+      - '.github/workflows/v30-voice-preview.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: claystory-v30-voice-comparison
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      V30_STORY: ${{ inputs.story || 'fish' }}
+      V30_ENGINE: ${{ inputs.engine || 'nano' }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install lightweight test tools (not the speech model)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m py_compile scripts/v30_voice.py scripts/test_v30_voice.py
+          python -m unittest discover -s scripts -p 'test_v30_voice.py' -v
+
+      - name: Extract approved NZ narrator comparison samples
+        run: |
+          if [ "$V30_STORY" = "fish" ]; then SCENES="1 6"; else SCENES="1 5"; fi
+          python scripts/v30_voice.py --story "$V30_STORY" --scenes $SCENES \
+            --engine edge --output-dir voice-previews
+
+      - name: Install CPU PyTorch for optional Chatterbox Nano
+        if: env.V30_ENGINE == 'nano'
+        id: cpu_install
+        continue-on-error: true
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu \
+            torch==2.6.0 torchaudio==2.6.0
+          python -m pip install 'chatterbox-tts==0.1.7'
+
+      - name: Generate Chatterbox Nano CPU alternative
+        if: env.V30_ENGINE == 'nano' && steps.cpu_install.outcome == 'success'
+        id: nano
+        continue-on-error: true
+        run: |
+          if [ "$V30_STORY" = "fish" ]; then SCENES="1 6"; else SCENES="1 5"; fi
+          python scripts/v30_voice.py --story "$V30_STORY" --scenes $SCENES \
+            --engine nano --output-dir voice-previews
+
+      - name: Explain results and CPU fallback
+        if: always()
+        env:
+          INSTALL_STATUS: ${{ steps.cpu_install.outcome }}
+          NANO_STATUS: ${{ steps.nano.outcome }}
+        run: |
+          {
+            echo "## Pūrākau Pixels V30 voice comparison"
+            echo ""
+            echo "Story: \`$V30_STORY\`. Requested engine: \`$V30_ENGINE\`."
+            echo ""
+            echo "- Existing NZ narrator is preserved in committed \`audio/\`."
+            echo "- Voice samples are private workflow artifacts, not public posts or GitHub Releases."
+            echo "- Chatterbox Nano is English-only and may mispronounce Māori words."
+            if [ "$V30_ENGINE" = "nano" ]; then
+              echo "- Optional CPU dependency installation: \`$INSTALL_STATUS\`."
+              echo "- Optional Nano audio generation: \`$NANO_STATUS\`."
+              if [ "$NANO_STATUS" != "success" ]; then
+                echo "- The free GitHub runner could not complete Nano; the NZ baseline remains available."
+              fi
+            fi
+            echo ""
+            echo "Download the **claystory-v30-voice-comparison** artifact and play its MP3 files."
+            echo "Approve Māori pronunciation and vocal tone before switching any production soundtrack."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Package preview audio (never commit or publish)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claystory-v30-voice-comparison
+          path: voice-previews/
+          if-no-files-found: warn
+          retention-days: 14
