@@ -388,6 +388,14 @@ function fishActor(x,y,t,color,face='determined',scale=1,pose='brace'){
   pLine(-5,7,-15+leg*.3,14+leg*.35,'#48373c',5);
   pLine(5,7,18-leg*.35,13-leg*.25,'#48373c',5);
   px(-12,-23,4,3,'#deaa81');px(10,-23,4,3,'#deaa81');
+ }else if(pose==='walk'){
+  // Real footfall cycle: alternating planted foot and counter-swinging arms.
+  pLine(-5,5,-13+sprite.stride,15+Math.min(0,sprite.bob),'#3e343f',5);
+  pLine(5,5,14-sprite.stride,15-Math.min(0,sprite.bob),'#3e343f',5);
+  pLine(-11,-27,-21-sprite.arm*.35,-10+sprite.bob,'#ce9472',4);
+  pLine(11,-27,21+sprite.arm*.35,-10-sprite.bob,'#ce9472',4);
+  px(-16+sprite.stride,13,7,3,'#574042');
+  px(12-sprite.stride,13,7,3,'#574042');
  }else if(pose==='point'){
   pLine(12,-27,25+sprite.reach*.4,-32+raise-sprite.reach*.5,'#ce9472',4);
   px(24+sprite.reach*.4,-34+raise-sprite.reach*.5,7,3,'#e0aa7e');
@@ -615,7 +623,7 @@ function drawFishPixelScene(scene,t){
   pTree(8,154,Math.sin(t)*1.5);pTree(-13,177,Math.cos(t));pFlax(21,234,Math.sin(t));
   pWhare(3,138,.5);pBasket(46,179,t);
   fishCanoe(91+ClayMotionV29.tween({x:0},{x:49},phase,'smooth').x,174,t,.64,true,false,'frustrated');
-  fishActor(29+Math.min(phase,.4)*26,202,t,'#b78e65','determined',.67,'point');
+  fishActor(29+Math.min(phase,.4)*26,202,t,'#b78e65','determined',.67,phase<.32?'walk':'point');
   fishFoam(67,195,t,42);fishFoam(117+phase*20,194,t,57);pBird(130+t%20,77,t);
  }else if(scene===2){
   // Close cutaway: sliding boards, a listening stowaway and moving oars above.
@@ -676,8 +684,10 @@ function drawFishPixelScene(scene,t){
  if(scene!==0&&scene!==5){for(let j=0;j<9;j++){const x=(j*43-t*7+360)%200-10,y=255+(j*13)%29;px(x,y,2,1,'rgba(206,234,220,.45)')}}
  const shade=pix.createLinearGradient(0,20,0,285);shade.addColorStop(0,'rgba(5,17,36,.16)');shade.addColorStop(.45,'rgba(5,17,36,0)');shade.addColorStop(1,'rgba(5,17,36,.22)');pix.fillStyle=shade;pix.fillRect(0,20,180,267);
  pix.restore();pCaption(scene);
- const fade=Math.max(0,1-local/.18,(local-duration+.18)/.18);
- if(fade>0){pix.fillStyle=`rgba(9,24,39,${Math.min(.8,fade)})`;pix.fillRect(0,20,180,267)}
+ const fadeIn=ClayMotionV29.tween({alpha:.8},{alpha:0},local/.30,'smooth').alpha;
+ const fadeOut=ClayMotionV29.tween({alpha:0},{alpha:.8},(local-duration+.30)/.30,'smooth').alpha;
+ const fade=Math.max(fadeIn,fadeOut);
+ if(fade>0){pix.fillStyle=`rgba(9,24,39,${fade})`;pix.fillRect(0,20,180,267)}
  presentFeaturedFrame(scene,t);
 }
 
