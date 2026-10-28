@@ -28,6 +28,7 @@ jobs:
         run: |
           python -m pip install 'requests>=2.32,<3'
           python -m py_compile scripts/instagram_reels.py scripts/publish_approved_fish.py
+          python -m unittest discover -s scripts -p 'test_instagram_publish.py' -v
       - name: Load prior posting history
         run: |
           git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
