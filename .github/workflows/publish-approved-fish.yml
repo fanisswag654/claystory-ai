@@ -1,0 +1,72 @@
+name: Publish approved Great Fish Reel now
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'instagram-publish-now.trigger'
+
+concurrency:
+  group: claystory-instagram-reels
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  share_approved:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Buffer API dependency and check Python
+        run: |
+          python -m pip install 'requests>=2.32,<3'
+          python -m py_compile scripts/instagram_reels.py scripts/publish_approved_fish.py
+      - name: Load prior posting history
+        run: |
+          git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+          git show origin/instagram-publish-history:instagram-post-history.json > instagram-post-history.json
+      - name: Send approved Great Fish draft to Buffer Publish Now
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          INSTAGRAM_USERNAME: purakaupixel
+          INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
+        run: python scripts/publish_approved_fish.py
+      - name: Persist publication record to avoid reposting
+        if: always()
+        run: |
+          if [ ! -s instagram-post-history.json ]; then exit 0; fi
+          cp instagram-post-history.json "$RUNNER_TEMP/instagram-post-history.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            cd "$GITHUB_WORKSPACE"
+            git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+            git worktree remove --force "$RUNNER_TEMP/instagram-now-history" 2>/dev/null || true
+            git worktree add --detach "$RUNNER_TEMP/instagram-now-history" origin/instagram-publish-history
+            cd "$RUNNER_TEMP/instagram-now-history"
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          new = json.loads((Path(os.environ["RUNNER_TEMP"]) / "instagram-post-history.json").read_text())
+          dest = Path("instagram-post-history.json")
+          old = json.loads(dest.read_text()) if dest.exists() else {}
+          old.update(new)
+          dest.write_text(json.dumps(old, sort_keys=True, indent=2, ensure_ascii=False) + "\n")
+          PY
+            git add instagram-post-history.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Record approved Great Fish immediate Instagram publication"
+            if git push origin HEAD:instagram-publish-history; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "Failed to persist publication receipt. Inspect Buffer before retry." >&2
+              exit 1
+            fi
+            sleep 2
+          done
