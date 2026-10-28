@@ -385,6 +385,27 @@ def soundtrack(name, durations):
     wav.unlink()
 
 
+def save_other_timing(name, durations):
+    """Keep future/custom stories synchronized to the actual narrated audio."""
+    path = out / f"{name}-timing.json"
+    if options.reuse_voice and path.is_file():
+        prior = json.loads(path.read_text(encoding="utf-8"))
+        voice = prior.get("voice", "existing-voice")
+        revision = prior.get("revision", 26)
+    elif options.narrator == "nz":
+        voice = "en-US-GuyNeural"
+        revision = 26
+    else:
+        voice = PROFILES[options.narrator]["model"]
+        revision = 32
+    path.write_text(json.dumps({
+        "durations": durations,
+        "voice": voice,
+        "revision": revision,
+        "narrator_profile": options.narrator if not options.reuse_voice else "existing",
+    }, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+
+
 def generate_featured(key):
     scenes = curated(key)
     name = f"{key}-nz"
@@ -433,6 +454,7 @@ if __name__ == "__main__":
             asyncio.run(voices(name, scenes, "en-US-GuyNeural", [("+0%", "+0Hz")]*6))
             durations = [round(media_duration(out / f"{name}-{i+1}.mp3") + .15, 3) for i in range(len(scenes))]
             continuous(name, durations)
+            save_other_timing(name, durations)
         custom = os.environ.get("CUSTOM_SCRIPT", "").strip()
         if custom:
             paragraphs = [p.strip() for p in re.split(r"\n\s*\n|\s*\|\s*", custom.replace("\\n", "\n")) if p.strip()]
@@ -446,8 +468,4 @@ if __name__ == "__main__":
             asyncio.run(voices("custom", scenes, "en-US-GuyNeural", [("+0%", "+0Hz")]*6))
             durations = [round(media_duration(out / f"custom-{i+1}.mp3") + .15, 3) for i in range(len(scenes))]
             continuous("custom", durations)
-            (out / "custom-timing.json").write_text(json.dumps({
-                "durations": durations,
-                "voice": "en-NZ-MitchellNeural" if options.narrator == "nz" else PROFILES[options.narrator]["model"],
-                "revision": 32
-            }, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+            save_other_timing("custom", durations)
