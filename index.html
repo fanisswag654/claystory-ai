@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ClayStory AI</title><style>
-:root{font-family:system-ui,sans-serif;color:#f7f1e9;background:#15171f}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:2.4rem;margin-bottom:6px}p{color:#bbb}section{background:#222632;padding:18px;border-radius:16px;margin:16px 0}input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #51576b}input,textarea{background:#11141c;color:white;width:100%}textarea{min-height:90px}button{background:#f8b95a;color:#151515;font-weight:700;cursor:pointer;margin:4px}button:disabled{opacity:.5}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:20px}canvas{width:100%;aspect-ratio:9/16;border-radius:12px;background:#090d20}.scene{border:1px solid #44495b;border-radius:10px;padding:10px;margin:10px 0}.small{font-size:.8rem;color:#b5b9c8}@media(max-width:720px){.layout{grid-template-columns:1fr}} </style></head><body><main><h1>🎬 ClayStory AI <span style="font-size:15px;color:#f8b95a">V28 ANIMATED FACES & CINEMATIC WATER</span></h1><p>Original Māori pūrākau in animated pixel art. Great Fish now uses a more conversational free New Zealand male narrator, with natural sound effects and subtitles.</p><section><label>Story topic<input id="topic" value="Māui and the Great Fish"></label><label style="display:block;margin-top:12px">Your video script<textarea id="customscript" placeholder="Paste your script here. Use a blank line between scenes, or paste a full story to split it automatically." rows="8"></textarea></label><button id="loadfish">🐟 Load Great Fish story</button><button id="loadmaui">🌞 Load Māui pixel animation</button><button id="buildscript">🎬 Build animation from script</button><button id="generate">⚡ Create video automatically</button><button id="savefilm">📲 Save film to Photos</button><button id="record">⬇ Record silent WebM</button><div id="savepanel" hidden><p id="savestatus" class="small" role="status"></p><button id="sharefilm" hidden>Share video / Save Video</button><a id="downloadfilm" hidden style="color:#f8b95a">Download MP4</a><p class="small">On iPad: tap Share video, then Save Video to add it to Photos. If unavailable, download the MP4, open it in Files, tap Share, then Save Video. Finished MP4s include narration and your selected effects mix. Edits, uploaded recordings and speed changes apply to Preview only.</p></div><p class="small">Choose either featured Māui story. The Great Fish has eight scenes; the Sun story has six original pixel-art scenes, NZ narration, and effects.</p></section><div class="layout"><section><div style="margin-bottom:12px"><label for="visualstyle" style="display:block;margin-bottom:6px">Great Fish visual style</label><select id="visualstyle" aria-describedby="visualstylehint" style="width:100%;font:inherit;padding:10px;border-radius:10px;background:#11141c;color:#f7f1e9;border:1px solid #51576b"><option value="pixel" selected>Pixel</option><option value="woodblock">Woodblock — style test</option></select><p id="visualstylehint" class="small" role="status" style="margin:6px 0">Pixel is the main style. Woodblock is a Great Fish Preview test; Photos MP4 downloads use Pixel.</p></div><canvas id="stage" width="540" height="960"></canvas><div><button id="play">▶ Preview with sound</button><button id="testfx" type="button">🔊 Hear new sound effects</button><div style="margin:9px 0;padding:11px;border:1px solid #596d75;border-radius:11px;background:#142831"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:#fbe6c7"><input id="captionsenabled" type="checkbox" checked style="width:22px;height:22px;accent-color:#f8b95a"><strong>CC — Show spoken captions</strong></label><p id="captionstatus" class="small" style="margin:5px 0 0">On by default. Spoken narration appears in a dedicated subtitle strip below the animation. Exported MP4 films also include captions.</p></div><div style="margin:8px 0;padding:12px;border-radius:12px;border:1px solid #51576b;background:#1a202c"><label style="display:flex;align-items:center;gap:10px;font-size:15px"><input id="sfxenabled" type="checkbox" checked style="width:auto;accent-color:#f8b95a"> 🎧 Natural sound effects — no electronic ambience</label><label style="display:block;margin-top:8px;font-size:13px;color:#d7d1c9">Effects strength (restart Preview to apply) <input id="sfxlevel" aria-label="Sound effects strength" type="range" min="0" max="100" value="55" style="width:100%;padding:0;border:0;accent-color:#f8b95a"></label><p id="sfxstatus" class="small" style="margin:6px 0 0">New sound cues include shoreline footsteps, baskets, floorboards, bubbles, the ancestral hook, rope scrapes, fish splashes, shifting rocks and wind through trees. Effects stay below the narration.</p></div><label style="display:block;margin:8px 0 4px">Pacing <select id="pace" style="padding:8px;background:#11141c;color:white;border-radius:8px"><option value="1">Fast cuts (narrator-paced)</option><option value="1.08">Even quicker (1.08×)</option><option value="1.15">Very quick (1.15×)</option></select></label><button id="stop">■ Stop</button><label style="display:block;margin-top:10px">Narrator voice <select id="voice" style="width:100%;padding:10px;border-radius:10px;background:#11141c;color:white;border:1px solid #51576b"><option value="">Best available English voice</option></select></label><button id="testvoice" type="button">🔊 Test iPad voice</button><div style="border:1px solid #51576b;border-radius:12px;padding:12px;margin-top:12px"><strong>☁️ Cloud-generated neural narration</strong><p class="small" style="color:#f5d39f">Great Fish: free New Zealand male voice with natural speech pitch, shorter conversational phrases and carefully timed pauses.</p><p class="small">GitHub Actions generates MP3 files remotely. For your own script, open the workflow, paste the same script into custom_script, and run it. Then return here and tap Check audio.</p><label style="display:block;margin:12px 0 4px">Optional: use a recorded narration (especially recommended for te reo Māori pronunciation).<input type="file" accept="audio/*" id="mauiaudio" style="margin-top:6px"></label><p class="small">A human narrator fluent in te reo Māori is best for cultural and pronunciation accuracy. A New Zealand English synthetic voice is not a substitute for that review.</p><button id="checkaudio" type="button">Check audio availability</button><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/narration.yml" target="_blank" rel="noopener" style="color:#f8b95a">Open GitHub voice generator ↗</a><p class="small" id="cloudstatus">No audio checked yet. Until generated, iPad voices remain available.</p></div><p class="small">Voice quality is limited by your iPad’s installed voices. Selecting a different voice only helps when the device offers one.</p></div><p id="status" class="small">Ready. Choose a supported topic and press Create video automatically. Save a finished MP4 with sound to Photos, or record a silent WebM on compatible browsers.</p></section><section><h2>Storyboard</h2><div id="scenes"></div><p class="small">Featured Māui stories show timed narration subtitles in a dedicated bottom safe area. Finished MP4s include spoken captions by default. Edits to narration affect Preview only.</p></section></div></main><script>
+:root{font-family:system-ui,sans-serif;color:#f7f1e9;background:#15171f}*{box-sizing:border-box}body{margin:0}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:2.4rem;margin-bottom:6px}p{color:#bbb}section{background:#222632;padding:18px;border-radius:16px;margin:16px 0}input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #51576b}input,textarea{background:#11141c;color:white;width:100%}textarea{min-height:90px}button{background:#f8b95a;color:#151515;font-weight:700;cursor:pointer;margin:4px}button:disabled{opacity:.5}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:20px}canvas{width:100%;aspect-ratio:9/16;border-radius:12px;background:#090d20}.scene{border:1px solid #44495b;border-radius:10px;padding:10px;margin:10px 0}.small{font-size:.8rem;color:#b5b9c8}@media(max-width:720px){.layout{grid-template-columns:1fr}} </style></head><body><main><h1>🎬 ClayStory AI <span style="font-size:15px;color:#f8b95a">V29 TWEEN CAMERA & ANIMATED SPRITES</span></h1><p>Original Māori pūrākau in animated pixel art. Great Fish now uses a more conversational free New Zealand male narrator, with natural sound effects and subtitles.</p><section><label>Story topic<input id="topic" value="Māui and the Great Fish"></label><label style="display:block;margin-top:12px">Your video script<textarea id="customscript" placeholder="Paste your script here. Use a blank line between scenes, or paste a full story to split it automatically." rows="8"></textarea></label><button id="loadfish">🐟 Load Great Fish story</button><button id="loadmaui">🌞 Load Māui pixel animation</button><button id="buildscript">🎬 Build animation from script</button><button id="generate">⚡ Create video automatically</button><button id="savefilm">📲 Save film to Photos</button><button id="record">⬇ Record silent WebM</button><div id="savepanel" hidden><p id="savestatus" class="small" role="status"></p><button id="sharefilm" hidden>Share video / Save Video</button><a id="downloadfilm" hidden style="color:#f8b95a">Download MP4</a><p class="small">On iPad: tap Share video, then Save Video to add it to Photos. If unavailable, download the MP4, open it in Files, tap Share, then Save Video. Finished MP4s include narration and your selected effects mix. Edits, uploaded recordings and speed changes apply to Preview only.</p></div><p class="small">Choose either featured Māui story. The Great Fish has eight scenes; the Sun story has six original pixel-art scenes, NZ narration, and effects.</p></section><div class="layout"><section><div style="margin-bottom:12px"><label for="visualstyle" style="display:block;margin-bottom:6px">Great Fish visual style</label><select id="visualstyle" aria-describedby="visualstylehint" style="width:100%;font:inherit;padding:10px;border-radius:10px;background:#11141c;color:#f7f1e9;border:1px solid #51576b"><option value="pixel" selected>Pixel</option><option value="woodblock">Woodblock — style test</option></select><p id="visualstylehint" class="small" role="status" style="margin:6px 0">Pixel is the main style. Woodblock is a Great Fish Preview test; Photos MP4 downloads use Pixel.</p></div><canvas id="stage" width="540" height="960"></canvas><div><button id="play">▶ Preview with sound</button><button id="testfx" type="button">🔊 Hear new sound effects</button><div style="margin:9px 0;padding:11px;border:1px solid #596d75;border-radius:11px;background:#142831"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:#fbe6c7"><input id="captionsenabled" type="checkbox" checked style="width:22px;height:22px;accent-color:#f8b95a"><strong>CC — Show spoken captions</strong></label><p id="captionstatus" class="small" style="margin:5px 0 0">On by default. Spoken narration appears in a dedicated subtitle strip below the animation. Exported MP4 films also include captions.</p></div><div style="margin:8px 0;padding:12px;border-radius:12px;border:1px solid #51576b;background:#1a202c"><label style="display:flex;align-items:center;gap:10px;font-size:15px"><input id="sfxenabled" type="checkbox" checked style="width:auto;accent-color:#f8b95a"> 🎧 Natural sound effects — no electronic ambience</label><label style="display:block;margin-top:8px;font-size:13px;color:#d7d1c9">Effects strength (restart Preview to apply) <input id="sfxlevel" aria-label="Sound effects strength" type="range" min="0" max="100" value="55" style="width:100%;padding:0;border:0;accent-color:#f8b95a"></label><p id="sfxstatus" class="small" style="margin:6px 0 0">New sound cues include shoreline footsteps, baskets, floorboards, bubbles, the ancestral hook, rope scrapes, fish splashes, shifting rocks and wind through trees. Effects stay below the narration.</p></div><label style="display:block;margin:8px 0 4px">Pacing <select id="pace" style="padding:8px;background:#11141c;color:white;border-radius:8px"><option value="1">Fast cuts (narrator-paced)</option><option value="1.08">Even quicker (1.08×)</option><option value="1.15">Very quick (1.15×)</option></select></label><button id="stop">■ Stop</button><label style="display:block;margin-top:10px">Narrator voice <select id="voice" style="width:100%;padding:10px;border-radius:10px;background:#11141c;color:white;border:1px solid #51576b"><option value="">Best available English voice</option></select></label><button id="testvoice" type="button">🔊 Test iPad voice</button><div style="border:1px solid #51576b;border-radius:12px;padding:12px;margin-top:12px"><strong>☁️ Cloud-generated neural narration</strong><p class="small" style="color:#f5d39f">Great Fish: free New Zealand male voice with natural speech pitch, shorter conversational phrases and carefully timed pauses.</p><p class="small">GitHub Actions generates MP3 files remotely. For your own script, open the workflow, paste the same script into custom_script, and run it. Then return here and tap Check audio.</p><label style="display:block;margin:12px 0 4px">Optional: use a recorded narration (especially recommended for te reo Māori pronunciation).<input type="file" accept="audio/*" id="mauiaudio" style="margin-top:6px"></label><p class="small">A human narrator fluent in te reo Māori is best for cultural and pronunciation accuracy. A New Zealand English synthetic voice is not a substitute for that review.</p><button id="checkaudio" type="button">Check audio availability</button><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/narration.yml" target="_blank" rel="noopener" style="color:#f8b95a">Open GitHub voice generator ↗</a><p class="small" id="cloudstatus">No audio checked yet. Until generated, iPad voices remain available.</p></div><p class="small">Voice quality is limited by your iPad’s installed voices. Selecting a different voice only helps when the device offers one.</p></div><p id="status" class="small">Ready. Choose a supported topic and press Create video automatically. Save a finished MP4 with sound to Photos, or record a silent WebM on compatible browsers.</p></section><section><h2>Storyboard</h2><div id="scenes"></div><p class="small">Featured Māui stories show timed narration subtitles in a dedicated bottom safe area. Finished MP4s include spoken captions by default. Edits to narration affect Preview only.</p></section></div></main><script src="vendor/tween.umd.js"></script><script src="scripts/v29_motion.js"></script><script>
 const story=[
 {title:"The hook",caption:"WHAT IF THE SUN VANISHED?",narration:"Imagine waking up, and the Sun has vanished. Would Earth freeze instantly? Not quite!",color:"#252346"},
 {title:"Eight-minute delay",caption:"8 MINUTES, 20 SECONDS",narration:"Sunlight takes about eight minutes and twenty seconds to reach Earth. So we'd still see sunlight briefly.",color:"#293451"},
@@ -349,7 +349,9 @@ function fishEase(value){const p=Math.max(0,Math.min(1,value));return p*p*(3-2*p
 function fishActor(x,y,t,color,face='determined',scale=1,pose='brace'){
  pActor(x,y,t,color,face==='frustrated'||face==='determined'?'angry':'neutral',scale);
  pix.save();pix.translate(Math.round(x),Math.round(y+Math.sin(t*4+x)*1.2));pix.scale(scale,scale);
- const blink=Math.sin(t*.9+x)>.985,raise=Math.sin(t*4+x)*2;
+ const action=pose==='pull'?'pull':pose==='point'?'point':face==='panic'||face==='surprise'?'surprise':'walk';
+ const sprite=ClayMotionV29.spriteFrame(action,t,Math.abs(Math.round(x))*.13);
+ const blink=Math.sin(t*.9+x)>.985,raise=Math.sin(t*4+x)*2+sprite.bob;
  const strain=face==='determined'||face==='frustrated';
  const gasp=face==='panic'||face==='surprise'||face==='awe';
  // Facial animation stays pixel-aligned and follows the actual narration clock.
@@ -376,15 +378,22 @@ function fishActor(x,y,t,color,face='determined',scale=1,pose='brace'){
   else{pLine(-3,-34,4,-34,'#563b3c',1)}
  }
  if(pose==='pull'){
-  const tug=Math.sin(t*8+x*.12)*2.5;
-  pLine(-12,-27,-23,-22+raise+tug,'#ce9472',4);pLine(-23,-22+raise+tug,6,-14+tug,'#ce9472',4);
-  pLine(12,-27,19,-20+raise-tug,'#ce9472',4);pLine(19,-20+raise-tug,6,-14+tug,'#e0aa7e',4);
-  pLine(-5,7,-15,14+tug*.4,'#48373c',5);pLine(5,7,18,13-tug*.4,'#48373c',5);
+  // Six deliberately authored pull frames: shoulders, wrist, brace and knees
+  // animate as a single coordinated pixel-sprite action.
+  const tug=sprite.tug,arm=sprite.arm,leg=sprite.leg;
+  pLine(-12,-27,-23+arm*.25,-22+raise+tug*.5,'#ce9472',4);
+  pLine(-23+arm*.25,-22+raise+tug*.5,6+arm*.18,-14+tug,'#ce9472',4);
+  pLine(12,-27,19+arm*.16,-20+raise-tug*.2,'#ce9472',4);
+  pLine(19+arm*.16,-20+raise-tug*.2,6+arm*.18,-14+tug,'#e0aa7e',4);
+  pLine(-5,7,-15+leg*.3,14+leg*.35,'#48373c',5);
+  pLine(5,7,18-leg*.35,13-leg*.25,'#48373c',5);
   px(-12,-23,4,3,'#deaa81');px(10,-23,4,3,'#deaa81');
  }else if(pose==='point'){
-  pLine(12,-27,28,-31+raise,'#ce9472',4);px(27,-33+raise,7,3,'#e0aa7e');
+  pLine(12,-27,25+sprite.reach*.4,-32+raise-sprite.reach*.5,'#ce9472',4);
+  px(24+sprite.reach*.4,-34+raise-sprite.reach*.5,7,3,'#e0aa7e');
  }else if(face==='panic'||face==='surprise'){
-  pLine(-12,-27,-23,-39+raise,'#ce9472',4);pLine(12,-27,23,-39-raise,'#ce9472',4);
+  pLine(-12,-27,-23-sprite.reach*.5,-39+raise-sprite.reach*.3,'#ce9472',4);
+  pLine(12,-27,23+sprite.reach*.5,-39-raise-sprite.reach*.3,'#ce9472',4);
  }
  pix.restore();
 }
@@ -407,8 +416,14 @@ function fishCamera(scene,phase,t){
  const shots=[ [1.08,1.22,94,188], [1,1.04,90,155], [1.23,1.40,90,158],
   [1.08,1.18,90,156], [1.30,1.55,104,150], [1.06,1.12,90,174],
   [1.20,.91,90,170], [1.05,.88,84,190] ];
- const [from,to,x,y]=shots[scene],z=from+(to-from)*fishEase(phase);
- pix.translate(90,154);pix.scale(z,z);pix.translate(-x+Math.sin(t*.3)*.6,-y);
+ const [from,to,x,y]=shots[scene];
+ // Tween.js is sampled from absolute scene time — camera moves are smooth,
+ // scrub backwards cleanly, and render identically frame by frame in FFmpeg.
+ const track=ClayMotionV29.tween(
+  {zoom:from,pan:0},{zoom:to,pan:scene===6?-3:scene===7?4:1.5},
+  phase,scene===6?'out':'cinematic');
+ pix.translate(90,154);pix.scale(track.zoom,track.zoom);
+ pix.translate(-x+Math.sin(t*.3)*.6+track.pan,-y);
 }
 function fishCanoe(x,y,t,scale=1,crew=true,hidden=false,reaction='frustrated',energy=1){
  pix.save();pix.translate(Math.round(x),Math.round(y+Math.sin(t*2.4)*2.4*energy));pix.rotate(Math.sin(t*2.1)*.025*energy);pix.scale(scale,scale);
@@ -417,9 +432,12 @@ function fishCanoe(x,y,t,scale=1,crew=true,hidden=false,reaction='frustrated',en
    for(let j=0;j<3;j++){
      const actorX=-35+j*34;
      fishActor(actorX,-8,t+j*.8,['#547c80','#8b695d','#71846a'][j],j===1&&reaction==='surprise'?'frustrated':reaction,.63,'brace');
-     const swing=Math.sin(t*2+j)*6;
-     pLine(actorX+7,-22,actorX+17+swing,36,'#a77555',3);
-     pPolygon([[actorX+14+swing,26],[actorX+20+swing,29],[actorX+24+swing,49],[actorX+15+swing,44]],'#d0b485')
+     const paddle=ClayMotionV29.spriteFrame('paddle',t,j*.21);
+     const swing=paddle.swing,bladeY=paddle.blade;
+     pLine(actorX+7,-22+paddle.shoulder,actorX+17+swing,36+bladeY,'#a77555',3);
+     pPolygon([[actorX+14+swing,26+bladeY],[actorX+20+swing,29+bladeY],[actorX+24+swing,49+bladeY],[actorX+15+swing,44+bladeY]],'#d0b485');
+     // A tiny water wake follows the blade as it completes the downstroke.
+     if(bladeY>6){px(actorX+16+swing,36+bladeY,8,2,'#a6d7ce');px(actorX+23+swing,35+bladeY,4,1,'#e0eee0')}
    }
  }
  pPolygon([[-74,-15],[-65,6],[-50,23],[44,23],[66,11],[76,-15]],'#2e3546');
@@ -432,9 +450,10 @@ function fishCanoe(x,y,t,scale=1,crew=true,hidden=false,reaction='frustrated',en
  pix.restore()
 }
 function fishCreature(x,y,w,h,t,marks=0){
- pix.save();pix.translate(x,y+Math.sin(t*1.8)*2.3);
+ const swim=ClayMotionV29.spriteFrame('swim',t);
+ pix.save();pix.translate(x,y+swim.bob+Math.sin(t*1.8)*1.2);
  pix.rotate(Math.sin(t*.74)*.028);pix.scale(w/110,h/68);
- const tail=Math.sin(t*3)*14,finBeat=Math.sin(t*3.7);
+ const tail=swim.tail,finBeat=swim.fin*.2;
  pPolygon([[34,-10],[83+tail,-37],[73+tail,0],[84+tail,32],[37,14]],'#37687b');
  // Separate fin rays and trailing highlights make the fish's swimming visible.
  for(let j=0;j<5;j++){const dy=-25+j*12;pLine(41,dy*.43,74+tail,dy,'#6aa6ad',1)}
@@ -513,7 +532,8 @@ function fishUnderwater(t){
  }
 }
 function fishIsland(t,phase){
- const grow=fishEase(phase*1.7),rise=fishEase((phase-.08)*2.1);
+ const grow=ClayMotionV29.tween({p:0},{p:1},phase*1.7,'out').p;
+ const rise=ClayMotionV29.tween({p:0},{p:1},(phase-.08)*2.1,'smooth').p;
  const coast=[[39,167],[31,152],[33,137],[25,120],[30,117],[41,134],[46,148],[61,158],[69,157],[81,147],[94,151],[99,165],[117,174],[130,192],[120,205],[133,213],[119,226],[110,245],[93,260],[89,274],[80,268],[83,248],[72,236],[65,215],[51,201],[54,185]];
  // Expanding rings and a shaded continental shelf give the rising land weight.
  for(let ring=3;ring>0;ring--){
@@ -594,7 +614,7 @@ function drawFishPixelScene(scene,t){
   pPolygon([[-20,174],[34,160],[59,185],[46,210],[21,222]],'#d6c29a');
   pTree(8,154,Math.sin(t)*1.5);pTree(-13,177,Math.cos(t));pFlax(21,234,Math.sin(t));
   pWhare(3,138,.5);pBasket(46,179,t);
-  fishCanoe(91+fishEase(phase)*49,174,t,.64,true,false,'frustrated');
+  fishCanoe(91+ClayMotionV29.tween({x:0},{x:49},phase,'smooth').x,174,t,.64,true,false,'frustrated');
   fishActor(29+Math.min(phase,.4)*26,202,t,'#b78e65','determined',.67,'point');
   fishFoam(67,195,t,42);fishFoam(117+phase*20,194,t,57);pBird(130+t%20,77,t);
  }else if(scene===2){
@@ -602,13 +622,13 @@ function drawFishPixelScene(scene,t){
   fishCanoe(90,171,t,.92,true,false,'frustrated');
   px(60,163,53,19,'#252d39');px(62,165,49,15,'#4c3d36');
   pix.save();pix.beginPath();pix.rect(61,156,50,25);pix.clip();
-  pix.save();pix.translate(69+fishEase(phase*2)*27,176);pix.rotate(-Math.PI/2);
+  pix.save();pix.translate(69+ClayMotionV29.tween({x:0},{x:27},phase*2,'out').x,176);pix.rotate(-Math.PI/2);
   fishActor(0,0,t,'#b78e65','determined',.48);pix.restore();pix.restore();
   for(let j=0;j<5;j++)px(61+j*11,159-Math.sin(Math.min(1,phase*3)*Math.PI)*8,10,4,'#c49868');
   fishFoam(91,197,t,107);fishSpray(t,52,187,8);
  }else if(scene===3){
   // Reaction shot: hands fly up, then the crew reluctantly resumes paddling.
-  const emerge=fishEase(phase*3),face=phase<.5?'surprise':'frustrated';
+  const emerge=ClayMotionV29.tween({p:0},{p:1},phase*3,'back').p,face=phase<.5?'surprise':'frustrated';
   fishCanoe(90,181,t,.91,true,false,face);
   fishActor(91,180-emerge*45,t,'#b78e65','determined',.85,'point');
   if(phase<.48){for(let j=0;j<3;j++){let x=54+j*34;pLine(x,110,x,104-Math.sin(t*5)*2,'#f4df9d',2);px(x,115,2,2,'#f4df9d')}}
@@ -618,22 +638,24 @@ function drawFishPixelScene(scene,t){
   fishCanoe(70,183,t,.91,true,false,'frustrated');
   fishActor(86,152,t,'#b78e65','determined',1.02,'point');
   if(phase<.42)pLine(95,131,88,115,'#ce9472',3);
-  const drop=fishEase((phase-.68)*3),hy=153+drop*55;
+  const drop=ClayMotionV29.tween({p:0},{p:1},(phase-.68)*3,'smooth').p,hy=153+drop*55;
   pLine(100,136,119,146,'#cfad78',3);fishTension(116,145,122,hy,t,drop);
   fishHook(122,hy,t);if(phase>.42)px(125,hy+16,2,2,'#914d52');
   fishFoam(93,209,t,120);
  }else if(scene===5){
   // Split-level strike: line descends, the fish approaches, then the rope snaps taut.
-  fishUnderwater(t);const descend=fishEase(phase*2.2),bite=fishEase((phase-.43)*8);
+  fishUnderwater(t);
+  const descend=ClayMotionV29.tween({p:0},{p:1},phase*2.2,'smooth').p;
+  const bite=ClayMotionV29.tween({p:0},{p:1},(phase-.43)*8,'out').p;
   fishCanoe(90,139,t,1,true,false,bite>.1?'panic':'frustrated',1+bite*2);
   const hy=165+descend*69-bite*12;
-  fishCreature(238-fishEase(phase*2)*131,264,176,66,t);
+  fishCreature(238-ClayMotionV29.tween({x:0},{x:131},phase*2,'smooth').x,264,176,66,t);
   fishHook(105,hy,t);fishTension(91,132,106,hy,t,bite);
   fishActor(90,133,t,'#b78e65','determined',.78,'pull');
   if(bite>.1){fishSpray(t,90,159,32);fishFoam(90,163,t,140)}
  }else if(scene===6){
   // Low-angle breach: the camera pulls out as the enormous catch breaks the surface.
-  const breach=fishEase(phase*2.5),fy=310-breach*112;
+  const breach=ClayMotionV29.tween({p:0},{p:1},phase*2.5,'out').p,fy=310-breach*112;
   fishCreature(87,fy,231,108,t,phase>.78?.5:0);
   for(let j=0;j<5;j++)fishFoam(40+j*25,fy+28+Math.sin(j)*6,t+j,42);
   fishCanoe(83,124,t,.69,true,false,phase<.55?'panic':'awe',1.7);
