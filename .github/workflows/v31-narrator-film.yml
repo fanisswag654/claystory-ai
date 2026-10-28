@@ -59,6 +59,12 @@ jobs:
             'torch==2.6.0' 'torchaudio==2.6.0'
           python -m pip install 'kokoro==0.9.4' 'soundfile>=0.12'
 
+      - name: Preserve approved NZ samples for genuine side-by-side listening
+        run: |
+          mkdir -p voice-previews/v31
+          cp audio/fish-nz-1.mp3 voice-previews/v31/scene-1-ORIGINAL-NZ.mp3
+          cp audio/fish-nz-6.mp3 voice-previews/v31/scene-6-ORIGINAL-NZ.mp3
+
       - name: Synthesize ALL original Great Fish scenes with new storyteller
         run: |
           python scripts/v31_storyteller.py \
