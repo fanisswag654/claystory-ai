@@ -1,4 +1,4 @@
-# ClayStory AI V30
+# ClayStory AI V31
 
 A static Canvas animation player for 9:16 short films. Open `index.html` through
 an HTTP server; no JavaScript build is required. Great Fish is the default.
@@ -28,6 +28,20 @@ TikTok, the old clip-farmer repository or Minecraft footage. Content hashes
 prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
+
+## V31 distinctly new cinematic narrator + complete preview film
+
+V31 generates a **genuinely different voice** (default: British male Ryan
+Neural, with scene-by-scene expressive pacing), rebuilds the complete
+narration and synchronized effects, and creates a **full-length 9:16 MP4**
+for review. It also supports warm US male Christopher Neural and the
+optional open-source Kokoro George male voice. Unlike the optional Nano
+run, the V31 workflow **cannot show a green result while outputting only
+the old NZ clips**: all 8 new scenes and the final video must succeed.
+No production narration is committed and nothing is posted to Instagram.
+Open the [V31 candidate film workflow](.github/workflows/v31-narrator-film.yml)
+or read [V31_NARRATION.md](V31_NARRATION.md) for iPad instructions and
+cultural pronunciation-review requirements.
 
 ## V30 optional Chatterbox Nano voice comparison
 
