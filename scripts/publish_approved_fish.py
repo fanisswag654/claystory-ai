@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import sys
 
-from instagram_reels import buffer_api, instagram_channel
+from instagram_reels import STORIES, buffer_api, edit_instagram_reel, instagram_channel, verify_public_release
 
 HISTORY_PATH = Path("instagram-post-history.json")
 APPROVALS_PATH = Path("config/instagram-approved.json")
@@ -39,38 +39,35 @@ def main():
     post_id = draft["buffer_post_id"]
     result = buffer_api(
         "query { post(input: { id: " + json.dumps(post_id) +
-        " }) { id channelId status shareMode } }"
+        " }) { id channelId status shareMode text assets { type source } } }"
     )["post"]
     if not result or result.get("id") != post_id or result.get("channelId") != channel["id"]:
         raise RuntimeError("Could not verify the approved draft and its Instagram channel")
 
     current_status = str(result.get("status") or "").lower()
     print("Existing approved Buffer post status:", current_status)
-    if current_status in {"sent", "published"}:
-        print("Already posted; recording to prevent duplicates")
+    video_url = draft.get("video_url", "")
+    expected_tag = f"/instagram-{STORY}-{fingerprint[:16]}/"
+    if expected_tag not in video_url:
+        raise RuntimeError("Reviewed draft's video URL does not match the approved film")
+    original_caption = next(s["caption"] for s in STORIES if s["key"] == STORY)
+    caption = result.get("text") or original_caption
+    # Preserve any caption edits the account owner made to the reviewed Buffer draft.
+    if current_status in {"sent", "scheduled", "sending"}:
+        print("Approved post was already submitted to Buffer; no second publish request")
         outcome = result
-    elif current_status not in {"draft"}:
+    elif current_status != "draft":
         raise RuntimeError(
-            f"Expected an unsent approved draft, got {current_status}; "
-            "stopping rather than posting a duplicate"
+            f"Expected a draft or already-submitted approved post, got {current_status}; "
+            "stopping rather than risking a duplicate"
         )
     else:
-        mutation = (
-            "mutation { editPost(input: {"
-            + " id: " + json.dumps(post_id)
-            + " mode: shareNow schedulingType: automatic saveToDraft: false"
-            + " }) {"
-            + " ... on PostActionSuccess { post { id status shareMode dueAt } }"
-            + " ... on MutationError { message }"
-            + " } }"
-        )
-        payload = buffer_api(mutation)["editPost"]
-        outcome = payload.get("post")
-        if not outcome or outcome.get("id") != post_id:
-            raise RuntimeError("Buffer rejected Publish Now: " + str(payload))
-        if str(outcome.get("status") or "").lower() == "draft":
-            raise RuntimeError("Buffer left approved post in Drafts; publish not accepted")
-        print("Buffer Publish Now accepted:", outcome)
+        # The previous implementation submitted only mode/saveToDraft and Buffer
+        # rejected it because its edit validator lacked text, media and Reel type.
+        # Validate the exact publicly hosted reviewed film before editing the post.
+        verify_public_release(video_url)
+        outcome = edit_instagram_reel(post_id, video_url, caption, "shareNow")
+        print("Buffer accepted Publish Now for the existing Reel:", outcome)
 
     history[queue_key] = {
         "story": STORY,
@@ -79,13 +76,13 @@ def main():
         "channel_id": channel["id"],
         "mode": "queue",
         "share_mode": "shareNow",
-        "video_url": draft.get("video_url"),
+        "video_url": video_url,
         "buffer_status": outcome.get("status"),
     }
     tmp = HISTORY_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(history, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     tmp.replace(HISTORY_PATH)
-    print("Recorded approved Publish Now action, no new post was created")
+    print("Recorded approved Buffer submission, no duplicate was created; confirm final Instagram status separately")
 
 
 if __name__ == "__main__":
