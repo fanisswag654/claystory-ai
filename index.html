@@ -39,10 +39,14 @@ const MAUI_FALLBACK_DURATIONS=[16,16,18,16,18,17];
 const FISH_FALLBACK_DURATIONS=[11,10,11,12,11,11,12,13];
 let fishDurations=FISH_FALLBACK_DURATIONS.slice();
 let mauiDurations=MAUI_FALLBACK_DURATIONS.slice();
-function timelineDurations(){return chosen===mauiChoice?mauiDurations:chosen===fishChoice?fishDurations:[8,8,8,8,8,8]}
+const otherStoryDurations={};
+function timelineDurations(){
+ return chosen===mauiChoice?mauiDurations:chosen===fishChoice?fishDurations:
+ (otherStoryDurations[storyAudioName()]||[8,8,8,8,8,8]);
+}
 function timelineTotal(){return timelineDurations().reduce((sum,seconds)=>sum+seconds,0)}
 function timelineAt(time){const lengths=timelineDurations();let begin=0;for(let i=0;i<lengths.length;i++){if(time<begin+lengths[i]||i===lengths.length-1){const local=Math.max(0,time-begin);return {index:i,local,duration:lengths[i],phase:Math.min(1,local/lengths[i]),start:begin}}begin+=lengths[i]}return {index:lengths.length-1,local:0,duration:lengths[lengths.length-1],phase:1,start:begin-lengths[lengths.length-1]}}
-function sceneSeconds(){return chosen===mauiChoice?mauiDurations[0]:chosen===fishChoice?fishDurations[0]:8}
+function sceneSeconds(){return timelineDurations()[0]}
 function isMauiScript(text){return /māui|maui/i.test(text)&&/sun|tama-nui/i.test(text)}
 function isFishScript(text){return /north island|great fish|enormous fish|floorboards|ancestral jawbone hook|fishing canoe|te ika-a-māui|cutting up the catch|mountains and valleys/i.test(text)}
 function openFishStory(){stop();chosen=fishChoice;customMode=false;scenes=structuredClone(fishStory);document.querySelector('#topic').value='Te Ika-a-Māui — The Great Fish';document.querySelector('#customscript').value=fishStory.map(s=>s.narration).join('\n\n');editors();draw(0);checkCloudAudio();status.textContent='Great Fish loaded. Choose Pixel or Woodblock, then Preview with sound.'}
@@ -914,12 +918,18 @@ function drawFishWoodblockScene(scene,t){
 function draw(t){lastVisualTime=t;const sceneTime=timelineAt(t);let dur=sceneTime.duration,index=sceneTime.index,s=scenes[index],local=sceneTime.local;if(chosen===mauiChoice){drawMauiPixelScene(index,t);return}if(chosen===fishChoice){if(isWoodblockStyle())drawFishWoodblockScene(index,t);else drawFishPixelScene(index,t);return}ctx.save();ctx.translate(270+Math.sin(t*.2)*9,480+Math.cos(t*.16)*7);let zoom=1.04+.045*Math.sin(t*.23)+.045*(local/8);ctx.scale(zoom,zoom);ctx.translate(-270,-480);sceneSet(index,t);if(index===0||index===2||index===5){earth(270+Math.sin(t)*8,375,143,t);character(125,560,.48,t,'explorer',s.mood|| (index===0?'surprised':index===2?'worried':'excited'))}else if(index===1||index===3){character(268,435,1.05,t,'scientist',s.mood|| (index===1?'thinking':'surprised'));ctx.fillStyle='#f7c468';blob(430,240,62,'#f7c468',2)}else{character(270,445,1.06,t,'explorer',s.mood|| (index===4?'sad':'happy'));ctx.fillStyle='#c8d6e8';for(let i=0;i<8;i++)blob(60+i*60,220+(i%3)*30,14,'#b7d9e5',i)}ctx.restore();motionEffects(index,t);let vignette=ctx.createRadialGradient(270,390,170,270,420,660);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(7,8,18,.58)');ctx.fillStyle=vignette;ctx.fillRect(0,0,540,960);ctx.fillStyle='rgba(255,246,224,.05)';for(let i=0;i<140;i++){let xx=(i*149)%540,yy=(i*263)%960;ctx.fillRect(xx,yy,1,1)}ctx.fillStyle='rgba(14,17,29,.48)';round(16,18,508,74,20);ctx.fillStyle='#fff8e7';ctx.font='bold 27px system-ui';ctx.textAlign='center';ctx.fillText('CLAYSTORY AI • V3',270,65);ctx.fillStyle='rgba(10,15,28,.72)';round(18,670,504,220,22);ctx.fillStyle='#ffc76b';ctx.font='bold 33px system-ui';wrap(s.caption.toUpperCase(),270,713,466,39);ctx.fillStyle='#fff';ctx.font='23px system-ui';wrap(s.narration,270,786,463,31);ctx.fillStyle='#f5dfb8';ctx.font='17px system-ui';ctx.fillText('SCENE '+(index+1)+' / 6',270,926);ctx.fillStyle='#f8b95a';ctx.fillRect(0,949,540*Math.min(1,t/48),11)}
 function wrap(txt,x,y,max,line){let words=txt.split(' '),str='';for(const w of words){let trial=str?str+' '+w:w;if(ctx.measureText(trial).width>max&&str){ctx.fillText(str,x,y);y+=line;str=w}else str=trial}ctx.fillText(str,x,y)}
 let cloudAudioAvailable=false,cloudAudioFiles=[],cloudAudioGeneration=0,continuousNarration=null, narrationOverrideUrl=null;
+// Every narration refresh gets a fresh playback URL so iPad Safari will not
+// keep playing cached NZ narration after cinematic audio has been deployed.
+let audioCacheToken=Date.now();
+function freshAudioQuery(){return '?v='+audioCacheToken}
 const cloudStatus=document.querySelector('#cloudstatus');
 function storyAudioName(){return customMode?'custom':chosen.audioKey|| (chosen===library[0]?'sun':chosen===library[1]?'moon':'ocean')}
 function sceneAudioUrl(index){return './audio/'+storyAudioName()+'-'+(index+1)+'.mp3'}
 function fullAudioUrl(){return './audio/'+storyAudioName()+'-full.mp3'}
 async function checkCloudAudio(){
- const generation=++cloudAudioGeneration;cloudAudioAvailable=false;cloudAudioFiles=[];mixedFxReady=false;
+ const generation=++cloudAudioGeneration;
+ audioCacheToken=Date.now();
+ cloudAudioAvailable=false;cloudAudioFiles=[];mixedFxReady=false;
  cloudStatus.textContent='Checking continuous neural narration...';
  try{
  const r=await fetch(fullAudioUrl()+'?check='+Date.now(),{cache:'no-store'});
@@ -933,7 +943,8 @@ async function checkCloudAudio(){
       mixedFxReady=fxResult.ok&&/audio|mpeg|octet-stream/.test(fxResult.headers.get('content-type')||'');
     }catch(err){mixedFxReady=false}
   }
-  if(chosen===mauiChoice||chosen===fishChoice){
+  // Load measured timings for all future/custom stories, not only featured Māui.
+  {
     try {
       const timingResponse=await fetch('./audio/'+storyAudioName()+'-timing.json?check='+Date.now(),{cache:'no-store'});
       if(!timingResponse.ok&&chosen===fishChoice){cloudAudioAvailable=false;mixedFxReady=false}
@@ -941,7 +952,9 @@ async function checkCloudAudio(){
         const manifest=await timingResponse.json();
         if(generation!==cloudAudioGeneration)return;
         if(Array.isArray(manifest.durations)&&manifest.durations.length===scenes.length&&manifest.durations.every(x=>Number.isFinite(x)&&x>=1&&x<=35)&&(chosen!==fishChoice||Number.isInteger(manifest.revision)&&manifest.revision>=18)){
-          if(chosen===fishChoice)fishDurations=manifest.durations;else mauiDurations=manifest.durations;
+          if(chosen===fishChoice)fishDurations=manifest.durations;
+          else if(chosen===mauiChoice)mauiDurations=manifest.durations;
+          else otherStoryDurations[storyAudioName()]=manifest.durations;
           if(!playing)draw(0);
         }else if(chosen===fishChoice){cloudAudioAvailable=false;mixedFxReady=false}
       }
@@ -1123,14 +1136,14 @@ function selectedMixUrl(){
  if((chosen===mauiChoice||chosen===fishChoice)&&fxEnabled.checked&&mixedFxReady){
    const volume=Number(fxLevel.value);
    const flavor=volume<34?'soft':volume<73?'balanced':'bold';
-   return './audio/'+storyAudioName()+'-mix-'+flavor+'.mp3?revision=26';
+   return './audio/'+storyAudioName()+'-mix-'+flavor+'.mp3'+freshAudioQuery();
  }
- return fullAudioUrl()+'?revision=26';
+ return fullAudioUrl()+freshAudioQuery();
 }
 function stopFxTest(){if(testFxAudio){testFxAudio.pause();testFxAudio.currentTime=0;testFxAudio=null}}
 document.querySelector('#testfx').onclick=()=>{
  stopFxTest();
- testFxAudio=new Audio('./audio/'+(chosen===fishChoice?'fish-nz':'maui-nz')+'-fx-test.mp3?revision=26');
+ testFxAudio=new Audio('./audio/'+(chosen===fishChoice?'fish-nz':'maui-nz')+'-fx-test.mp3'+freshAudioQuery());
  testFxAudio.volume=.95;
  testFxAudio.play().then(()=>{fxStatus.textContent='Playing a story-specific sound-effects sample. If you hear it, your iPad audio is working.'}).catch(e=>{fxStatus.textContent='Effects test unavailable: '+e.message+'. Wait for the newest GitHub audio workflow.'});
 };
