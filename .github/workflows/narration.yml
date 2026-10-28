@@ -7,6 +7,11 @@ on:
         type: choice
         options: [fish, all]
         default: fish
+      narrator:
+        description: "Narration voice for newly generated stories"
+        type: choice
+        options: [cinematic, warm, nz]
+        default: cinematic
       custom_script:
         description: "Optional custom story script (paste up to 6 paragraphs; blank = built-in stories)"
         required: false
@@ -15,6 +20,8 @@ on:
     paths:
       - 'index.html'
       - 'scripts/generate_narration.py'
+      - 'scripts/v31_storyteller.py'
+      - 'scripts/v30_voice.py'
       - 'scripts/natural_foley.py'
       - 'scripts/render_films.py'
       - 'scripts/v29_motion.js'
@@ -38,15 +45,21 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install 'edge-tts>=7,<8'
+      - name: Verify cinematic narration is available for future scenes
+        run: |
+          python -m py_compile scripts/generate_narration.py scripts/v31_storyteller.py scripts/v30_voice.py
+          python -m unittest discover -s scripts -p 'test_v32_narration_default.py' -v
       - name: Install audio tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Generate MP3 voice for each scene
         env:
           CUSTOM_SCRIPT: ${{ inputs.custom_script }}
           STORY: ${{ inputs.story || 'fish' }}
+          NARRATOR: ${{ inputs.narrator || 'cinematic' }}
         run: |
           if [ -n "$CUSTOM_SCRIPT" ]; then STORY=all; fi
-          python scripts/generate_narration.py --story "$STORY"
+          echo "Generating $STORY with narrator profile: $NARRATOR"
+          python scripts/generate_narration.py --story "$STORY" --narrator "$NARRATOR"
       - name: Commit narration audio
         run: |
           git config user.name "github-actions[bot]"
