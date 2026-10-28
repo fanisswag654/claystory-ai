@@ -1,4 +1,5 @@
 """Render deterministic portrait H.264/AAC MP4s for Photos, without real-time recording."""
+import argparse
 import base64
 import functools
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -17,7 +18,8 @@ class QuietHandler(SimpleHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
-def render():
+def render(story="all", mix="all"):
+    """Render one or both featured films; Instagram uses one balanced MP4."""
     DEST.mkdir(exist_ok=True)
     server = ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(QuietHandler, directory=str(ROOT)))
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -26,7 +28,10 @@ def render():
             browser = p.chromium.launch(executable_path=shutil.which("chromium"), args=["--no-sandbox"])
             page = browser.new_page()
             page.goto(f'http://127.0.0.1:{server.server_port}')
-            for key, opener in [('fish-nz', 'openFishStory'), ('maui-nz', 'openMauiStory')]:
+            stories = [('fish-nz', 'openFishStory'), ('maui-nz', 'openMauiStory')]
+            if story != 'all':
+                stories = [item for item in stories if item[0] == story + '-nz']
+            for key, opener in stories:
                 timing = json.loads((ROOT / 'audio' / f'{key}-timing.json').read_text())
                 total = sum(timing['durations'])
                 page.evaluate(f'{opener}()')
@@ -46,7 +51,8 @@ def render():
                     process.kill()
                     process.wait()
                     raise
-                for mix in ('soft', 'balanced', 'bold', 'voice'):
+                mixes = ('soft', 'balanced', 'bold', 'voice') if mix == 'all' else (mix,)
+                for mix in mixes:
                     audio = ROOT / 'audio' / (f'{key}-full.mp3' if mix == 'voice' else f'{key}-mix-{mix}.mp3')
                     target = DEST / f'{key}-{mix}.mp4'
                     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(video), '-i', str(audio),
@@ -59,4 +65,8 @@ def render():
         server.shutdown()
 
 if __name__ == '__main__':
-    render()
+    parser = argparse.ArgumentParser(description="Render original ClayStory portrait films")
+    parser.add_argument('--story', choices=('all', 'fish', 'maui'), default='all')
+    parser.add_argument('--mix', choices=('all', 'soft', 'balanced', 'bold', 'voice'), default='all')
+    args = parser.parse_args()
+    render(args.story, args.mix)
