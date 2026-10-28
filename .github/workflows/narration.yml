@@ -17,6 +17,8 @@ on:
       - 'scripts/generate_narration.py'
       - 'scripts/natural_foley.py'
       - 'scripts/render_films.py'
+      - 'scripts/v29_motion.js'
+      - 'vendor/tween.umd.js'
       - '.github/workflows/narration.yml'
 permissions:
   contents: write
@@ -109,6 +111,10 @@ jobs:
           cp index.html _site/
           cp -a audio _site/audio
           cp -a videos _site/videos
+          mkdir -p _site/scripts _site/vendor
+          cp scripts/v29_motion.js _site/scripts/
+          cp vendor/tween.umd.js _site/vendor/
+          cp vendor/TWEEN_LICENSE.txt _site/vendor/
           if [ -f custom-story.json ]; then cp custom-story.json _site/; fi
       - uses: actions/upload-pages-artifact@v3
         with:
