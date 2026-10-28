@@ -8,9 +8,8 @@ the TikTok clip-farmer.
 
 1. `.github/workflows/narration.yml` generates narration and deploys two
    portrait animated films (with captions and original sound) to GitHub Pages.
-2. `.github/workflows/instagram-reels.yml` checks the public films each day.
-3. `scripts/instagram_reels.py` checks the video duration, aspect ratio, FPS,
-   audio track and size; it fingerprints each MP4 to avoid repeat posts.
+2. `.github/workflows/instagram-reels.yml` checks ClayStory's committed film source and soundtrack daily.
+3. `scripts/instagram_reels.py` fingerprints each story's artwork code and audio. For each new version, it renders the portrait MP4 directly using `scripts/render_films.py --story <name> --mix balanced`, validates the Reel's duration, aspect ratio, FPS and audio, and hosts the film as a versioned public GitHub Release asset. This avoids GitHub Pages video URL 404s.
 4. If enabled, the workflow sends **one new Reel per day** to the selected
    **Instagram** Buffer channel. Buffer schedules it into the posting queue.
    It never uses the TikTok channel or the old clip-farmer repository.
@@ -49,8 +48,7 @@ does not invent culturally sensitive pūrākau automatically.
 
 Open the [Instagram Reels workflow](https://github.com/fanisswag654/claystory-ai/actions/workflows/instagram-reels.yml).
 
-1. Tap **Run workflow**, leave `mode=check`, and run. The video can be checked
-   without a Buffer credential.
+1. Tap **Run workflow**, leave `mode=check`, and run. The workflow renders and publicly hosts a versioned MP4 using the repository's GitHub Actions token, without using Buffer or publishing to Instagram.
 2. Once Buffer and Instagram are connected, run `mode=draft`. Confirm the
    original video appears under **Buffer → Instagram → Drafts**.
 3. When satisfied, set `IG_AUTO_PUBLISH=true`. On the next scheduled run the
@@ -63,10 +61,8 @@ queue schedule.
 
 ## Important quality and hosting notes
 
-- Media are served from the **ClayStory GitHub Pages MP4 URLs**. These public
-  URLs must stay accessible through the scheduled publication time. If an MP4
-  is replaced before Buffer publishes the queued Reel, the media can change.
-  For immutable hosting, add versioned media URLs in a future release.
+- Media are served from immutable, versioned **public GitHub Releases** in the ClayStory repo. The workflow creates the MP4 when needed, checks that it is downloadable and reuses unchanged assets. GitHub Pages remains useful for the site but is not needed to deliver Instagram videos.
+- On the very first draft test, rendering and hosting the original film can take substantially longer than checking an existing release. This does not publish to Instagram.
 - Review AI-generated pronunciations of te reo Māori and the chosen telling of
   each pūrākau with an appropriate fluent reviewer before allowing unattended
   posting.
