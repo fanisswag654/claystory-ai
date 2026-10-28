@@ -269,6 +269,28 @@ def create_post(channel_id: str, video_url: str, caption: str) -> dict:
     return post
 
 
+def schedule_existing_draft(post_id: str) -> dict:
+    """Move the reviewed Buffer draft into the Instagram queue without duplicating it."""
+    query = (
+        "mutation { editPost(input: {"
+        " id: " + json.dumps(post_id)
+        + " schedulingType: automatic"
+        + " mode: addToQueue"
+        + " saveToDraft: false"
+        + " }) {"
+        + " ... on PostActionSuccess { post { id status dueAt } }"
+        + " ... on MutationError { message }"
+        + " } }"
+    )
+    result = buffer_api(query)["editPost"]
+    post = result.get("post")
+    if not post:
+        raise RuntimeError("Could not schedule reviewed Instagram draft: " + str(result))
+    if str(post.get("status", "")).lower() == "draft":
+        raise RuntimeError("Buffer left the post as a draft; nothing was scheduled")
+    return post
+
+
 def persist_history(data: dict) -> None:
     tmp = HISTORY_FILE.with_suffix(".tmp")
     tmp.write_text(
@@ -318,7 +340,16 @@ def main() -> None:
             continue
         if channel is None:
             channel = instagram_channel()
-        post = create_post(channel["id"], video_url, story["caption"])
+        original_draft = history.get(f"{key}:{fingerprint}:draft") if mode == "queue" else None
+        if original_draft and original_draft.get("buffer_post_id"):
+            if original_draft.get("channel_id") != channel["id"]:
+                raise RuntimeError("Existing draft belongs to a different Buffer channel")
+            post = schedule_existing_draft(original_draft["buffer_post_id"])
+            print("Moved reviewed Buffer draft into Instagram queue without duplicating it")
+        else:
+            post = create_post(channel["id"], video_url, story["caption"])
+        if mode == "queue" and str(post.get("status", "")).lower() == "draft":
+            raise RuntimeError("Buffer returned draft status; refusing to mark it scheduled")
         history[unique_key] = {
             "story": key,
             "source_fingerprint": fingerprint,
