@@ -1,0 +1,143 @@
+name: ClayStory V31 cinematic narrator + complete preview film
+
+on:
+  workflow_dispatch:
+    inputs:
+      voice:
+        description: Choose a genuinely new male storyteller (not the approved NZ voice)
+        type: choice
+        options: [cinematic, warm, kokoro]
+        default: cinematic
+  push:
+    branches: [main]
+    paths:
+      - 'v31-voice-preview.trigger'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: claystory-v31-cinematic-preview
+  cancel-in-progress: false
+
+jobs:
+  create-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      V31_PROFILE: ${{ inputs.voice || 'cinematic' }}
+      CLAYSTORY_PREVIEW_WORKSPACE: '1'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - name: Check out original project (read-only, no push credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install voice, testing and film dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install --upgrade pip
+          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2'
+          python -m playwright install --with-deps chromium
+
+      - name: Verify V31 can only use a genuinely distinct narrator
+        run: |
+          python -m py_compile scripts/v30_voice.py scripts/v31_storyteller.py scripts/test_v31_storyteller.py
+          python -m unittest discover -s scripts -p 'test_v31_storyteller.py' -v
+
+      - name: Install optional Kokoro 82M CPU model (not needed for cinematic)
+        if: env.V31_PROFILE == 'kokoro'
+        run: |
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu \
+            'torch==2.6.0' 'torchaudio==2.6.0'
+          python -m pip install 'kokoro==0.9.4' 'soundfile>=0.12'
+
+      - name: Synthesize ALL original Great Fish scenes with new storyteller
+        run: |
+          python scripts/v31_storyteller.py \
+            --voice "$V31_PROFILE" \
+            --story fish \
+            --full \
+            --stage-film \
+            --output voice-previews/v31
+          test "$(find voice-previews/v31 -name "*-new-narration.mp3" | wc -l)" -eq 8
+
+      - name: Rebuild full voice, scene timings and Foley with new audio
+        run: |
+          python scripts/generate_narration.py --story fish --reuse-voice
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from scripts.v31_storyteller import PROFILES
+          path = Path("audio/fish-nz-timing.json")
+          timing = json.loads(path.read_text())
+          profile = PROFILES[os.environ["V31_PROFILE"]]
+          timing.update(
+              voice=profile["model"],
+              revision=31,
+              description=profile["label"] +
+                ". Experimental non-NZ narrator, Māori pronunciation unverified.",
+          )
+          path.write_text(json.dumps(timing, ensure_ascii=False, indent=2) + "\n")
+          print("Candidate film scene timings:", timing["durations"])
+          PY
+
+      - name: Render complete V31 cinematic Reel with new narration
+        run: |
+          python scripts/render_films.py --story fish --mix balanced
+          test -s videos/fish-nz-balanced.mp4
+          cp videos/fish-nz-balanced.mp4 "voice-previews/v31/fish-nz-V31-${V31_PROFILE}-REVIEW.mp4"
+          cp audio/fish-nz-timing.json "voice-previews/v31/fish-nz-V31-timing.json"
+          cp audio/fish-nz-mix-balanced.mp3 "voice-previews/v31/fish-nz-V31-balanced-audio.mp3"
+          ffprobe -v error -show_entries format=duration,size \
+            -of default=noprint_wrappers=1 "voice-previews/v31/fish-nz-V31-${V31_PROFILE}-REVIEW.mp4"
+          python - <<'PY'
+          import glob, hashlib, os
+          from pathlib import Path
+          new = Path(f"voice-previews/v31/fish-nz-V31-{os.environ['V31_PROFILE']}-REVIEW.mp4")
+          if new.stat().st_size < 100_000:
+              raise RuntimeError("Candidate preview MP4 is unexpectedly small")
+          items = sorted(glob.glob("voice-previews/v31/*-new-narration.mp3"))
+          if len(items) != 8:
+              raise RuntimeError("Missing alternate narration scenes")
+          report = [(hashlib.sha256(Path(x).read_bytes()).hexdigest(), Path(x).name)
+                    for x in [*items, str(new)]]
+          Path("voice-previews/v31/SHA256SUMS.txt").write_text(
+              "".join(f"{sha}  {filename}\n" for sha, filename in report)
+          )
+          print("V31 distinct narration and preview video rendered successfully.")
+          PY
+
+      - name: Report exactly which voice succeeded
+        if: success()
+        run: |
+          {
+            echo "## V31 new narrator: successful"
+            echo ""
+            echo "**Voice profile:** $V31_PROFILE"
+            echo ""
+            echo "- All 8 scene narrations have been regenerated (not copies of NZ Mitchell)."
+            echo "- A new full-length animation MP4 was rendered with matching captions and soundtrack."
+            echo "- **This is a REVIEW-ONLY candidate. Nothing was posted to Instagram.**"
+            echo "- The voice has a British or American accent, not guaranteed New Zealand."
+            echo "- Te reo Māori pronunciation requires fluent review."
+            echo ""
+            echo "Scroll to Artifacts and download **claystory-v31-improved-narration-film**."
+            echo "Open the **fish-nz-V31-*-REVIEW.mp4** in Files on your iPad."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload review film and complete alternative narration
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claystory-v31-improved-narration-film
+          path: voice-previews/v31/
+          if-no-files-found: warn
+          retention-days: 7
