@@ -1,4 +1,4 @@
-name: ClayStory V30 narrator comparison (private samples)
+name: ClayStory V30 narrator comparison (review-only samples)
 
 on:
   workflow_dispatch:
@@ -16,9 +16,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/v30_voice.py'
-      - 'scripts/test_v30_voice.py'
-      - '.github/workflows/v30-voice-preview.yml'
+      # A single manual trigger file avoids downloading large CPU models on
+      # every source edit. workflow_dispatch remains available on iPad.
+      - 'v30-voice-preview.trigger'
 
 permissions:
   contents: read
@@ -87,7 +87,7 @@ jobs:
             echo "Story: \`$V30_STORY\`. Requested engine: \`$V30_ENGINE\`."
             echo ""
             echo "- Existing NZ narrator is preserved in committed \`audio/\`."
-            echo "- Voice samples are private workflow artifacts, not public posts or GitHub Releases."
+            echo "- Samples are GitHub Actions artifacts for review (public-repo users may access artifacts); they are never automatically posted to social media or Releases."
             echo "- Chatterbox Nano is English-only and may mispronounce Māori words."
             if [ "$V30_ENGINE" = "nano" ]; then
               echo "- Optional CPU dependency installation: \`$INSTALL_STATUS\`."
@@ -108,4 +108,4 @@ jobs:
           name: claystory-v30-voice-comparison
           path: voice-previews/
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 7
