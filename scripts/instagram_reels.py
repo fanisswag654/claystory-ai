@@ -327,6 +327,14 @@ def main() -> None:
         if unique_key in history:
             print(f"Already submitted {story['name']}, {fingerprint[:12]}; skipping")
             continue
+        if mode == "queue":
+            approval_file = Path("config/instagram-approved.json")
+            approved = (json.loads(approval_file.read_text(encoding="utf-8"))
+                        if approval_file.exists() else {})
+            permitted = approved.get("approved_reels", {}).get(key, [])
+            if fingerprint not in permitted:
+                print(f"Skipping unreviewed film: {story['name']} ({fingerprint[:12]})")
+                continue
 
         print(f"New Instagram Reel source: {story['name']}, {fingerprint[:12]}", flush=True)
         # Release assets replace the old Pages /videos/ URL that returned 404.
