@@ -1,15 +1,16 @@
 {
   "durations": [
-    9.486,
-    8.022,
-    10.014,
-    10.83,
-    8.91,
-    12.15,
-    9.702,
-    14.092
+    10.422,
+    7.686,
+    10.302,
+    9.846,
+    9.63,
+    9.726,
+    9.798,
+    14.956
   ],
-  "voice": "en-NZ-MitchellNeural",
-  "revision": 26,
-  "description": "Free NZ male neural narration in two conversational beats per scene; pronunciation needs fluent review"
+  "voice": "en-GB-RyanNeural",
+  "revision": 32,
+  "narrator_profile": "cinematic",
+  "description": "Cinematic British male storyteller; cinematic sentence pacing and pauses; Māori pronunciation requires review"
 }
