@@ -1,4 +1,4 @@
-# ClayStory AI V24
+# ClayStory AI V29
 
 A static Canvas animation player for 9:16 short films. Open `index.html` through
 an HTTP server; no JavaScript build is required. Great Fish is the default.
@@ -28,6 +28,18 @@ TikTok, the old clip-farmer repository or Minecraft footage. Content hashes
 prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
+
+## V29 animation system — Tween.js + frame-based pixel poses
+
+ClayStory now loads a **local MIT-licensed Tween.js v25** engine and a deterministic
+sprite-action library. The Great Fish film has eased cinematic camera motion,
+frame-based Māui walking, point/pull/reaction poses, coordinated paddle strokes,
+swimming fish tail/fin animation and smoother scene transitions. All movement
+uses absolute narration time, so browser previews and Playwright/FFmpeg exports
+remain synchronized. The procedural sprite frames can later be replaced with
+transparent sprite sheets authored in Pixelorama; Pixelorama images have not
+yet been imported. Read [V29_ANIMATION.md](V29_ANIMATION.md) for full
+architecture, testing, integration details and iPad preview steps.
 
 ## V28 animation improvements (Great Fish)
 
