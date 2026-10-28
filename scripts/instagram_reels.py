@@ -1,6 +1,7 @@
 """Publish original ClayStory films to Instagram Reels via Buffer.
 
-Uses the ClayStory GitHub Pages MP4 URLs. There is no dependency on
+Renders finished films from the checked-out original animation source and
+hosts them as immutable GitHub Release assets. Never depends on GitHub Pages,
 TikTok-auto-clipper, Cloudinary credentials, or TikTok channels.
 
 Modes:
@@ -15,19 +16,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 import os
 from pathlib import Path
 import subprocess
 import sys
-import tempfile
 from fractions import Fraction
-from urllib.parse import urljoin
 
 import requests
 
-PAGES_BASE = os.getenv(
-    "CLAYSTORY_PAGES_BASE", "https://fanisswag654.github.io/claystory-ai/"
-).rstrip("/") + "/"
+REPOSITORY = os.getenv("GITHUB_REPOSITORY", "fanisswag654/claystory-ai")
 HISTORY_FILE = Path(os.getenv("IG_HISTORY_PATH", "instagram-post-history.json"))
 MODE = os.getenv("IG_MODE", "check").strip().lower()
 LIMIT = max(1, min(2, int(os.getenv("IG_MAX_POSTS", "1"))))
@@ -64,33 +62,97 @@ STORIES = [
 SESSION = requests.Session()
 
 
-def download_public_video(url: str, output: Path) -> str:
-    """Download the rendered video and return an SHA-256 content fingerprint."""
+def fingerprint_source(story_key: str) -> str:
+    """Fingerprint animation code + complete narration/mix to avoid reposts."""
     digest = hashlib.sha256()
-    length = 0
-    try:
-        with SESSION.get(url, stream=True, timeout=(20, 150), allow_redirects=True) as response:
-            response.raise_for_status()
-            content_type = response.headers.get("Content-Type", "").lower()
-            if "html" in content_type:
-                raise RuntimeError(f"Expected a public MP4 but received HTML at {url}")
-            with output.open("wb") as target:
-                for chunk in response.iter_content(chunk_size=1024 * 1024):
-                    if not chunk:
-                        continue
-                    length += len(chunk)
-                    if length > 300 * 1024 * 1024:
-                        raise RuntimeError(f"Instagram Reel exceeds 300MB: {url}")
-                    digest.update(chunk)
-                    target.write(chunk)
-    except requests.RequestException as exc:
-        raise RuntimeError(
-            f"Cannot download {url}. Check that ClayStory GitHub Pages deployment "
-            "is active and videos are public."
-        ) from exc
-    if length < 50_000:
-        raise RuntimeError(f"Video is unexpectedly small: {url} ({length} bytes)")
+    paths = [
+        Path("index.html"),
+        Path("scripts/render_films.py"),
+        Path(f"audio/{story_key}-timing.json"),
+        Path(f"audio/{story_key}-mix-balanced.mp3"),
+    ]
+    for file in paths:
+        if not file.is_file():
+            raise RuntimeError(f"Missing ClayStory render input: {file}")
+        digest.update(str(file).encode("utf-8"))
+        with file.open("rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(chunk)
     return digest.hexdigest()
+
+
+def github_release_asset(story_key: str, source_hash: str) -> tuple[str, Path | None]:
+    """Create a versioned, public MP4 if missing, using original renderer.
+
+    This avoids the GitHub Pages 404 entirely. GitHub Releases are public
+    in this public repository; the versioned URL remains stable for Buffer.
+    """
+    if not os.environ.get("GH_TOKEN"):
+        raise RuntimeError("GITHUB_TOKEN is not available for GitHub Releases")
+    tag = f"instagram-{story_key}-{source_hash[:16]}"
+    filename = f"{story_key}-balanced.mp4"
+    url = f"https://github.com/{REPOSITORY}/releases/download/{tag}/{filename}"
+    lookup = subprocess.run(
+        ["gh", "release", "view", tag, "--repo", REPOSITORY,
+         "--json", "assets", "--jq", ".assets[].name"],
+        capture_output=True, text=True,
+    )
+    found = lookup.returncode == 0 and filename in lookup.stdout.splitlines()
+    if found:
+        print(f"Reusing existing original ClayStory Reel asset: {tag}/{filename}", flush=True)
+        return url, None
+
+    print(f"Rendering original ClayStory film for GitHub Release {tag}", flush=True)
+    subprocess.run(
+        [sys.executable, "scripts/render_films.py",
+         "--story", story_key.removesuffix("-nz"), "--mix", "balanced"],
+        check=True,
+    )
+    video = Path("videos") / filename
+    if not video.is_file():
+        raise RuntimeError(f"Original film renderer did not create {video}")
+    print("New film validated:", validate_reel(video), flush=True)
+
+    if lookup.returncode == 0:
+        # The versioned release exists, but the requested file is missing.
+        command = ["gh", "release", "upload", tag, str(video),
+                   "--repo", REPOSITORY]
+    else:
+        command = ["gh", "release", "create", tag, str(video),
+                   "--repo", REPOSITORY, "--target",
+                   os.getenv("GITHUB_SHA", "main"),
+                   "--title", f"ClayStory original animation {story_key} ({source_hash[:12]})",
+                   "--notes", "Versioned original pixel-animated film for Pūrākau Pixels Instagram Reels. This public asset is hosted for Buffer media delivery."]
+    subprocess.run(command, check=True)
+    print("Hosted original film:", url, flush=True)
+    return url, video
+
+
+def verify_public_release(url: str) -> None:
+    """Wait for the GitHub Releases CDN to make the MP4 publicly readable."""
+    for attempt in range(1, 9):
+        try:
+            with SESSION.get(url, headers={"Range": "bytes=0-1023"},
+                             stream=True, timeout=(20, 60),
+                             allow_redirects=True) as response:
+                response.raise_for_status()
+                iterator = response.iter_content(chunk_size=1024)
+                first = next(iterator, b"")
+                if not first:
+                    raise RuntimeError("Public video asset is empty")
+                mime = response.headers.get("content-type", "").lower()
+                if "html" in mime:
+                    raise RuntimeError(f"Public asset returned HTML, not MP4: {url}")
+                print(f"Public Reel URL verified (HTTP {response.status_code})", flush=True)
+                return
+        except (requests.RequestException, RuntimeError) as error:
+            if attempt == 8:
+                raise RuntimeError(
+                    "GitHub Releases did not provide a public MP4. "
+                    "Instagram draft was not created; retry when the release is accessible."
+                ) from error
+            print(f"Release delivery not yet ready ({attempt}/8): {error}", flush=True)
+            time.sleep(5)
 
 
 def validate_reel(video: Path) -> str:
@@ -233,36 +295,41 @@ def main() -> None:
     if not isinstance(history, dict):
         raise RuntimeError("Invalid Instagram posting history")
     created = 0
-    with tempfile.TemporaryDirectory(prefix="claystory-instagram-") as folder:
-        for story in STORIES:
-            if created >= LIMIT:
-                break
-            key = story["key"]
-            url = urljoin(PAGES_BASE, f"videos/{key}-balanced.mp4")
-            film = Path(folder) / f"{key}.mp4"
-            fingerprint = download_public_video(url, film)
-            validation = validate_reel(film)
-            unique_key = f"{key}:{fingerprint}:{mode}"
-            if unique_key in history:
-                print(f"Already submitted {story['name']}, {fingerprint[:12]}; skipping")
-                continue
-            print(f"New Instagram Reel: {story['name']} ({validation})")
-            if mode == "check":
-                created += 1
-                continue
-            # Resolve channel only when a genuinely new film needs posting.
-            channel = instagram_channel()
-            post = create_post(channel["id"], url, story["caption"])
-            history[unique_key] = {
-                "story": key,
-                "buffer_post_id": post["id"],
-                "channel_id": channel["id"],
-                "mode": mode,
-                "video_url": url,
-            }
-            persist_history(history)
-            print(f"Instagram {mode} successful: {story['name']}, Buffer ID {post['id']}")
+    channel = None
+    for story in STORIES:
+        if created >= LIMIT:
+            break
+        key = story["key"]
+        fingerprint = fingerprint_source(key)
+        unique_key = f"{key}:{fingerprint}:{mode}"
+        if unique_key in history:
+            print(f"Already submitted {story['name']}, {fingerprint[:12]}; skipping")
+            continue
+
+        print(f"New Instagram Reel source: {story['name']}, {fingerprint[:12]}", flush=True)
+        # Release assets replace the old Pages /videos/ URL that returned 404.
+        video_url, local_video = github_release_asset(key, fingerprint)
+        if local_video:
+            print("Instagram video specs:", validate_reel(local_video))
+        verify_public_release(video_url)
+
+        if mode == "check":
             created += 1
+            continue
+        if channel is None:
+            channel = instagram_channel()
+        post = create_post(channel["id"], video_url, story["caption"])
+        history[unique_key] = {
+            "story": key,
+            "source_fingerprint": fingerprint,
+            "buffer_post_id": post["id"],
+            "channel_id": channel["id"],
+            "mode": mode,
+            "video_url": video_url,
+        }
+        persist_history(history)
+        print(f"Instagram {mode} successful: {story['name']}, Buffer ID {post['id']}")
+        created += 1
     print(
         f"Completed: {created} new {'eligible video(s)' if mode == 'check' else 'Instagram item(s)'}. "
         "No TikTok account was used."
