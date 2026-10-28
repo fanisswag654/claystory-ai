@@ -1,4 +1,4 @@
-# ClayStory AI V29
+# ClayStory AI V30
 
 A static Canvas animation player for 9:16 short films. Open `index.html` through
 an HTTP server; no JavaScript build is required. Great Fish is the default.
@@ -28,6 +28,19 @@ TikTok, the old clip-farmer repository or Minecraft footage. Content hashes
 prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
+
+## V30 optional Chatterbox Nano voice comparison
+
+ClayStory now has a separate GitHub Actions workflow that compares its approved
+en-NZ-MitchellNeural narrator with an experimental **Chatterbox Nano** CPU
+narrator for selected Māori story scenes. The test reads the original story,
+generates downloadable MP3 comparisons and a listening page, and does **not**
+replace the live animation soundtrack, change scene timings or post to Instagram.
+The model is English-only, so Māori names and pronunciation require fluent
+review. If the model cannot run on GitHub's free runner, the NZ narrator remains
+unchanged. See [V30_NARRATION.md](V30_NARRATION.md) and the
+[voice-comparison workflow](.github/workflows/v30-voice-preview.yml) for setup,
+iPad review and limitations.
 
 ## V29 animation system — Tween.js + frame-based pixel poses
 
