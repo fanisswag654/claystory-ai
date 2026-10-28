@@ -1,0 +1,113 @@
+name: ClayStory Instagram Reels automation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/instagram_reels.py'
+      - '.github/workflows/instagram-reels.yml'
+  schedule:
+    - cron: '30 20 * * *' # 9:30am NZDT / 8:30am NZST
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Check only, save draft, or queue an Instagram Reel
+        type: choice
+        options: [check, draft, queue]
+        default: check
+      max_posts:
+        description: Maximum new reels processed in this run
+        type: choice
+        options: ['1', '2']
+        default: '1'
+
+concurrency:
+  group: claystory-instagram-reels
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  instagram:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out ClayStory (not the TikTok clip-farmer)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate Instagram automation source code
+        run: python -m py_compile scripts/instagram_reels.py
+
+      - name: Install validation dependencies
+        if: github.event_name != 'push'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install 'requests>=2.32,<3'
+
+      - name: Restore Instagram posting history
+        if: github.event_name != 'push'
+        run: |
+          git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+          git show origin/instagram-publish-history:instagram-post-history.json > instagram-post-history.json
+
+      - name: Check or upload original ClayStory films to Instagram via Buffer
+        if: github.event_name != 'push'
+        env:
+          IG_MODE: ${{ github.event_name == 'schedule' && 'queue' || inputs.mode || 'check' }}
+          IG_MAX_POSTS: ${{ inputs.max_posts || '1' }}
+          IG_AUTO_PUBLISH: ${{ vars.IG_AUTO_PUBLISH || 'false' }}
+          INSTAGRAM_USERNAME: ${{ vars.INSTAGRAM_USERNAME }}
+          INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: python scripts/instagram_reels.py
+
+      - name: Persist Instagram post IDs and video checksums after partial success
+        if: always() && github.event_name != 'push'
+        run: |
+          if [ ! -s instagram-post-history.json ]; then
+            echo "Nothing to persist"
+            exit 0
+          fi
+          cp instagram-post-history.json "$RUNNER_TEMP/instagram-post-history.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            cd "$GITHUB_WORKSPACE"
+            git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+            git worktree remove --force "$RUNNER_TEMP/instagram-history" 2>/dev/null || true
+            git worktree add --detach "$RUNNER_TEMP/instagram-history" origin/instagram-publish-history
+            cd "$RUNNER_TEMP/instagram-history"
+            python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          new_data = json.loads((Path(os.environ["RUNNER_TEMP"]) / "instagram-post-history.json").read_text())
+          dest = Path("instagram-post-history.json")
+          old_data = json.loads(dest.read_text()) if dest.exists() else {}
+          old_data.update(new_data)
+          dest.write_text(json.dumps(old_data, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+          PY
+            git add instagram-post-history.json
+            if git diff --cached --quiet; then
+              echo "Instagram history is already up to date"
+              exit 0
+            fi
+            git commit -m "Record scheduled ClayStory Instagram Reels"
+            if git push origin HEAD:instagram-publish-history; then
+              exit 0
+            fi
+            if [ "$attempt" = "5" ]; then
+              echo "Failed to persist Instagram history; inspect before retrying" >&2
+              exit 1
+            fi
+            sleep 3
+          done
