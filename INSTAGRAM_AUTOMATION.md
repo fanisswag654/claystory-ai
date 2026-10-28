@@ -43,8 +43,10 @@ does not invent culturally sensitive pūrākau automatically.
   Instagram test draft. An Actions variable `IG_AUTO_PUBLISH=false` immediately
   disables new automatic scheduling on subsequent runs. The scheduled workflow
   targets only @purakaupixel, with a limit of one newly scheduled film per day.
-  Check each film's cultural accuracy and narration before or after scheduling;
-  publishing queued posts remains subject to Buffer's posting schedule.
+  **Only exact video versions recorded in `config/instagram-approved.json` can
+  be scheduled automatically.** New or revised films must be reviewed and
+  approved before public publishing. The V28 visual enhancements therefore
+  do not silently replace or automatically publish the previously reviewed Reel.
 
 ## Test safely on iPad
 
@@ -80,3 +82,24 @@ queue schedule.
 - To stop automatic submissions immediately, set `IG_AUTO_PUBLISH=false`
   under repository Actions variables, or disable the Instagram workflow in
   GitHub Actions. This does not cancel posts already queued in Buffer.
+
+## Publish Now for approved Māui and the Great Fish
+
+The one-time [Publish approved Great Fish Reel now](.github/workflows/publish-approved-fish.yml)
+workflow promotes **the existing reviewed Buffer draft**, using Buffer's
+`editPost(mode: shareNow)` mutation. It never uploads a second copy.
+It checks the exact original release fingerprint, the destination channel,
+and the previous posting history before sending the request. After Buffer
+accepts the request, the workflow records the receipt on the
+`instagram-publish-history` branch to prevent the scheduled job from
+reposting it. If an automated trigger is not dispatched, start this workflow
+manually using **Run workflow**. A successful action acknowledges Buffer's
+request; check Instagram for final publication status.
+
+## V28 animation testing
+
+The [animation quality workflow](.github/workflows/animation-quality.yml)
+validates the browser's inline JavaScript syntax and exercises all eight Great
+Fish scenes with deterministic frames and sound. Review V28's improved
+facial expressions, swimming-fin motion, underwater caustics and splash
+particles before adding its new fingerprint to the approval file.
