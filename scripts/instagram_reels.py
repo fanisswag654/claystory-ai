@@ -269,26 +269,51 @@ def create_post(channel_id: str, video_url: str, caption: str) -> dict:
     return post
 
 
-def schedule_existing_draft(post_id: str) -> dict:
-    """Move the reviewed Buffer draft into the Instagram queue without duplicating it."""
+def edit_instagram_reel(post_id: str, video_url: str, caption: str,
+                        share_mode: str) -> dict:
+    """Edit an existing Instagram Reel with *complete* valid post content.
+
+    Buffer validates the edited post in full when it moves out of Drafts.
+    Explicitly supply caption, video asset and Instagram type rather than
+    relying on a partial edit being merged with the existing draft.
+    """
+    if share_mode not in ("shareNow", "addToQueue"):
+        raise ValueError("Only immediate or queued Instagram Reel publishing is supported")
+    if not post_id or not video_url or not caption.strip():
+        raise ValueError("Buffer Reel edits require the reviewed ID, video and caption")
+    if not video_url.startswith(
+        "https://github.com/" + REPOSITORY + "/releases/download/"
+    ):
+        raise ValueError("Refusing to publish a video outside the approved ClayStory Releases")
     query = (
         "mutation { editPost(input: {"
-        " id: " + json.dumps(post_id)
+        + " id: " + json.dumps(post_id)
+        + " text: " + json.dumps(caption, ensure_ascii=False)
+        + " assets: [{ video: { url: " + json.dumps(video_url)
+        + " metadata: { thumbnailOffset: 2000 } } }]"
+        + " metadata: { instagram: { type: reel shouldShareToFeed: true isAiGenerated: true } }"
         + " schedulingType: automatic"
-        + " mode: addToQueue"
+        + " mode: " + share_mode
         + " saveToDraft: false"
         + " }) {"
-        + " ... on PostActionSuccess { post { id status dueAt } }"
+        + " ... on PostActionSuccess { post { id status shareMode dueAt } }"
         + " ... on MutationError { message }"
         + " } }"
     )
     result = buffer_api(query)["editPost"]
     post = result.get("post")
-    if not post:
-        raise RuntimeError("Could not schedule reviewed Instagram draft: " + str(result))
-    if str(post.get("status", "")).lower() == "draft":
-        raise RuntimeError("Buffer left the post as a draft; nothing was scheduled")
+    if not post or post.get("id") != post_id:
+        raise RuntimeError(
+            f"Buffer rejected complete Instagram Reel edit ({share_mode}): {result}"
+        )
+    if str(post.get("status") or "").lower() == "draft":
+        raise RuntimeError("Buffer did not move the Instagram Reel out of Drafts")
     return post
+
+
+def schedule_existing_draft(post_id: str, video_url: str, caption: str) -> dict:
+    """Queue a reviewed Reel with the complete media and Instagram metadata."""
+    return edit_instagram_reel(post_id, video_url, caption, "addToQueue")
 
 
 def persist_history(data: dict) -> None:
@@ -352,7 +377,7 @@ def main() -> None:
         if original_draft and original_draft.get("buffer_post_id"):
             if original_draft.get("channel_id") != channel["id"]:
                 raise RuntimeError("Existing draft belongs to a different Buffer channel")
-            post = schedule_existing_draft(original_draft["buffer_post_id"])
+            post = schedule_existing_draft(original_draft["buffer_post_id"], video_url, story["caption"])
             print("Moved reviewed Buffer draft into Instagram queue without duplicating it")
         else:
             post = create_post(channel["id"], video_url, story["caption"])
