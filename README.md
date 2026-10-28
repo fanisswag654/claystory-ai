@@ -29,6 +29,18 @@ prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
 
+## V28 animation improvements (Great Fish)
+
+The new pixel renderer adds visibly different facial reactions (panic, surprise,
+awe and determined effort), stronger tugging arm/leg poses, animated fin rays,
+shifting fish-scale highlights, moving gills, underwater caustics and cinematic
+water/sunlight particles during the hook, breach and island transformation.
+All effects are deterministic functions of film time and should render identically
+in Preview and exported video. The original reviewed Instagram film remains
+available as a versioned release; changes to this version require a new review
+before public posting. The [animation quality workflow](.github/workflows/animation-quality.yml)
+checks JavaScript syntax and the eight-scene browser playback tests.
+
 ## Development
 
 ```sh
