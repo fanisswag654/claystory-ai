@@ -31,7 +31,7 @@ permissions:
 jobs:
   instagram:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     steps:
       - name: Check out ClayStory (not the TikTok clip-farmer)
         uses: actions/checkout@v4
@@ -46,12 +46,14 @@ jobs:
       - name: Validate Instagram automation source code
         run: python -m py_compile scripts/instagram_reels.py
 
-      - name: Install validation dependencies
+      - name: Install local animation renderer and GitHub Release tools
         if: github.event_name != 'push'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-          python -m pip install 'requests>=2.32,<3'
+          python -m pip install 'requests>=2.32,<3' 'playwright>=1.50,<2'
+          python -m playwright install --with-deps chromium
+          gh --version
 
       - name: Restore Instagram posting history
         if: github.event_name != 'push'
@@ -59,7 +61,7 @@ jobs:
           git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
           git show origin/instagram-publish-history:instagram-post-history.json > instagram-post-history.json
 
-      - name: Check or upload original ClayStory films to Instagram via Buffer
+      - name: Render original ClayStory film and create Instagram Buffer draft or queue item
         if: github.event_name != 'push'
         env:
           IG_MODE: ${{ github.event_name == 'schedule' && 'queue' || inputs.mode || 'check' }}
@@ -68,6 +70,7 @@ jobs:
           INSTAGRAM_USERNAME: purakaupixel
           INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/instagram_reels.py
 
       - name: Persist Instagram post IDs and video checksums after partial success
