@@ -223,6 +223,8 @@ def main() -> None:
         mode = "check"
     else:
         mode = MODE
+    if mode != "check" and not (TARGET_USERNAME or TARGET_CHANNEL_ID):
+        raise RuntimeError("Set INSTAGRAM_USERNAME as a ClayStory Actions variable before creating drafts or queued Reels")
     if mode != "check" and not os.environ.get("BUFFER_API_KEY"):
         raise RuntimeError("Add BUFFER_API_KEY as an Actions secret in the ClayStory repo")
 
