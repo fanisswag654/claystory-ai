@@ -65,7 +65,7 @@ jobs:
           IG_MODE: ${{ github.event_name == 'schedule' && 'queue' || inputs.mode || 'check' }}
           IG_MAX_POSTS: ${{ inputs.max_posts || '1' }}
           IG_AUTO_PUBLISH: ${{ vars.IG_AUTO_PUBLISH || 'false' }}
-          INSTAGRAM_USERNAME: ${{ vars.INSTAGRAM_USERNAME }}
+          INSTAGRAM_USERNAME: purakaupixel
           INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
         run: python scripts/instagram_reels.py
