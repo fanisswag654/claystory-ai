@@ -1,0 +1,1 @@
+User approved V30 comparison: test original Māui and the Great Fish narration scenes 1 and 6 with the existing NZ male voice and optional Chatterbox Nano CPU. Preserve all production audio and Instagram posts.
