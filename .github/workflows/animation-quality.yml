@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'vendor/tween.umd.js'
+      - 'scripts/v29_motion.js'
+      - 'scripts/test_v29_motion.py'
       - 'scripts/render_films.py'
       - 'scripts/test_fish_film.py'
       - '.github/workflows/animation-quality.yml'
@@ -26,12 +29,16 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
-          assert html.count("<script>") == 1 and html.count("</script>") == 1
+          assert html.count("<script>") == 1 and html.count("</script>") == 3
+          assert '<script src="vendor/tween.umd.js"></script>' in html
+          assert '<script src="scripts/v29_motion.js"></script>' in html
           code = html.split("<script>", 1)[1].split("</script>", 1)[0]
           Path("/tmp/claystory-animation.js").write_text(code, encoding="utf-8")
           print("Extracted", len(code), "bytes of animation JavaScript")
           PY
           node --check /tmp/claystory-animation.js
+          node --check vendor/tween.umd.js
+          node --check scripts/v29_motion.js
       - name: Install browser and video tools
         run: |
           sudo apt-get update -qq
@@ -43,4 +50,5 @@ jobs:
           python -m http.server 8000 --bind 127.0.0.1 > /tmp/claystory-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          python scripts/test_v29_motion.py
           python scripts/test_fish_film.py
