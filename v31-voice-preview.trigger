@@ -1,0 +1,1 @@
+Approved by the project owner: generate a NEW full-length Māui and the Great Fish candidate using the V31 cinematic British male narrator, scene-specific dramatic pacing, and existing original animation. For review only: do not commit audio or publish to Instagram.
