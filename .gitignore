@@ -5,3 +5,4 @@ _site/
 audio/*-raw.mp3
 audio/*.wav
 videos/
+voice-previews/
