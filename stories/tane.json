@@ -1,0 +1,83 @@
+{
+  "key": "tane-nz",
+  "title": "Tāne and the First Light",
+  "subtitle": "Ranginui and Papatūānuku",
+  "revision": 1,
+  "language": "English narration with Māori names",
+  "format": "9:16 • original 2D pixel art • eight scenes",
+  "narrator": "cinematic",
+  "narratorModel": "en-GB-RyanNeural",
+  "culturalNote": "One retelling of the separation of Ranginui and Papatūānuku. Traditions differ across iwi; review te reo pronunciation and cultural details before publication.",
+  "sources": [
+    {
+      "title": "Te Ara — Ranginui: The sky",
+      "url": "https://teara.govt.nz/en/ranginui-the-sky"
+    },
+    {
+      "title": "Ministry for the Environment — Te tīmatanga o te ao Māori",
+      "url": "https://environment.govt.nz/te-ao-maori/te-timatanga-o-te-ao-maori/"
+    },
+    {
+      "title": "Mātauranga Māori — Tāwhirimātea",
+      "url": "https://eng.mataurangamaori.tki.org.nz/Support-materials/Te-Reo-Maori/Maori-Myths-Legends-and-Contemporary-Stories/Tawhirimatea"
+    }
+  ],
+  "scenes": [
+    {
+      "title": "BEFORE THE LIGHT",
+      "caption": "A WORLD IN DARKNESS",
+      "narration": "Long ago, Ranginui, the sky father, and Papatūānuku, the earth mother, held each other in a close embrace. Between them, the world lay in darkness.",
+      "mood": "mysterious",
+      "visual": "parental embrace"
+    },
+    {
+      "title": "THE CHILDREN",
+      "caption": "NO ROOM TO GROW",
+      "narration": "Their children, the atua, lived in that narrow space. They longed to stand tall, to stretch, and to see the light beyond the darkness.",
+      "mood": "restless",
+      "visual": "crowded"
+    },
+    {
+      "title": "A HARD CHOICE",
+      "caption": "THE BROTHERS DISAGREE",
+      "narration": "The brothers spoke of separating their parents. But Tāwhirimātea, guardian of the winds, fiercely opposed the idea. He wanted his parents to remain together.",
+      "mood": "conflict",
+      "visual": "council"
+    },
+    {
+      "title": "THE FIRST ATTEMPTS",
+      "caption": "THE EMBRACE HELD",
+      "narration": "One by one, the brothers tried to lift the sky. Yet the embrace of Ranginui and Papatūānuku was too strong. Nothing would move.",
+      "mood": "struggle",
+      "visual": "attempt"
+    },
+    {
+      "title": "TĀNE'S STRENGTH",
+      "caption": "TĀNE PUSHED UPWARD",
+      "narration": "Then Tāne, guardian of the forests, lay on his back upon the earth. Pressing his feet against the sky, he gathered his strength, and pushed.",
+      "mood": "determination",
+      "visual": "push"
+    },
+    {
+      "title": "TE AO MĀRAMA",
+      "caption": "LIGHT ENTERED THE WORLD",
+      "narration": "Slowly, the sky rose. A thin golden line opened between earth and heaven, growing wider and brighter, until the world was filled with light.",
+      "mood": "wonder",
+      "visual": "light"
+    },
+    {
+      "title": "THE STORM",
+      "caption": "TĀWHIRIMĀTEA'S ANGER",
+      "narration": "Tāwhirimātea grieved the separation. He rose to join his father in the sky, sending fierce winds and storms across the land below.",
+      "mood": "storm",
+      "visual": "wind"
+    },
+    {
+      "title": "A LIVING WORLD",
+      "caption": "LIFE BENEATH THE SKY",
+      "narration": "Beneath Ranginui, forests spread across Papatūānuku. Rain fell from the heavens, and life grew in the space between. This is one telling of how light entered the world.",
+      "mood": "renewal",
+      "visual": "forest"
+    }
+  ]
+}
