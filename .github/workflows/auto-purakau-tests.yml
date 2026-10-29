@@ -41,8 +41,14 @@ jobs:
           generate=Path(".github/workflows/auto-purakau-review.yml").read_text()
           decision=Path(".github/workflows/auto-purakau-decision.yml").read_text()
           assert "vars.PURAKAU_TELEGRAM_ENABLED == 'true'" in generate
-          assert "vars.PURAKAU_TELEGRAM_ENABLED == 'true'" in decision
+          # General scheduled generation stays OFF, while publishing this
+          # one already-reviewed, SHA-pinned video is enabled ONLY after its
+          # separate signed owner Telegram approval.
+          assert "vars.PURAKAU_TELEGRAM_ENABLED == 'true'" not in decision
+          assert "auto-review-maui-mahuika-fire-ddb8318a9296" in decision
+          assert "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c" in decision
+          assert "github.event.client_payload.platform == 'telegram'" in decision
           assert "purakau_telegram_decision" in decision
           assert "automation/telegram_send.py" in generate
-          print("Validated: Telegram review and Instagram posting remain OFF until explicitly activated")
+          print("Validated: automated story generation stays OFF; one SHA-pinned video awaits signed Telegram publishing approval")
           PY
