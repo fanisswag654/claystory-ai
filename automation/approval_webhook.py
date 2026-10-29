@@ -22,6 +22,10 @@ import urllib.request
 from flask import Flask, request, jsonify
 
 app=Flask(__name__)
+# Telegram approval is a separate HTTPS route on the SAME free Render service.
+# The legacy WhatsApp route stays present but is not used by the new workflow.
+from automation.telegram_webhook import bot as telegram_review_blueprint
+app.register_blueprint(telegram_review_blueprint)
 REPO="fanisswag654/claystory-ai"
 TAG_REGEX=re.compile(r"^auto-review-[a-z0-9-]+-[0-9a-f]{12}$")
 DECISIONS={"approve":"approved","reject":"rejected"}
@@ -130,7 +134,13 @@ def health():
         "WHATSAPP_PHONE_NUMBER_ID","GITHUB_REVIEW_DISPATCH_TOKEN",
         "PURAKAU_APPROVAL_SIGNING_KEY"
     ))
-    return jsonify(service="claystory-whatsapp-review",configured=configured)
+    telegram_ready=all(os.getenv(k) for k in (
+        "TELEGRAM_WEBHOOK_SECRET", "TELEGRAM_APPROVER_USER_ID",
+        "TELEGRAM_REVIEW_CHAT_ID", "GITHUB_REVIEW_DISPATCH_TOKEN",
+        "PURAKAU_APPROVAL_SIGNING_KEY"
+    ))
+    return jsonify(service="claystory-review-approval", whatsapp_configured=configured,
+                   telegram_configured=telegram_ready)
 
 
 @app.get("/webhook/whatsapp")
