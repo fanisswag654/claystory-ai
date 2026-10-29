@@ -24,6 +24,7 @@ import telegram_send
 from automation import telegram_webhook
 import approve_publish_telegram
 import telegram_video_smoke
+import telegram_bridge_probe
 
 USER = "123456789"
 CHAT = "123456789"
@@ -218,6 +219,84 @@ class TelegramWebhook(unittest.TestCase):
             x["callback_data"].startswith("test_preview:")
             for x in markup["inline_keyboard"][0]
         ))
+
+    def test_bridge_probe_hmac_is_verified_independently(self):
+        receipt = telegram_bridge_probe.make_probe(
+            USER, CHAT, 1256, SIGN_KEY, now=1700000000
+        )
+        telegram_bridge_probe.verify_probe(
+            receipt, SIGN_KEY, USER, CHAT, now=1700000001
+        )
+        for name, value in (
+            ("telegram_message_id", 1257),
+            ("telegram_chat_id", "123460000"),
+            ("platform", "telegram"),
+        ):
+            wrong = {**receipt, name: value}
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                telegram_bridge_probe.verify_probe(
+                    wrong, SIGN_KEY, USER, CHAT, now=1700000001
+                )
+        with self.assertRaisesRegex(ValueError, "delayed"):
+            telegram_bridge_probe.verify_probe(
+                receipt, SIGN_KEY, USER, CHAT, now=1700000601
+            )
+
+    def test_bridge_probe_accepts_only_owner_private_check_command(self):
+        request = {
+            "message": {
+                "message_id": 1256, "text": "/check",
+                "from": {"id": int(USER), "is_bot": False},
+                "chat": {"id": int(CHAT), "type": "private"},
+            }
+        }
+        self.assertEqual(
+            telegram_webhook.parse_bridge_check(request, USER, CHAT)["message_id"],
+            1256,
+        )
+        self.assertIsNone(telegram_webhook.parse_bridge_check(request, "99999", CHAT))
+        other = json.loads(json.dumps(request))
+        other["message"]["text"] = "/start"
+        self.assertIsNone(telegram_webhook.parse_bridge_check(other, USER, CHAT))
+        other["message"]["text"] = "/check"
+        other["message"]["chat"]["type"] = "group"
+        self.assertIsNone(telegram_webhook.parse_bridge_check(other, USER, CHAT))
+
+    def test_bridge_probe_never_enters_instagram_publish_path(self):
+        request = {
+            "message": {
+                "message_id": 1357,
+                "text": "/check",
+                "from": {"id": int(USER)},
+                "chat": {"id": int(CHAT), "type": "private"},
+            }
+        }
+        with patch.dict(os.environ, {
+            "TELEGRAM_WEBHOOK_SECRET": WEBHOOK_SECRET,
+            "TELEGRAM_APPROVER_USER_ID": USER,
+            "TELEGRAM_REVIEW_CHAT_ID": CHAT,
+            "PURAKAU_APPROVAL_SIGNING_KEY": SIGN_KEY,
+            "GITHUB_REVIEW_DISPATCH_TOKEN": "github_pat_mock_test",
+        }), patch.object(telegram_webhook, "dispatch_bridge_probe") as bridge_dispatch, \
+             patch.object(telegram_webhook, "dispatch_decision") as publish_dispatch:
+            response = approval_webhook.app.test_client().post(
+                "/webhook/telegram",
+                json=request,
+                headers={"X-Telegram-Bot-Api-Secret-Token": WEBHOOK_SECRET},
+            )
+        self.assertEqual(response.status_code, 200, response.get_json())
+        self.assertFalse(response.get_json()["instagram_publication"])
+        bridge_dispatch.assert_called_once()
+        publish_dispatch.assert_not_called()
+        signed = bridge_dispatch.call_args.args[0]
+        telegram_bridge_probe.verify_probe(
+            signed, SIGN_KEY, USER, CHAT
+        )
+
+    def test_bridge_probe_refuses_dispatch_without_scoped_github_token(self):
+        fake = telegram_bridge_probe.make_probe(USER, CHAT, 10, SIGN_KEY)
+        with self.assertRaisesRegex(RuntimeError, "not configured"):
+            telegram_webhook.dispatch_bridge_probe(fake, "not-a-token")
 
     def test_valid_header_only(self):
         self.assertTrue(telegram_webhook.verify_secret_header(WEBHOOK_SECRET, WEBHOOK_SECRET))
