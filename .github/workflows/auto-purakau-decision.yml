@@ -1,8 +1,8 @@
-name: Pūrākau Pixels — process signed WhatsApp Approve / Reject
+name: Pūrākau Pixels — process signed Telegram Approve / Reject
 
 on:
   repository_dispatch:
-    types: [purakau_whatsapp_decision]
+    types: [purakau_telegram_decision]
 
 permissions:
   contents: write
@@ -14,14 +14,16 @@ concurrency:
 jobs:
   process_approval:
     # A global kill switch: disabling the system immediately blocks future
-    # WhatsApp-triggered Instagram posts, even for earlier sent videos.
-    if: vars.PURAKAU_AUTOMATION_ENABLED == 'true'
+    # Telegram-triggered Instagram posts, even for earlier sent videos.
+    if: vars.PURAKAU_TELEGRAM_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       PURAKAU_APPROVAL_SIGNING_KEY: ${{ secrets.PURAKAU_APPROVAL_SIGNING_KEY }}
-      PURAKAU_REVIEW_RECEIPT: ${{ toJSON(github.event.client_payload) }}
+      PURAKAU_TELEGRAM_RECEIPT: ${{ toJSON(github.event.client_payload) }}
+      TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
       BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
       INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
       INSTAGRAM_USERNAME: purakaupixel
@@ -40,8 +42,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-          python -m pip install 'requests>=2.32,<3'
-          python -m py_compile automation/approve_publish.py
+          python -m pip install 'requests>=2.32,<3' 'flask>=3,<4'
+          python -m py_compile automation/approve_publish.py automation/approve_publish_telegram.py automation/telegram_webhook.py
           python -m unittest discover -s automation -p 'test_*.py' -v
 
       - name: Download EXACT originally reviewed release media and proposal
@@ -50,10 +52,10 @@ jobs:
           set -euo pipefail
           TAG="$(python - <<'PY'
           import json,re,os
-          p=json.loads(os.environ["PURAKAU_REVIEW_RECEIPT"])
+          p=json.loads(os.environ["PURAKAU_TELEGRAM_RECEIPT"])
           tag=p.get("proposal_id","")
           if not re.fullmatch(r"auto-review-[a-z0-9-]+-[a-f0-9]{12}",tag):
-              raise SystemExit("Invalid signed WhatsApp proposal identifier")
+              raise SystemExit("Invalid signed Telegram proposal identifier")
           print(tag)
           PY
           )"
@@ -71,19 +73,19 @@ jobs:
           git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
           git show origin/instagram-publish-history:instagram-post-history.json > instagram-post-history.json
 
-      - name: Process signed WhatsApp decision (Reject never calls Buffer)
-        run: python automation/approve_publish.py
+      - name: Process signed Telegram decision (Reject never calls Buffer)
+        run: python automation/approve_publish_telegram.py
 
       - name: Show truthfully what happened
         if: success()
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json,os
-          receipt=json.loads(os.environ["PURAKAU_REVIEW_RECEIPT"])
+          receipt=json.loads(os.environ["PURAKAU_TELEGRAM_RECEIPT"])
           history=json.load(open("instagram-post-history.json"))
           tag=receipt["proposal_id"]
           decision=receipt["decision"]
-          print("## WhatsApp review outcome: "+decision.upper())
+          print("## Telegram review outcome: "+decision.upper())
           print("")
           if decision=="rejected":
               print("- Film rejected; NO Buffer or Instagram upload was made.")
@@ -105,19 +107,19 @@ jobs:
             echo "No history to persist"
             exit 0
           fi
-          cp instagram-post-history.json "$RUNNER_TEMP/whatsapp-review-history.json"
+          cp instagram-post-history.json "$RUNNER_TEMP/telegram-review-history.json"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3 4 5; do
             cd "$GITHUB_WORKSPACE"
             git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
-            git worktree remove --force "$RUNNER_TEMP/whatsapp-review-branch" 2>/dev/null || true
-            git worktree add --detach "$RUNNER_TEMP/whatsapp-review-branch" origin/instagram-publish-history
-            cd "$RUNNER_TEMP/whatsapp-review-branch"
+            git worktree remove --force "$RUNNER_TEMP/telegram-review-branch" 2>/dev/null || true
+            git worktree add --detach "$RUNNER_TEMP/telegram-review-branch" origin/instagram-publish-history
+            cd "$RUNNER_TEMP/telegram-review-branch"
             python - <<'PY'
           import json,os
           from pathlib import Path
-          src=Path(os.environ["RUNNER_TEMP"])/"whatsapp-review-history.json"
+          src=Path(os.environ["RUNNER_TEMP"])/"telegram-review-history.json"
           entries=json.loads(src.read_text(encoding="utf-8"))
           target=Path("instagram-post-history.json")
           previous=json.loads(target.read_text()) if target.exists() else {}
@@ -126,7 +128,7 @@ jobs:
           PY
             git add instagram-post-history.json
             if git diff --cached --quiet; then exit 0; fi
-            git commit -m "Record authenticated WhatsApp Pūrākau review decision"
+            git commit -m "Record authenticated Telegram Pūrākau review decision"
             if git push origin HEAD:instagram-publish-history; then exit 0; fi
             if [ "$attempt" -eq 5 ]; then
               echo "History record failed; do not retry publishing without inspection" >&2
