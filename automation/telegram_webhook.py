@@ -174,6 +174,10 @@ TEST_PREVIEW_MARKER = "PŪRĀKAU PIXELS VIDEO TEST ONLY — NO INSTAGRAM"
 TEST_PREVIEW_ACTIONS = {
     "test_preview:approve:v33": "approve",
     "test_preview:reject:v33": "reject",
+    # Checked-in, newly rendered, no-cost curated film previews.
+    # These callbacks NEVER enter the real approve/reject publishing route.
+    "test_preview:approve:free": "approve",
+    "test_preview:reject:free": "reject",
 }
 
 
