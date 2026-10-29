@@ -209,34 +209,52 @@ def parse_preview_test(update: dict, user_id: str, chat_id: str) -> dict | None:
         "action": TEST_PREVIEW_ACTIONS[data],
         "callback_id": str(query["id"]),
         "chat_id": chat_id,
+        "message_id": message["message_id"],
+        "caption": message.get("caption") or "",
     }
 
 
 def acknowledge_preview_test(test: dict, token: str) -> None:
-    """Telegram-only confirmation; NO GitHub, Buffer or Instagram calls."""
+    """Edit the ORIGINAL video; never send an extra Telegram chat message.
+
+    Telegram can redeliver callback queries after network errors or Render
+    cold starts. Calling sendMessage on each delivery created an unbounded
+    flood. Editing the same message is idempotent and leaves a visible review
+    status directly on the video, with its preview buttons removed.
+    This is ONLY a preview response: never dispatch GitHub or call Buffer.
+    """
     if not re.fullmatch(r"[0-9]{5,16}:[A-Za-z0-9_-]{25,80}", token):
-        raise RuntimeError("Render Telegram bot token must be valid for test acknowledgments")
-    action = test["action"].upper()
-    content = (
-        f"🧪 {action} TEST RECEIVED ✅\n\n"
-        "Your Telegram video preview buttons are working.\n"
-        "This was a TEST ONLY. Nothing has been approved "
-        "for publishing and nothing has been sent to Instagram.\n\n"
-        "The automatic publishing switch remains OFF."
+        raise RuntimeError("Render Telegram bot token must be valid for preview acknowledgments")
+    if not isinstance(test.get("message_id"), int) or test["message_id"] <= 0:
+        raise ValueError("A preview response must target the original video")
+    status = (
+        "✅ PREVIEW APPROVED — NOT PUBLISHED."
+        if test["action"] == "approve"
+        else "❌ PREVIEW REJECTED — NOT PUBLISHED."
     )
+    existing = test["caption"]
+    # Keep the original video and its source/title information in place.
+    # A repeated Telegram delivery produces the same caption, not another chat
+    # message; short enough for Telegram's 1,024-character caption limit.
+    if status in existing:
+        caption = existing
+    else:
+        caption = existing[:(1024 - len(status) - 2)].rstrip() + "\n\n" + status
     req = urllib.request.Request(
-        f"https://api.telegram.org/bot{token}/sendMessage",
+        f"https://api.telegram.org/bot{token}/editMessageCaption",
         data=json.dumps({
             "chat_id": test["chat_id"],
-            "text": content,
+            "message_id": test["message_id"],
+            "caption": caption,
+            "reply_markup": {"inline_keyboard": []},
         }).encode("utf-8"),
         method="POST",
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=15) as response:
+    with urllib.request.urlopen(req, timeout=12) as response:
         result = json.load(response)
     if not result.get("ok"):
-        raise RuntimeError("Telegram refused safe preview test acknowledgment")
+        raise RuntimeError("Telegram did not confirm editing the original preview")
 
 
 def parse_bridge_check(update: dict, user_id: str, chat_id: str) -> dict | None:
@@ -363,16 +381,31 @@ def telegram_updates():
     if test_button is not None:
         # A preview TEST button cannot enter the normal signed approval route,
         # cannot send any repository_dispatch, and cannot call Buffer.
+        # Preview reactions must never return 5xx: Telegram retries 5xx
+        # indefinitely. Older code sent a NEW sendMessage then returned 503
+        # if the (short-lived) answerCallbackQuery had expired, flooding the
+        # user's chat with duplicate confirmations.
         try:
             acknowledge_preview_test(
                 test_button, os.getenv("TELEGRAM_BOT_TOKEN", "")
             )
+        except (ValueError, RuntimeError, urllib.error.URLError, OSError) as exc:
+            # Editing is best-effort only. This is not a publishing decision;
+            # nothing unsafe occurs if Telegram was offline or already edited.
+            bot.logger.warning(
+                "Non-retriable Telegram preview edit failed (%s)", type(exc).__name__
+            )
+        try:
             answer_callback(
                 test_button["callback_id"], os.getenv("TELEGRAM_BOT_TOKEN", ""),
-                "TEST ONLY: Telegram button works. Nothing has been published."
+                "PREVIEW ONLY: choice recorded on the video; nothing published."
             )
-        except (RuntimeError, urllib.error.URLError, OSError):
-            return jsonify(error="Test acknowledgment could not be sent"), 503
+        except (RuntimeError, urllib.error.URLError, OSError) as exc:
+            # The callback may have expired by the time Render woke up.
+            bot.logger.warning(
+                "Expired/unavailable Telegram callback; update acknowledged (%s)",
+                type(exc).__name__,
+            )
         return jsonify(test_acknowledged=True, instagram_publication=False), 200
 
     bridge = parse_bridge_check(payload, trusted_user, trusted_chat)
