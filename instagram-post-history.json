@@ -37,6 +37,12 @@
     "story": "fish-nz",
     "video_url": "https://github.com/fanisswag654/claystory-ai/releases/download/instagram-fish-nz-9ad7bd4f7221a9c0/fish-nz-balanced.mp4"
   },
+  "review:auto-review-maui-mahuika-fire-05d8dd2bbd82": {
+    "decision": "rejected",
+    "platform": "telegram",
+    "telegram_callback_id": "3362901893707976926",
+    "video_sha256": "05d8dd2bbd8297834fda1697bd46a32fb5db7f9f91f0715470ca4ab31a894aa5"
+  },
   "review:auto-review-maui-mahuika-fire-ddb8318a9296": {
     "buffer_post_id": "6ae38e34b3aaeefe23224b5b",
     "buffer_status": "sent",
