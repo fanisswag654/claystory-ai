@@ -1,0 +1,114 @@
+name: Tāne and the First Light — render original cinematic animation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tane-film.trigger'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: claystory-tane-original-film
+  cancel-in-progress: false
+
+jobs:
+  create-original-film:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout original ClayStory project (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install narration and animation dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install --upgrade pip
+          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2'
+          python -m playwright install --with-deps chromium
+
+      - name: Validate new Tāne story, narrator and publish safeguards
+        run: |
+          python -m py_compile scripts/tane_sound.py scripts/render_tane.py \
+            scripts/v31_storyteller.py scripts/v30_voice.py scripts/test_tane_film.py
+          python -m unittest discover -s scripts -p 'test_tane_film.py' -v
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          approved = json.loads(Path("config/instagram-approved.json").read_text())
+          if "tane-nz" in approved.get("approved_reels", {}):
+              raise RuntimeError("Review-only film must not be pre-approved for Instagram")
+          print("Instagram allowlist excludes the unreviewed new film")
+          PY
+
+      - name: Generate eight scenes with V31 cinematic narrator and nature foley
+        run: |
+          python scripts/tane_sound.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path("audio/tane-nz-timing.json").read_text())
+          assert data["voice"]=="en-GB-RyanNeural" and len(data["durations"])==8
+          assert all(4<=d<=42 for d in data["durations"])
+          print("Actual time-synchronized cinematic audio",data["durations"])
+          PY
+
+      - name: Render all eight original pixel scenes to narrated MP4
+        run: python scripts/render_tane.py
+
+      - name: Package finished review-only film and narration
+        run: |
+          cp videos/tane-nz-balanced.mp4 tane-review/
+          cp audio/tane-nz-full.mp3 tane-review/tane-nz-voice-only.mp3
+          cp audio/tane-nz-mix-balanced.mp3 tane-review/tane-nz-balanced-audio.mp3
+          cp audio/tane-nz-timing.json tane-review/
+          cp stories/tane.json tane-review/storyboard.json
+          cat > tane-review/READ-ME.txt <<'EOF'
+          PURAKAU PIXELS — TANE AND THE FIRST LIGHT
+          ------------------------------------------------
+          New original cinematic 9:16 pixel-art animation, eight scenes.
+          Voice: en-GB-RyanNeural (V31 approved cinematic narrator).
+          Watch tane-nz-balanced.mp4 in Files on your iPad.
+          Other files: voice MP3, effects mix, scene timings and eight stills.
+          REVIEW ONLY — not posted to Instagram, Buffer or TikTok.
+          Verify te reo Maori pronunciation and cultural interpretation
+          before approving publication. Accounts differ across iwi.
+          EOF
+          test -s tane-review/tane-nz-balanced.mp4
+          test "$(find tane-review/stills -name 'tane-scene-*.png' | wc -l)" -eq 8
+
+      - name: Display review result and iPad instructions
+        if: success()
+        run: |
+          {
+            echo "## Tāne and the First Light — finished animated film"
+            echo ""
+            echo "- Original eight-scene pixel artwork and animated characters"
+            echo "- V31 cinematic male storyteller (Ryan)"
+            echo "- Measured speech timings + original nature sound effects"
+            echo "- 540×960 vertical H.264/AAC MP4, 24fps"
+            echo "- Eight independent scene screenshots for review"
+            echo "- **No Instagram or Buffer publication**"
+            echo ""
+            echo "Download the **tane-first-light-review-film** artifact."
+            echo "Extract it in iPad Files, then open **tane-nz-balanced.mp4**."
+            echo "Please review voice pronunciation and imagery before posting."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload final movie plus scene artwork (expires after 14 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tane-first-light-review-film
+          path: tane-review/
+          if-no-files-found: warn
+          retention-days: 14
