@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "policy": "Only source-backed, public-facing retellings. Do not copy source prose, images or sacred visual symbols. Always require user review before posting.",
+  "topics": [
+    {
+      "id": "maui-mahuika-fire",
+      "title": "Māui and Mahuika: The Secret of Fire",
+      "theme": "fire",
+      "hero_role": "ochre",
+      "support_role": "earth",
+      "known_names": [
+        "Māui",
+        "Mahuika"
+      ],
+      "sources": [
+        {
+          "title": "Te Ara — Stealing Fire",
+          "url": "https://teara.govt.nz/en/1966/maui-legends-of/page-5"
+        },
+        {
+          "title": "Department of Conservation — Conservation kōrero",
+          "url": "https://blog.doc.govt.nz/2022/02/16/conservation-korero/"
+        }
+      ],
+      "facts": [
+        "Māui visits his ancestress Mahuika seeking fire.",
+        "In this telling, Mahuika gives him fire from her burning fingernails.",
+        "He repeatedly extinguishes the fire and returns asking for more.",
+        "Mahuika grows angry after she realizes she has been tricked.",
+        "Fire spreads through a forest and Māui flees.",
+        "Rain and water help end the danger in some tellings.",
+        "Fire remains in the trees used to create fire by friction."
+      ],
+      "visuals": [
+        "village",
+        "cavern",
+        "ember",
+        "river",
+        "ember",
+        "forest_fire",
+        "storm",
+        "fire_tree"
+      ],
+      "actions": [
+        "idle",
+        "reach",
+        "wonder",
+        "reach",
+        "argue",
+        "storm",
+        "strain",
+        "wonder"
+      ]
+    },
+    {
+      "id": "ruaumoko-earthquakes",
+      "title": "Rūaumoko: The Earth Beneath Our Feet",
+      "theme": "earth",
+      "hero_role": "earth",
+      "support_role": "river",
+      "known_names": [
+        "Rūaumoko",
+        "Ranginui",
+        "Papatūānuku"
+      ],
+      "sources": [
+        {
+          "title": "Te Ara — Earthquakes in Māori tradition",
+          "url": "https://teara.govt.nz/en/historic-earthquakes/page-1"
+        }
+      ],
+      "facts": [
+        "One traditional account describes Rūaumoko as a child of Ranginui and Papatūānuku.",
+        "After their separation, the children turn their grieving mother Papatūānuku over.",
+        "Rūaumoko remains with his mother beneath the earth.",
+        "He is associated with earthquakes and volcanic activity.",
+        "The trembling land is explained in this tradition through his movements."
+      ],
+      "visuals": [
+        "night",
+        "earth",
+        "council",
+        "earth",
+        "cavern",
+        "earth_rumble",
+        "mountains",
+        "dawn"
+      ],
+      "actions": [
+        "idle",
+        "wonder",
+        "listen",
+        "strain",
+        "idle",
+        "storm",
+        "reach",
+        "wonder"
+      ]
+    }
+  ],
+  "requirements": {
+    "scenes": 8,
+    "languages": [
+      "English with correctly spelled Māori names"
+    ],
+    "review": "Human approval must include te reo Māori pronunciation and cultural accuracy",
+    "maximum_narration_chars_per_scene": 360
+  }
+}
