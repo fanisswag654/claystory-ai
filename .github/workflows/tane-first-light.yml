@@ -39,8 +39,10 @@ jobs:
       - name: Validate new Tāne story, narrator and publish safeguards
         run: |
           python -m py_compile scripts/tane_sound.py scripts/render_tane.py \
-            scripts/v31_storyteller.py scripts/v30_voice.py scripts/test_tane_film.py
+            scripts/v31_storyteller.py scripts/v30_voice.py scripts/test_tane_film.py \
+            scripts/test_tane_characters_browser.py
           python -m unittest discover -s scripts -p 'test_tane_film.py' -v
+          python scripts/test_tane_characters_browser.py
           python - <<'PY'
           import json
           from pathlib import Path
@@ -67,7 +69,7 @@ jobs:
 
       - name: Package finished review-only film and narration
         run: |
-          cp videos/tane-nz-balanced.mp4 tane-review/
+          cp videos/tane-nz-balanced.mp4 tane-review/tane-nz-V33-detailed.mp4
           cp audio/tane-nz-full.mp3 tane-review/tane-nz-voice-only.mp3
           cp audio/tane-nz-mix-balanced.mp3 tane-review/tane-nz-balanced-audio.mp3
           cp audio/tane-nz-timing.json tane-review/
@@ -77,13 +79,15 @@ jobs:
           ------------------------------------------------
           New original cinematic 9:16 pixel-art animation, eight scenes.
           Voice: en-GB-RyanNeural (V31 approved cinematic narrator).
-          Watch tane-nz-balanced.mp4 in Files on your iPad.
+          Watch tane-nz-V33-detailed.mp4 in Files on your iPad.
+          Inspect tane-v33-character-studies.png for enlarged actor details.
           Other files: voice MP3, effects mix, scene timings and eight stills.
           REVIEW ONLY — not posted to Instagram, Buffer or TikTok.
           Verify te reo Maori pronunciation and cultural interpretation
           before approving publication. Accounts differ across iwi.
           EOF
-          test -s tane-review/tane-nz-balanced.mp4
+          test -s tane-review/tane-nz-V33-detailed.mp4
+          test -s tane-review/tane-v33-character-studies.png
           test "$(find tane-review/stills -name 'tane-scene-*.png' | wc -l)" -eq 8
 
       - name: Display review result and iPad instructions
@@ -92,6 +96,7 @@ jobs:
           {
             echo "## Tāne and the First Light — finished animated film"
             echo ""
+            echo "- V33 articulated detailed actors: expressive faces, costume layers and poses"
             echo "- Original eight-scene pixel artwork and animated characters"
             echo "- V31 cinematic male storyteller (Ryan)"
             echo "- Measured speech timings + original nature sound effects"
@@ -100,7 +105,8 @@ jobs:
             echo "- **No Instagram or Buffer publication**"
             echo ""
             echo "Download the **tane-first-light-review-film** artifact."
-            echo "Extract it in iPad Files, then open **tane-nz-balanced.mp4**."
+            echo "Extract it in iPad Files, then open **tane-nz-V33-detailed.mp4**."
+            echo "Inspect **tane-v33-character-studies.png** for character close-ups."
             echo "Please review voice pronunciation and imagery before posting."
           } >> "$GITHUB_STEP_SUMMARY"
 
