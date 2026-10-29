@@ -194,8 +194,10 @@ def identify_private_chat(update: dict) -> dict | None:
 
 def send_onboarding_reply(identity: dict, token: str) -> None:
     """Use HTTPS Telegram Bot API to respond ONLY within the caller's chat."""
-    if not token:
-        raise RuntimeError("Render TELEGRAM_BOT_TOKEN not configured")
+    # Fail before constructing an HTTP URL: a pasted instruction rather
+    # than a BotFather token must never appear in an exception or server log.
+    if not re.fullmatch(r"[0-9]{5,16}:[A-Za-z0-9_-]{25,80}", token):
+        raise RuntimeError("Render TELEGRAM_BOT_TOKEN is missing or invalid; use actual BotFather token")
     body = {
         "chat_id": identity["chat_id"],
         "text": (
