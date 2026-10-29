@@ -83,22 +83,30 @@ the art further, add Pixelorama sprite packs by story/character type.
   Meta's approved configuration. WhatsApp messaging limits apply: the
   renderer refuses review MP4s above ~15 MiB.
 - Configure a **webhook callback URL**:
-  https://YOUR-RENDER-SERVICE.onrender.com/webhook/whatsapp
+  https://claystory-whatsapp-approval.onrender.com/webhook/whatsapp
   and subscribe to WhatsApp **messages** events. Use the same randomly
   generated WHATSAPP_VERIFY_TOKEN on Render and the Meta verification page.
 
-## Render deployment (requires user's selected workspace)
+## Render deployment — COMPLETED (hosting only)
 
-The connected Render account currently has a workspace named **My Workspace**,
-but an assistant must obtain user confirmation before creating a service.
+The user authorized deployment into their connected **My Workspace**, and
+the service was created successfully on Render's Singapore **free** plan.
+Render reported the first deployment **LIVE** with a successful health request.
 
-Suggested webhook service settings:
-- Repo: https://github.com/fanisswag654/claystory-ai
-- Runtime: Python 3
-- Service: claystory-whatsapp-approval
+- **Render dashboard:** https://dashboard.render.com/web/srv-dbhahoec6qcc73ervv20
+- **Service URL:** https://claystory-whatsapp-approval.onrender.com/
+- **Meta webhook callback URL:**
+  https://claystory-whatsapp-approval.onrender.com/webhook/whatsapp
+- Repo: https://github.com/fanisswag654/claystory-ai (branch main)
+- Runtime: Python 3 / free plan / Singapore
 - Build: pip install -r automation/requirements-webhook.txt
 - Start: gunicorn --bind 0.0.0.0:$PORT automation.approval_webhook:app
-- Expose HTTPS URL from Render.
+- Deployment: automatic on changes to the main branch.
+
+**Important:** This only verifies hosting. The webhook has no configured
+Meta credentials, authorizing WhatsApp number or repository dispatch
+token yet, so it **cannot** send approval actions or publish any Reel.
+The default automation kill switch remains OFF.
 
 For time-sensitive WhatsApp webhooks, an always-on service is more reliable.
 Free hosted services may spin down and delay or miss the response window.
