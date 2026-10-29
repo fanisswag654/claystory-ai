@@ -20,6 +20,18 @@ celestial layers, growing trees and flowing light. Character art is original
 procedural pixel art, without copied assets, borrowed game imagery or
 pretending to reproduce any specific iwi carving patterns.
 
+## V33 expressive character upgrade
+
+Characters now have individually animated arms, hands, legs, expressive
+faces with blinking eyes, layered costumes, and multiple action frames.
+Tāne's sky-lifting scene shows him lying on the earth with bent knees,
+pushing with both feet. Tāwhirimātea wears a separate storm-blue mantle
+with a moving scarf. The browser and MP4 export sample identical poses
+from the narration timeline.
+
+See [V33_DETAILED_CHARACTERS.md](V33_DETAILED_CHARACTERS.md) for the full
+art workflow, recommended sprite editors, and iPad review instructions.
+
 ## How it works
 
 - Story and scene narration: `stories/tane.json`
@@ -46,8 +58,9 @@ darkness, wind, storm, earth movement and forest sounds.
    all eight scenes were synthesized and the MP4 was successfully rendered.
 3. Scroll to **Artifacts**, download **tane-first-light-review-film** and
    unzip it in the Files app.
-4. Open **tane-nz-balanced.mp4**. The folder also contains eight scene
-   screenshots, voice-only narration, the finished sound mix, and source
+4. Open **tane-nz-V33-detailed.mp4**. The folder also contains an
+   enlarged **tane-v33-character-studies.png**, eight scene screenshots,
+   voice-only narration, the finished sound mix, and source
    script/timing files.
 5. Review the narration, Māori words, colors and interpretation before
    granting any permission to publish.
