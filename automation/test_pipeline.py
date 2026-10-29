@@ -34,7 +34,7 @@ def example_story(topic):
     ]
     return [
         {"title":f"NEW BEAT {i+1}","caption":f"ORIGINAL SCENE {i+1}",
-         "narration":sentence}
+         "narration":sentence+" This brief requires a careful review of the Māori story and its meaning."}
         for i,sentence in enumerate(sentences)
     ]
 
@@ -93,8 +93,8 @@ class WhatsAppDeliverySafety(unittest.TestCase):
         self.assertEqual(message["type"],"template")
         components=message["template"]["components"]
         self.assertEqual(components[0]["parameters"][0]["type"],"video")
-        self.assertEqual(components[2]["parameters"][0]["payload"]["payload"].split(":")[0],"approve")
-        self.assertEqual(components[3]["parameters"][0]["payload"]["payload"].split(":")[0],"reject")
+        self.assertEqual(components[2]["parameters"][0]["payload"].split(":")[0],"approve")
+        self.assertEqual(components[3]["parameters"][0]["payload"].split(":")[0],"reject")
 
     def test_bad_destination_or_video_url_cannot_be_sent(self):
         meta={"proposal_id":"auto-review-test-"+("a"*12),"title":"Test",
