@@ -57,7 +57,7 @@ def parse_callback(payload: dict, user_id: str, chat_id: str) -> dict | None:
     action, tag = value.split(":", 1)
     if action not in DECISION or not TAG.fullmatch(tag):
         return None
-    if tag not in message.get("caption", ""):
+    if tag not in (message.get("caption") or ""):
         # A forwarded or unrelated message can never authorize a new story.
         return None
     callback_id = str(query.get("id", ""))
