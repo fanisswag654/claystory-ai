@@ -16,5 +16,28 @@
     "source_fingerprint": "9ad7bd4f7221a9c0e9f7e563f125b85742e2e177dbe1d9069d26d859dcd53268",
     "story": "fish-nz",
     "video_url": "https://github.com/fanisswag654/claystory-ai/releases/download/instagram-fish-nz-9ad7bd4f7221a9c0/fish-nz-balanced.mp4"
+  },
+  "tane-nz:9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52:draft": {
+    "buffer_post_id": "6ae29b84cc91be5434bd6212",
+    "channel_id": "6ae277352f1f5ed648046667",
+    "mode": "draft",
+    "source_fingerprint": "9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52",
+    "source_workflow_run": 40794388100,
+    "story": "tane-nz",
+    "video_sha256": "9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52",
+    "video_url": "https://github.com/fanisswag654/claystory-ai/releases/download/instagram-tane-nz-v33-9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52/tane-nz-V33-detailed.mp4"
+  },
+  "tane-nz:9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52:shareNow": {
+    "buffer_post_id": "6ae29b84cc91be5434bd6212",
+    "buffer_status": "scheduled",
+    "channel_id": "6ae277352f1f5ed648046667",
+    "mode": "shareNow",
+    "notes": "Accepted by Buffer; confirm sent status on Instagram",
+    "share_mode": "shareNow",
+    "source_fingerprint": "9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52",
+    "source_workflow_run": 40794388100,
+    "story": "tane-nz",
+    "video_sha256": "9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52",
+    "video_url": "https://github.com/fanisswag654/claystory-ai/releases/download/instagram-tane-nz-v33-9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52/tane-nz-V33-detailed.mp4"
   }
 }
