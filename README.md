@@ -29,6 +29,21 @@ prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
 
+## FREE curated Pūrākau Pixels pixel animation (no paid OpenAI API)
+
+**[Generate a free curated film for Telegram review](.github/workflows/free-curated-purakau.yml)**
+
+This separate manual workflow renders one of four **original eight-scene Māori
+pūrākau scripts** using the existing pixel characters, 540×960 animation,
+free Ryan Edge narration and original environmental SFX. It needs **no
+OPENAI_API_KEY** and has **no Buffer/Instagram publishing access**.
+The finished MP4 is delivered to your private Telegram review chat with
+**PREVIEW-ONLY** buttons that cannot publish a Reel.
+
+Start with [FREE_CURATED_PURAKAU_SETUP.md](FREE_CURATED_PURAKAU_SETUP.md) for
+iPad steps, source credits, cultural review, GitHub quota and TTS availability
+limitations. Production publishing remains independently disabled.
+
 ## New automation — Telegram review before every Instagram upload
 
 ClayStory now has an **approval-first Telegram bot workflow** for new,
