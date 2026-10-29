@@ -128,6 +128,12 @@ jobs:
           cp scripts/v29_motion.js _site/scripts/
           cp vendor/tween.umd.js _site/vendor/
           cp vendor/TWEEN_LICENSE.txt _site/vendor/
+          # The Tāne player is a review-only storyboard on Pages; narrated MP4
+          # remains an Actions artifact until cultural and voice approval.
+          cp tane.html _site/
+          cp scripts/tane_animation.js scripts/tane_characters.js _site/scripts/
+          mkdir -p _site/stories
+          cp stories/tane.json _site/stories/
           if [ -f custom-story.json ]; then cp custom-story.json _site/; fi
       - uses: actions/upload-pages-artifact@v3
         with:
