@@ -179,7 +179,7 @@ class TelegramWebhook(unittest.TestCase):
             reply = client.post("/webhook/telegram", json=self.payload, headers={
                 "X-Telegram-Bot-Api-Secret-Token": WEBHOOK_SECRET,
             })
-        self.assertEqual(reply.status_code, 200)
+        self.assertEqual(reply.status_code, 200, reply.get_json())
         receipt = dispatch.call_args.args[0]
         self.assertEqual(receipt["platform"], "telegram")
         self.assertEqual(receipt["decision"], "approved")
