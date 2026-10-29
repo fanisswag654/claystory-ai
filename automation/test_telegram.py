@@ -116,6 +116,38 @@ class TelegramWebhook(unittest.TestCase):
         self.proposal = fake_proposal(self.sha)
         self.payload = button_payload(self.proposal)
 
+    def test_invalid_render_bot_token_does_not_make_network_request(self):
+        with patch.object(telegram_webhook.urllib.request, "urlopen") as call:
+            with self.assertRaisesRegex(RuntimeError, "missing or invalid"):
+                telegram_webhook.send_onboarding_reply(
+                    {"user_id": USER, "chat_id": CHAT},
+                    "Paste the same token BotFather gave you, which you saved in GitHub.",
+                )
+        call.assert_not_called()
+
+    def test_start_onboarding_replies_to_private_caller(self):
+        data = {
+            "message": {
+                "text": "/start",
+                "chat": {"id": int(CHAT), "type": "private"},
+                "from": {"id": int(USER)},
+            }
+        }
+        self.assertEqual(
+            telegram_webhook.identify_private_chat(data),
+            {"chat_id": CHAT, "user_id": USER},
+        )
+        with patch.dict(os.environ, {
+            "TELEGRAM_WEBHOOK_SECRET": WEBHOOK_SECRET,
+            "TELEGRAM_BOT_TOKEN": "1234567890:" + "a" * 40,
+        }), patch.object(telegram_webhook, "send_onboarding_reply") as send:
+            reply = approval_webhook.app.test_client().post(
+                "/webhook/telegram", json=data,
+                headers={"X-Telegram-Bot-Api-Secret-Token": WEBHOOK_SECRET},
+            )
+        self.assertEqual(reply.status_code, 200, reply.get_json())
+        send.assert_called_once()
+
     def test_valid_header_only(self):
         self.assertTrue(telegram_webhook.verify_secret_header(WEBHOOK_SECRET, WEBHOOK_SECRET))
         self.assertFalse(telegram_webhook.verify_secret_header("incorrect", WEBHOOK_SECRET))
