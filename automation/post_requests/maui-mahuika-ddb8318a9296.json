@@ -1,0 +1,10 @@
+{
+  "workflow": "promote_existing_curated_preview_for_signed_telegram_approval",
+  "source_run_id": 40819103075,
+  "artifact_name": "purakau-free-curated-preview",
+  "story_id": "maui-mahuika-fire",
+  "original_mp4_sha256": "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c",
+  "target_instagram": "@purakaupixel",
+  "review_required": true,
+  "publish_before_telegram_approval": false
+}
