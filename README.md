@@ -29,6 +29,22 @@ prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
 
+## New original film — Tāne and the First Light
+
+A separate eight-scene **Tāne and the First Light** animation has been added
+with original 9:16 pixel visuals: Ranginui and Papatūānuku's dark embrace,
+the atua's debate, Tāne pushing the sky upward, an explosive dawn,
+Tāwhirimātea's storm and forests flourishing afterward.
+
+The [new film review workflow](.github/workflows/tane-first-light.yml)
+synthesizes the approved V31 cinematic Ryan narrator for the new story,
+creates an original nature soundscape, renders a synchronized H.264/AAC MP4
+at 540×960 and 24fps, and attaches eight scene stills. No Instagram/Buffer
+post is created, and only the existing approved fish Reel stays on the
+Instagram allowlist. Review the video and te reo Māori pronunciation before
+approving any public post. Story sources, full creative details and iPad
+instructions are in [TANE_FIRST_LIGHT.md](TANE_FIRST_LIGHT.md).
+
 ## V32 production default — approved cinematic narrator
 
 The storyteller voice you preferred in V31 is now the **default for future
