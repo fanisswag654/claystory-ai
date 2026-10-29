@@ -1,0 +1,131 @@
+name: Pūrākau Pixels — FREE curated film to Telegram (NO Instagram)
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: Choose one original, source-backed eight-scene Māori story
+        required: true
+        type: choice
+        default: maui-mahuika-fire
+        options:
+          - maui-mahuika-fire
+          - ruaumoko-earthquakes
+          - rata-and-the-tree
+          - tane-three-kete
+
+# Read-only: this workflow CANNOT create Releases, repository dispatch
+# events, approved Instagram posts or modify repository history.
+permissions:
+  contents: read
+
+concurrency:
+  group: purakau-story-candidates
+  cancel-in-progress: false
+
+jobs:
+  free_curated_telegram_preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      REQUESTED_TOPIC: ${{ inputs.topic }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
+      TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
+      # Intentionally NO OPENAI_API_KEY, Buffer credentials or
+      # approval signing/dispatch tokens. The paid pipeline remains OFF.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check free-run identity and original curated script BEFORE rendering
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          sys.path.insert(0, "automation")
+          from prepare_story import source_briefs, curated_script
+          from telegram_free_preview import verified_private_credentials
+          approved={t["id"]:t for t in source_briefs()["topics"]}
+          topic=os.environ["REQUESTED_TOPIC"]
+          if topic not in approved:
+              raise RuntimeError("Only curated, source-backed choices are permitted")
+          original=curated_script(approved[topic])
+          if len(original)!=8:
+              raise RuntimeError("Curated script must have eight scenes")
+          verified_private_credentials(os.environ)
+          print("Ready: ORIGINAL eight-scene script, approved topic ID:",topic)
+          print("No paid OpenAI API key is needed or read")
+          print("No Instagram publishing credentials or production gate are present")
+          PY
+
+      - name: Install free Ryan voice, local pixel rendering and foley tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2' 'requests>=2.32,<3' 'flask>=3,<4'
+          python -m playwright install --with-deps chromium
+          python -m compileall -q automation
+          python -m unittest discover -s automation -p 'test_*.py' -q
+
+      - name: Build a new SOURCE-CURATED English script with ZERO OpenAI API calls
+        run: |
+          python automation/prepare_story.py \
+            --mode curated \
+            --topic "$REQUESTED_TOPIC" \
+            --output automation/candidate-story.json
+          test -s automation/candidate-story.json
+          python - <<'PY'
+          import json
+          story=json.load(open("automation/candidate-story.json"))
+          assert story["script_origin"]=="checked-in-curated-original"
+          assert len(story["scenes"])==8
+          print("Curated original storyboard verified:",story["title"])
+          PY
+
+      - name: Narrate eight original scenes using free Edge voice and unique natural sounds
+        run: python automation/make_audio.py
+
+      - name: Animate original pixel scenes into a portrait MP4
+        run: |
+          python automation/render_candidate.py
+          test -s automation/output/purakau-review.mp4
+          test -s automation/output/story.json
+          test -s automation/output/manifest.json
+
+      - name: Send verified MP4 to owner's private Telegram with PREVIEW-ONLY buttons
+        run: python automation/telegram_free_preview.py
+
+      - name: Keep a short-lived copy of the original film for personal review
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: purakau-free-curated-preview
+          path: |
+            automation/output/purakau-review.mp4
+            automation/output/story.json
+            automation/output/manifest.json
+            automation/output/timing.json
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Explain preview outcome (not approved or posted)
+        if: success()
+        run: |
+          {
+            echo "## Free Pūrākau Pixels video sent for private review"
+            echo ""
+            echo "A NEW pixel-animated film was rendered using the checked-in original sourced script."
+            echo "NO OpenAI script-generation API call was made."
+            echo "Free Edge narration and original generated effects were added."
+            echo ""
+            echo "It was sent to your private Telegram with PREVIEW-ONLY buttons."
+            echo "**Neither Approve nor Reject can post to Instagram.**"
+            echo "Production Instagram and scheduled automation remain DISABLED."
+            echo "Review cultural details, pronunciation and variations between iwi."
+          } >> "$GITHUB_STEP_SUMMARY"
