@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "editorial_status": "original drafts based only on the corresponding source-backed story_briefs.json entries; human cultural and te reo review required",
+  "scripts": {
+    "maui-mahuika-fire": [
+      {
+        "title": "A GIFT OF FIRE",
+        "caption": "THE STORY OF FIRE",
+        "narration": "In one telling, Māui wanted to discover the secret of fire. He went to seek out Mahuika, an ancestress who held that powerful gift."
+      },
+      {
+        "title": "MEETING MAHUIKA",
+        "caption": "MAHUIKA'S GIFT",
+        "narration": "Mahuika gave Māui a flame from one of her burning fingernails. He carried it away, but his curiosity had not yet been satisfied."
+      },
+      {
+        "title": "THE FLAME GOES OUT",
+        "caption": "A VANISHED EMBER",
+        "narration": "Māui deliberately put out the flame and returned to ask for another. Mahuika gave him fire once again, not knowing his purpose."
+      },
+      {
+        "title": "BACK FOR MORE",
+        "caption": "THE SAME REQUEST",
+        "narration": "Again and again, Māui extinguished the fire and returned. Each visit brought him another precious flame and tested Mahuika's patience."
+      },
+      {
+        "title": "MAHUIKA'S ANGER",
+        "caption": "THE TRICK REVEALED",
+        "narration": "At last Mahuika realized she was being tricked. Her anger grew as Māui's repeated requests threatened the fire she had guarded."
+      },
+      {
+        "title": "FIRE IN THE FOREST",
+        "caption": "FLAMES SPREAD",
+        "narration": "Fire swept through the forest, and Māui fled from its danger. In this telling, the gift he had sought had become far too powerful."
+      },
+      {
+        "title": "WIND AND RAIN",
+        "caption": "THE STORM ARRIVES",
+        "narration": "Rain and water helped bring the danger to an end in some versions of the story. The flames faded, but the secret of fire was not lost."
+      },
+      {
+        "title": "FIRE IN THE TREES",
+        "caption": "FIRE REMAINS",
+        "narration": "In one telling, fire remained within certain trees, ready to be brought forth by friction. Different communities preserve different details of Māui's story."
+      }
+    ],
+    "ruaumoko-earthquakes": [
+      {
+        "title": "SKY AND EARTH",
+        "caption": "RANGINUI AND PAPA",
+        "narration": "One Māori tradition begins with Ranginui, the sky, and Papatūānuku, the earth. Their separation changed the world around their children."
+      },
+      {
+        "title": "A GRIEVING MOTHER",
+        "caption": "BENEATH THE LAND",
+        "narration": "After that separation, the children turned their grieving mother Papatūānuku over. In this account, their actions help explain the world beneath us."
+      },
+      {
+        "title": "THE CHILD BELOW",
+        "caption": "RŪAUMOKO REMAINS",
+        "narration": "Rūaumoko remained with his mother beneath the earth. His place below the surface became part of the story of the land and its hidden power."
+      },
+      {
+        "title": "UNDER OUR FEET",
+        "caption": "A HIDDEN PRESENCE",
+        "narration": "Although he could not be seen above ground, Rūaumoko was still present in the world. The story connects the unseen beneath us with the land."
+      },
+      {
+        "title": "THE EARTH STIRS",
+        "caption": "MOVEMENT BELOW",
+        "narration": "In this tradition, Rūaumoko is linked to the movements of the earth. His presence gives the shaking ground a place within a wider story."
+      },
+      {
+        "title": "WHEN THE LAND SHAKES",
+        "caption": "EARTHQUAKES",
+        "narration": "Earthquakes are understood in this account through Rūaumoko's movements beneath Papatūānuku. The trembling land becomes part of the pūrākau."
+      },
+      {
+        "title": "MOUNTAINS AND FIRE",
+        "caption": "VOLCANIC POWER",
+        "narration": "Rūaumoko is also associated with volcanic activity. The story connects the land's great power with relationships among the atua."
+      },
+      {
+        "title": "AN ENDURING STORY",
+        "caption": "ONE TELLING",
+        "narration": "This is one traditional way of understanding earthquakes and volcanoes, not a scientific explanation. Different iwi may tell these stories differently."
+      }
+    ],
+    "rata-and-the-tree": [
+      {
+        "title": "INTO THE FOREST",
+        "caption": "RĀTĀ'S JOURNEY",
+        "narration": "Rātā entered the forest searching for a great tree. He hoped its wood would become a waka, a canoe that could carry people across the water."
+      },
+      {
+        "title": "A WAKA IN MIND",
+        "caption": "THE WORK BEGINS",
+        "narration": "With his waka in mind, Rātā chose a tree and began cutting it down. He worked on the timber, unaware that the forest had more to teach him."
+      },
+      {
+        "title": "THE TREE RETURNS",
+        "caption": "A STRANGE SIGHT",
+        "narration": "When Rātā returned, the tree he had cut was standing tall again. What he had left on the ground seemed to have been restored overnight."
+      },
+      {
+        "title": "CUT DOWN AGAIN",
+        "caption": "THE PUZZLE GROWS",
+        "narration": "Puzzled, Rātā cut down the tree once more. Yet when he came back, it had been restored again, and he wondered what was happening."
+      },
+      {
+        "title": "GUARDIANS AT WORK",
+        "caption": "HĀKUTURI",
+        "narration": "The hākuturi, guardians of the forest, had been restoring the tree. The living forest was responding to the way Rātā had treated it."
+      },
+      {
+        "title": "A LESSON IN RESPECT",
+        "caption": "TIKANGA MATTERS",
+        "narration": "Rātā learned that he had not observed the appropriate tikanga when taking a tree. His actions had overlooked the respect owed to the forest."
+      },
+      {
+        "title": "ANOTHER BEGINNING",
+        "caption": "RESPECT FOR THE FOREST",
+        "narration": "In one telling, once Rātā paid proper respect, the forest guardians allowed him to use the tree. His journey could then continue differently."
+      },
+      {
+        "title": "THE STORY'S MEANING",
+        "caption": "CARE FOR NATURE",
+        "narration": "The story of Rātā is often remembered as a lesson in caring for the forest. It reminds us that people and the natural world are connected."
+      }
+    ],
+    "tane-three-kete": [
+      {
+        "title": "THE SEARCH",
+        "caption": "A QUEST FOR KNOWLEDGE",
+        "narration": "In one tradition, Tāne set out to seek knowledge in the heavens. The journey would link learning, life, and the world of Ranginui above."
+      },
+      {
+        "title": "THE JOURNEY BEGINS",
+        "caption": "TOWARD THE HEAVENS",
+        "narration": "Tāne began his ascent toward the heavens, moving beyond the familiar world below. His goal was a source of knowledge of great importance."
+      },
+      {
+        "title": "UP THROUGH THE SKY",
+        "caption": "THE HEAVENS ABOVE",
+        "narration": "The story describes a journey through the heavens. In this telling, Tāne climbed toward the highest of twelve heavenly realms."
+      },
+      {
+        "title": "THE HIGHEST REALM",
+        "caption": "THE JOURNEY'S END",
+        "narration": "One account names his destination Te Tihi-o-Manono at Te Toi-o-ngā-rangi. These names belong to a tradition of Tāne's search for knowledge."
+      },
+      {
+        "title": "THREE BASKETS",
+        "caption": "KETE WĀNANGA",
+        "narration": "Tāne retrieved three baskets of knowledge, called kete wānanga. They became an enduring part of the story of learning and understanding."
+      },
+      {
+        "title": "NAMES OF THE KETE",
+        "caption": "THREE KETE",
+        "narration": "The names include te kete-tuatea, te kete-tuauri, and te kete-aronui. Accounts and interpretations of these baskets are not all the same."
+      },
+      {
+        "title": "KNOWLEDGE SHARED",
+        "caption": "LEARNING AND LIFE",
+        "narration": "The story links Tāne and Ranginui with knowledge, learning, and the origins of life. It continues to invite reflection on what knowledge means."
+      },
+      {
+        "title": "MANY INTERPRETATIONS",
+        "caption": "ONE TRADITION",
+        "narration": "This is one telling of Tāne and the three baskets of knowledge. Different traditions and Māori scholars offer different interpretations."
+      }
+    ]
+  }
+}
