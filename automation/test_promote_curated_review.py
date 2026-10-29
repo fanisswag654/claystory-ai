@@ -80,6 +80,24 @@ class PromoteExistingVideoTests(unittest.TestCase):
         self.assertNotIn("mode: shareNow", yml)
         self.assertNotIn("OPENAI_API_KEY", yml)
 
+    def test_publishing_job_installs_all_imported_test_dependencies(self):
+        # In 2 real signed approval runs the entire publishing job failed
+        # before seeing the MP4 because unittest imports render_candidate,
+        # which imports playwright.sync_api. This must never regress.
+        workflow = (
+            Path(__file__).resolve().parents[1]
+            / ".github/workflows/auto-purakau-decision.yml"
+        ).read_text(encoding="utf-8")
+        install_step = workflow.index("Install minimal integrity and Buffer dependencies")
+        playwright_install = workflow.index("'playwright>=1.50,<2'")
+        offline_tests = workflow.index("python -m unittest discover -s automation")
+        publishing_script = workflow.index("python automation/approve_publish_telegram.py")
+        self.assertLess(install_step, playwright_install)
+        self.assertLess(playwright_install, offline_tests)
+        self.assertLess(offline_tests, publishing_script)
+        self.assertIn("PURAKAU_APPROVAL_SIGNING_KEY", workflow)
+        self.assertIn("instagram-publish-history", workflow)
+
     def test_separate_publishing_workflow_only_accepts_exact_signed_mp4(self):
         yml = (
             Path(__file__).resolve().parents[1]
