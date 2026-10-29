@@ -17,7 +17,13 @@ import re
 import requests
 
 from prepare_story import ROOT, source_briefs, curated_script, build_candidate
-from telegram_webhook import TEST_PREVIEW_MARKER, TEST_PREVIEW_ACTIONS
+# Keep this sender independent of the Flask/Render publishing webhook.
+# Offline tests compare these test-only strings to the webhook allowlist.
+TEST_PREVIEW_MARKER = "PŪRĀKAU PIXELS VIDEO TEST ONLY — NO INSTAGRAM"
+TEST_PREVIEW_ACTIONS = {
+    "test_preview:approve:free": "approve",
+    "test_preview:reject:free": "reject",
+}
 
 OUT = ROOT / "automation" / "output"
 MAX_VIDEO_BYTES = 15 * 1024 * 1024
