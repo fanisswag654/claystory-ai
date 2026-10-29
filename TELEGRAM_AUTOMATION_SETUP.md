@@ -84,6 +84,25 @@ No one else can use their Telegram account to approve your videos: the
 Render webhook and GitHub publication gate each independently verify
 the configured IDs, webhook secret and exact video fingerprint.
 
+## FREE curated original stories (NO OpenAI API key)
+
+The owner can now create a **brand-new eight-scene pixel-animated film**
+using four hand-written, source-backed scripts and the existing free
+Ryan narrator/foley mixer.
+
+On an iPad, open:
+https://github.com/fanisswag654/claystory-ai/actions/workflows/free-curated-purakau.yml
+
+Tap **Run workflow**, choose a story from the four options, then wait for
+a new MP4 in your private Telegram bot chat. Preview-only buttons respond
+inside Telegram, but **never** trigger Instagram or Buffer.
+
+This uses **no OpenAI API script generation** and does not need the
+production `PURAKAU_TELEGRAM_ENABLED` switch. Leave that switch OFF.
+Free external Edge TTS still needs network access, and GitHub Actions
+has platform/account usage quotas. Full details in
+[FREE_CURATED_PURAKAU_SETUP.md](FREE_CURATED_PURAKAU_SETUP.md).
+
 ## 5. Connect the approval dispatch and Instagram gate (advanced)
 
 Further secrets needed — **do not share them in chat**:
