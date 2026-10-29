@@ -17,7 +17,7 @@ import time
 import urllib.error
 import urllib.request
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 from automation.telegram_bridge_probe import make_probe
 
 bot = Blueprint("telegram_review", __name__)
@@ -392,7 +392,7 @@ def telegram_updates():
         except (ValueError, RuntimeError, urllib.error.URLError, OSError) as exc:
             # Editing is best-effort only. This is not a publishing decision;
             # nothing unsafe occurs if Telegram was offline or already edited.
-            bot.logger.warning(
+            current_app.logger.warning(
                 "Non-retriable Telegram preview edit failed (%s)", type(exc).__name__
             )
         try:
@@ -402,7 +402,7 @@ def telegram_updates():
             )
         except (RuntimeError, urllib.error.URLError, OSError) as exc:
             # The callback may have expired by the time Render woke up.
-            bot.logger.warning(
+            current_app.logger.warning(
                 "Expired/unavailable Telegram callback; update acknowledged (%s)",
                 type(exc).__name__,
             )
