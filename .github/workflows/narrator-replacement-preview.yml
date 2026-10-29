@@ -1,0 +1,57 @@
+name: Preview replacement male narrators
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/narrator-replacement-preview.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  voices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install edge-tts requests
+      - name: Fresh Christopher narration, plus Eric and Brian auditions (natural pitch)
+        run: |
+          python - <<'PY'
+          import asyncio,json,sys,tempfile,shutil
+          from pathlib import Path
+          sys.path.insert(0,"scripts")
+          from v31_storyteller import generate_edge, PROFILES
+          import tane_sound
+          out=Path("narrator-preview");out.mkdir()
+          scenes=json.loads(Path("automation/curated_scripts.json").read_text())["scripts"]["maui-mahuika-fire"]
+          profile=dict(PROFILES["warm"], rates=(-8,)*8,pitches=(0,)*8,pauses=(.35,)*8)
+          async def main():
+              for i,scene in enumerate(scenes):
+                  with tempfile.TemporaryDirectory() as tmp:
+                      await generate_edge(scene["narration"],out/f"new-voice-{i+1}.mp3","en-US-ChristopherNeural",i,profile,Path(tmp))
+                  print("Christopher scene",i+1,flush=True)
+              shutil.copy2(out/"new-voice-1.mp3",out/"Christopher-sample.mp3")
+              for name in ("Eric","Brian"):
+                  with tempfile.TemporaryDirectory() as tmp:
+                      await generate_edge(scenes[0]["narration"],out/f"{name}-sample.mp3",f"en-US-{name}Neural",0,profile,Path(tmp))
+                  print(name,"audition complete",flush=True)
+          asyncio.run(main())
+          durations=[round(tane_sound.seconds(out/f"new-voice-{i+1}.mp3")+(.17 if i<7 else .28),3) for i in range(8)]
+          tane_sound.KEY="new-voice";tane_sound.out=out
+          tane_sound.merge_voice(durations)
+          tane_sound.original_soundscape(durations)
+          tane_sound.master_mix(durations)
+          (out/"timing.json").write_text(json.dumps({"story":"maui-mahuika-fire","durations":durations,"voice":"en-US-ChristopherNeural","pitch_hz":0,"rate_percent":-8,"status":"private voice preview; no publishing"},indent=2))
+          assert all(3<x<40 for x in durations)
+          print("NEW narrator:", "en-US-ChristopherNeural", "pitch unchanged")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: replacement-male-narrators
+          path: narrator-preview/
+          retention-days: 30
