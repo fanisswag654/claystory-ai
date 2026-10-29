@@ -1,0 +1,1 @@
+User asked ChatGPT to choose a new Māori pūrākau and animate it. Render an ORIGINAL eight-scene Tāne and the First Light pixel film with the approved cinematic V31 narrator, original foley, 24fps H.264/AAC MP4 and eight review stills. Review only; do not publish to Instagram, Buffer or TikTok.
