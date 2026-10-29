@@ -169,6 +169,57 @@ def answer_callback(callback_id: str, bot_token: str, explanation: str) -> None:
         pass
 
 
+def identify_private_chat(update: dict) -> dict | None:
+    """BotFather onboarding: /start tells each user their own IDs privately.
+
+    A different user may learn their OWN Telegram numeric ID, but can never
+    approve a film because the webhook/Actions enforce the configured IDs.
+    """
+    message = update.get("message")
+    if not isinstance(message, dict):
+        return None
+    chat = message.get("chat", {})
+    sender = message.get("from", {})
+    words = str(message.get("text") or "").split()
+    command = words[0].split("@")[0] if words else ""
+    if (
+        command not in ("/start", "/id")
+        or chat.get("type") != "private"
+        or not str(chat.get("id", "")).lstrip("-").isdigit()
+        or not str(sender.get("id", "")).isdigit()
+    ):
+        return None
+    return {"chat_id": str(chat["id"]), "user_id": str(sender["id"])}
+
+
+def send_onboarding_reply(identity: dict, token: str) -> None:
+    """Use HTTPS Telegram Bot API to respond ONLY within the caller's chat."""
+    if not token:
+        raise RuntimeError("Render TELEGRAM_BOT_TOKEN not configured")
+    body = {
+        "chat_id": identity["chat_id"],
+        "text": (
+            "🌿 Pūrākau Pixels review bot is connected!\n\n"
+            f"Your Telegram user ID: {identity['user_id']}\n"
+            f"Your private chat ID: {identity['chat_id']}\n\n"
+            "Store these numbers in the private Telegram settings for your "
+            "ClayStory automation. Never share your BotFather token or paste "
+            "that token into chat.\n\n"
+            "New films will arrive with Approve and Reject buttons once "
+            "the owner turns on the review automation."
+        ),
+    }
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        method="POST", data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as response:
+        payload = json.load(response)
+    if not payload.get("ok"):
+        raise RuntimeError("Telegram did not accept onboarding message")
+
+
 @bot.post("/webhook/telegram")
 def telegram_updates():
     if not verify_secret_header(
@@ -183,6 +234,16 @@ def telegram_updates():
         return jsonify(error="Invalid Telegram JSON"), 400
     if not isinstance(payload, dict):
         return jsonify(error="Unexpected Telegram update"), 400
+
+    # Allow the reviewer to discover their numeric private chat/user IDs
+    # safely by sending /start to the bot after its webhook is registered.
+    identity = identify_private_chat(payload)
+    if identity is not None:
+        try:
+            send_onboarding_reply(identity, os.getenv("TELEGRAM_BOT_TOKEN", ""))
+        except (RuntimeError, urllib.error.URLError, OSError):
+            return jsonify(error="Bot token not ready to respond to /start"), 503
+        return jsonify(onboarding_message_sent=True), 200
 
     trusted_user = os.getenv("TELEGRAM_APPROVER_USER_ID", "")
     trusted_chat = os.getenv("TELEGRAM_REVIEW_CHAT_ID", "")
