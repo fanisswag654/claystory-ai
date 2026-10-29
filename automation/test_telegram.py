@@ -19,7 +19,9 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import approval_webhook
 import telegram_send
-import telegram_webhook
+# Patch the same module that Flask registered on its Blueprint. Importing
+# telegram_webhook at the top level would construct a SECOND module object.
+from automation import telegram_webhook
 import approve_publish_telegram
 
 USER = "123456789"
