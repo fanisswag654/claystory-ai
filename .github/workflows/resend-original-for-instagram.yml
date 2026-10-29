@@ -1,0 +1,154 @@
+name: Pūrākau Pixels — resend EXACT approved preview for REAL Instagram approval
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'automation/post_requests/maui-mahuika-ddb8318a9296.json'
+  workflow_dispatch:
+
+# This is a deliberately one-film-only workflow.
+# It may host the original video and send for Telegram review, but NEVER
+# creates a Buffer draft, post, or Instagram publication.
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: purakau-original-maui-review-once
+  cancel-in-progress: false
+
+jobs:
+  send_exact_video_for_instagram_approval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
+      INSTAGRAM_USERNAME: purakaupixel
+      IG_MODE: draft
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
+      TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
+      SOURCE_RUN_ID: '40819103075'
+      SOURCE_ARTIFACT: purakau-free-curated-preview
+      PROPOSAL_TAG: 'auto-review-maui-mahuika-fire-ddb8318a9296'
+      EXPECTED_SHA256: 'ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c'
+
+    steps:
+      - name: Check out one-time, owner-selected story request
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install only safe verification and Telegram/Buffer API client dependencies
+        run: |
+          python -m pip install 'requests>=2.32,<3'
+          python -m py_compile automation/promote_curated_review.py automation/telegram_send.py
+          gh --version
+
+      - name: Confirm exact source review approval intent and private Telegram destination
+        run: |
+          python automation/promote_curated_review.py --artifact-dir automation/output --verify-request-only
+          python - <<'PY'
+          import os,sys
+          sys.path.insert(0,"automation")
+          from telegram_free_preview import verified_private_credentials
+          token,chat=verified_private_credentials(os.environ)
+          print("Telegram receiver verified: user and private chat IDs match.")
+          assert os.environ["PROPOSAL_TAG"]=="auto-review-maui-mahuika-fire-ddb8318a9296"
+          assert os.environ["EXPECTED_SHA256"]=="ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c"
+          PY
+
+      - name: READ-ONLY verify real Buffer Instagram account BEFORE sending live buttons
+        run: |
+          python - <<'PY'
+          import os,sys
+          sys.path.insert(0,"scripts")
+          from instagram_reels import instagram_channel
+          if not os.getenv("BUFFER_API_KEY"):
+              raise RuntimeError(
+                  "BUFFER_API_KEY is missing in GitHub Secrets. "
+                  "No real Telegram buttons will be sent until it is configured."
+              )
+          from pathlib import Path
+          sys.path.insert(0,"automation")
+          from approve_publish import TRUSTED_CHANNEL
+          selected=instagram_channel()
+          if selected["id"]!=TRUSTED_CHANNEL:
+              raise RuntimeError(
+                  "Connected Buffer channel is not the verified @purakaupixel channel"
+              )
+          if (selected.get("name") or "").lower().lstrip("@") != "purakaupixel" and (
+              (selected.get("displayName") or "").lower().lstrip("@") != "purakaupixel"
+          ):
+              raise RuntimeError("Connected Buffer Instagram account handle mismatch")
+          print("READ ONLY: verified exact @purakaupixel Instagram channel.")
+          print("No media posted, drafted, or scheduled by this workflow.")
+          PY
+
+      - name: Retrieve SAME previously sent MP4 from the successful free GitHub Actions run
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p automation/output
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$SOURCE_ARTIFACT" \
+            --dir automation/output
+          test -s automation/output/purakau-review.mp4
+          test -s automation/output/story.json
+          test -s automation/output/manifest.json
+
+      - name: Verify original video SHA and issue one pending owner-approval proposal
+        run: |
+          python automation/promote_curated_review.py --artifact-dir automation/output
+          test -s automation/output/proposal.json
+
+      - name: Create ONE pinned GitHub Release for the SAME MP4 (public asset, no Instagram post)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$PROPOSAL_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Original film review release already exists. Refusing a second send/release." >&2
+            exit 1
+          fi
+          gh release create "$PROPOSAL_TAG" \
+            automation/output/purakau-review.mp4 \
+            automation/output/proposal.json \
+            automation/output/story.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --latest=false \
+            --title "Pūrākau Pixels — original Māui Mahuika MP4 awaiting Telegram approval" \
+            --notes "This is the exact existing free preview MP4 from successful GitHub run 40819103075, cryptographically checked with SHA-256 ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c. Public GitHub asset for Buffer only. NOTHING has been published to Instagram. Explicit owner Telegram Approve/Reject controls any later posting."
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,"scripts")
+          from instagram_reels import verify_public_release
+          from pathlib import Path
+          import json
+          proposal=json.loads(Path("automation/output/proposal.json").read_text())
+          verify_public_release(proposal["video_url"])
+          PY
+
+      - name: RESEND exact MP4 with real signed Instagram approval buttons
+        run: python automation/telegram_send.py automation/output/proposal.json
+
+      - name: Confirm NO automatic posting occurred
+        if: success()
+        run: |
+          {
+            echo "## Original Māui and Mahuika video resent to private Telegram"
+            echo "Exact original MP4 SHA-256: \`$EXPECTED_SHA256\`"
+            echo "Review tag: \`$PROPOSAL_TAG\`"
+            echo "The owner must now explicitly tap **Approve for Instagram**."
+            echo "**No Telegram Approve = no Instagram posting.**"
+            echo "The actual Buffer submission happens only in the separate"
+            echo "signature-verified Telegram decision workflow."
+            echo "No paid OpenAI API calls and no new rendering."
+          } >> "$GITHUB_STEP_SUMMARY"
