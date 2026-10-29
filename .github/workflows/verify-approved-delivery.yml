@@ -23,15 +23,8 @@ jobs:
           import sys,json
           sys.path.insert(0,"scripts")
           from instagram_reels import buffer_api
-          post=buffer_api('query { post(input: { id: "6ae38e34b3aaeefe23224b5b" }) { id channelId status shareMode dueAt } }')["post"]
+          post=buffer_api('query { post(input: { id: "6ae38e34b3aaeefe23224b5b" }) { id channelId status shareMode dueAt sentAt externalLink } }')["post"]
           if not post or post["channelId"]!="6ae277352f1f5ed648046667":
               raise RuntimeError("Existing post account mismatch")
           print("EXISTING_APPROVED_POST",json.dumps(post))
-          schema=buffer_api('query { __schema { queryType { fields { name args { name type { kind name ofType { kind name } } } type { kind name ofType { kind name } } } } } }')
-          fields=schema["__schema"]["queryType"]["fields"]
-          print(json.dumps([f for f in fields if "post" in f["name"].lower()],indent=2))
-          types=buffer_api('query { __schema { types { kind name fields { name type { kind name ofType { kind name } } } inputFields { name type { kind name ofType { kind name } } } } } }')
-          for t in types["__schema"]["types"]:
-              if t["name"] in ("Post","PostInput","GetPostInput") or ("Post" in t["name"] and t["kind"]=="INPUT_OBJECT" and not any(s in t["name"] for s in ("Create","Edit","Update","Delete"))):
-                  print(json.dumps(t))
           PY
