@@ -43,6 +43,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install preflight dependency before importing Telegram preview code
+        run: python -m pip install 'requests>=2.32,<3'
+
       - name: Check free-run identity and original curated script BEFORE rendering
         run: |
           python - <<'PY'
@@ -68,7 +71,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2' 'requests>=2.32,<3' 'flask>=3,<4'
+          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2' 'flask>=3,<4'
           python -m playwright install --with-deps chromium
           python -m compileall -q automation
           python -m unittest discover -s automation -p 'test_*.py' -q
