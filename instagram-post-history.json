@@ -11,13 +11,13 @@
     "buffer_post_id": "6ae38e34b3aaeefe23224b5b",
     "buffer_status": "sent",
     "channel_id": "6ae277352f1f5ed648046667",
-    "mode": "shareNow",
-    "story": "maui-mahuika-fire",
-    "video_sha256": "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c",
-    "video_url": "https://github.com/fanisswag654/claystory-ai/releases/download/auto-review-maui-mahuika-fire-ddb8318a9296/purakau-review.mp4",
     "instagram_url": "https://www.instagram.com/reel/DfForcPkc0T/",
+    "mode": "shareNow",
     "sent_at": "2026-10-29T18:20:28.326Z",
-    "verification_run_id": 40930241278
+    "story": "maui-mahuika-fire",
+    "verification_run_id": 40930241278,
+    "video_sha256": "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c",
+    "video_url": "https://github.com/fanisswag654/claystory-ai/releases/download/auto-review-maui-mahuika-fire-ddb8318a9296/purakau-review.mp4"
   },
   "fish-nz:9ad7bd4f7221a9c0e9f7e563f125b85742e2e177dbe1d9069d26d859dcd53268:draft": {
     "buffer_post_id": "6ae279fbcc91be5434b3ba6d",
@@ -39,14 +39,14 @@
   },
   "review:auto-review-maui-mahuika-fire-ddb8318a9296": {
     "buffer_post_id": "6ae38e34b3aaeefe23224b5b",
-    "decision": "approved",
-    "platform": "telegram",
-    "telegram_callback_id": "3362901895692474878",
-    "video_sha256": "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c",
     "buffer_status": "sent",
+    "decision": "approved",
     "instagram_url": "https://www.instagram.com/reel/DfForcPkc0T/",
+    "platform": "telegram",
     "sent_at": "2026-10-29T18:20:28.326Z",
-    "verification_run_id": 40930241278
+    "telegram_callback_id": "3362901895692474878",
+    "verification_run_id": 40930241278,
+    "video_sha256": "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c"
   },
   "tane-nz:9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52:draft": {
     "buffer_post_id": "6ae29b84cc91be5434bd6212",
