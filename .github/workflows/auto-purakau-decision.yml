@@ -1,0 +1,136 @@
+name: Pūrākau Pixels — process signed WhatsApp Approve / Reject
+
+on:
+  repository_dispatch:
+    types: [purakau_whatsapp_decision]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: purakau-instagram-approval
+  cancel-in-progress: false
+
+jobs:
+  process_approval:
+    # A global kill switch: disabling the system immediately blocks future
+    # WhatsApp-triggered Instagram posts, even for earlier sent videos.
+    if: vars.PURAKAU_AUTOMATION_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PURAKAU_APPROVAL_SIGNING_KEY: ${{ secrets.PURAKAU_APPROVAL_SIGNING_KEY }}
+      PURAKAU_REVIEW_RECEIPT: ${{ toJSON(github.event.client_payload) }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
+      INSTAGRAM_USERNAME: purakaupixel
+      IG_MODE: draft
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal integrity and Buffer dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install 'requests>=2.32,<3'
+          python -m py_compile automation/approve_publish.py
+          python -m unittest discover -s automation -p 'test_*.py' -v
+
+      - name: Download EXACT originally reviewed release media and proposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="$(python - <<'PY'
+          import json,re,os
+          p=json.loads(os.environ["PURAKAU_REVIEW_RECEIPT"])
+          tag=p.get("proposal_id","")
+          if not re.fullmatch(r"auto-review-[a-z0-9-]+-[a-f0-9]{12}",tag):
+              raise SystemExit("Invalid signed WhatsApp proposal identifier")
+          print(tag)
+          PY
+          )"
+          mkdir -p automation/review-upload
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            -p purakau-review.mp4 -p proposal.json \
+            -D automation/review-upload
+          test -s automation/review-upload/purakau-review.mp4
+          test -s automation/review-upload/proposal.json
+
+      - name: Restore durable history before possibly publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+          git show origin/instagram-publish-history:instagram-post-history.json > instagram-post-history.json
+
+      - name: Process signed WhatsApp decision (Reject never calls Buffer)
+        run: python automation/approve_publish.py
+
+      - name: Show truthfully what happened
+        if: success()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json,os
+          receipt=json.loads(os.environ["PURAKAU_REVIEW_RECEIPT"])
+          history=json.load(open("instagram-post-history.json"))
+          tag=receipt["proposal_id"]
+          decision=receipt["decision"]
+          print("## WhatsApp review outcome: "+decision.upper())
+          print("")
+          if decision=="rejected":
+              print("- Film rejected; NO Buffer or Instagram upload was made.")
+          else:
+              rec=history["review:"+tag]
+              print("- Approved for @purakaupixel only.")
+              print("- Exact SHA-256-validated film submitted to Buffer Publish Now.")
+              print("- Buffer post ID: "+rec["buffer_post_id"])
+              print("- Instagram publication must be verified separately.")
+          print("- Duplicate/contradictory approval buttons are refused.")
+          PY
+
+      - name: Save decisions and drafts even after partial API failures
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -s instagram-post-history.json ]; then
+            echo "No history to persist"
+            exit 0
+          fi
+          cp instagram-post-history.json "$RUNNER_TEMP/whatsapp-review-history.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            cd "$GITHUB_WORKSPACE"
+            git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+            git worktree remove --force "$RUNNER_TEMP/whatsapp-review-branch" 2>/dev/null || true
+            git worktree add --detach "$RUNNER_TEMP/whatsapp-review-branch" origin/instagram-publish-history
+            cd "$RUNNER_TEMP/whatsapp-review-branch"
+            python - <<'PY'
+          import json,os
+          from pathlib import Path
+          src=Path(os.environ["RUNNER_TEMP"])/"whatsapp-review-history.json"
+          entries=json.loads(src.read_text(encoding="utf-8"))
+          target=Path("instagram-post-history.json")
+          previous=json.loads(target.read_text()) if target.exists() else {}
+          previous.update(entries)
+          target.write_text(json.dumps(previous,ensure_ascii=False,sort_keys=True,indent=2)+"\n")
+          PY
+            git add instagram-post-history.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Record authenticated WhatsApp Pūrākau review decision"
+            if git push origin HEAD:instagram-publish-history; then exit 0; fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "History record failed; do not retry publishing without inspection" >&2
+              exit 1
+            fi
+            sleep 2
+          done
