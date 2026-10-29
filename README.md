@@ -31,6 +31,16 @@ cultural review requirements.
 
 ## New original film — Tāne and the First Light
 
+**V33 detailed-character upgrade:** The Tāne film now features a separate
+procedural character rig with distinct Tāne/Tāwhirimātea palettes, detailed
+faces, blinking, expressive arms, a realistic bracing pose, clothing depth
+and multiple keyed frames for all the main actions. The
+[Tāne review workflow](.github/workflows/tane-first-light.yml) exports a
+**tane-nz-V33-detailed.mp4** and an enlarged **character studies PNG**.
+See [V33_DETAILED_CHARACTERS.md](V33_DETAILED_CHARACTERS.md) and the
+[mobile-ready browser preview](tane.html). Hand-painted PNG sprite sheets
+from Pixelorama are the next optional art step, not a dependency on V33.
+
 A separate eight-scene **Tāne and the First Light** animation has been added
 with original 9:16 pixel visuals: Ranginui and Papatūānuku's dark embrace,
 the atua's debate, Tāne pushing the sky upward, an explosive dawn,
