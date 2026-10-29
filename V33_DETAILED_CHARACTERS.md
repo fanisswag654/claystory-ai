@@ -7,7 +7,7 @@ The Tāne and the First Light film now draws its atua using a dedicated, fully o
 - **Tāne:** forest-green layered mantle, leaf highlights, dark hair, warm face, expressive hands and realistic bracing pose.
 - **Tāwhirimātea:** dark storm-blue outfit, flowing scarf, blue-white accents and stronger animated wind gestures.
 - **Three differently styled brothers:** earth, ochre and river palettes with individual movements, shapes and expressions.
-- **Faces:** layered hair, raised/furrowed eyebrows, highlights, blinking eyes, noses and distinct determined, surprised, angry and joyful mouths.
+- **Faces:** layered swaying hair, raised/furrowed eyebrows, highlights, blinking eyes, noses and different animated speaking, determined, surprised, angry and joyful mouth shapes.
 - **Actions:** idle, listen, argue, reach, strain, push, wonder, storm. Each movement has several explicitly authored animation poses.
 - **Better body mechanics:** Tāne lies along the earth with planted hands, bending knees and feet pushing up against the sky.
 - **Larger character closeups:** debate, failed attempts and sky separation show more readable expressions and gestures.
