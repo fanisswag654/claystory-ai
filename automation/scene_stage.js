@@ -22,7 +22,8 @@ function poly(points,c){p.fillStyle=c;p.beginPath();p.moveTo(points[0][0],points
 function rnd(n){let v=Math.sin(n*127.17+5.18)*44735.19;return v-Math.floor(v)}
 function text(t,y,size=7,color="#f6e6c8"){p.fillStyle=color;p.font="bold "+size+"px system-ui";p.textAlign="center";p.fillText(t,90,y)}
 function bg(v,phase,t,theme){
- const top=theme==="fire"?"#27182c":"#172b43",ground=theme==="fire"?"#a06a50":"#5c6f63";
+ const top=theme==="fire"?"#27182c":theme==="forest"?"#19362f":"#172b43",
+ ground=theme==="fire"?"#a06a50":theme==="forest"?"#5c805b":"#5c6f63";
  const g=p.createLinearGradient(0,25,0,270);g.addColorStop(0,top);g.addColorStop(.68,theme==="fire"?"#6c4150":"#3b5362");g.addColorStop(1,ground);
  p.fillStyle=g;p.fillRect(0,25,180,264);
  for(let i=0;i<54;i++){let x=rnd(i+10)*180,y=40+rnd(i+600)*145;
@@ -109,6 +110,24 @@ function environment(scene,t,phase,theme){
  if(v==="night") {
   circ(140,63,13,"#c9cad0");circ(144,60,12,"#263b57");
  }
+ if(v==="sky"){
+  // The ascent to knowledge: layered sky, three symbolic light-filled
+  // baskets. This is original illustrative art, not a claimed customary kete
+  // weaving pattern or depiction of any sacred artifact.
+  for(let i=0;i<4;i++){
+   const cx=15+i*46,cy=105+i%2*29+wave(t*.4+i,2);
+   ell(cx,cy,28,9,"#8a9cad");ell(cx-12,cy-7,18,8,"#b3bdc7");
+   ell(cx+13,cy-5,16,8,"#ced0c5");
+  }
+  for(let j=0;j<3;j++){
+   const x=37+j*53,y=205+wave(t*.8+j,2);
+   poly([[x-11,y-11],[x+12,y-11],[x+10,y+3],[x-10,y+3]],"#9d8151");
+   poly([[x-11,y-11],[x-8,y-17],[x+8,y-17],[x+12,y-11]],"#d2b878");
+   px(x-7,y-8,14,3,"#d6b66f");
+   circ(x,y-23,5+wave(t+j,1),"#fce1a4");
+  }
+ }
+
  if(v==="ember"||v==="forest_fire"||v==="fire_tree"){
   for(let i=0;i<(v==="forest_fire"?8:3);i++){
    flames(17+i*(v==="forest_fire"?23:58),248+wave(t+i,2),t+i,v==="forest_fire"?.75:1);
