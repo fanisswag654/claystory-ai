@@ -1,0 +1,33 @@
+name: Verify existing approved Instagram delivery
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-approved-delivery.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests
+      - name: Read existing Buffer post only
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          python - <<'PY'
+          import sys,json
+          sys.path.insert(0,"scripts")
+          from instagram_reels import buffer_api
+          schema=buffer_api('query { __schema { queryType { fields { name args { name type { kind name ofType { kind name } } } type { kind name ofType { kind name } } } } } }')
+          fields=schema["__schema"]["queryType"]["fields"]
+          print(json.dumps([f for f in fields if "post" in f["name"].lower()],indent=2))
+          types=buffer_api('query { __schema { types { kind name fields { name type { kind name ofType { kind name } } } inputFields { name type { kind name ofType { kind name } } } } } }')
+          for t in types["__schema"]["types"]:
+              if t["name"] in ("Post","PostInput","GetPostInput") or ("Post" in t["name"] and t["kind"]=="INPUT_OBJECT" and not any(s in t["name"] for s in ("Create","Edit","Update","Delete"))):
+                  print(json.dumps(t))
+          PY
