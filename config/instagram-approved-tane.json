@@ -1,0 +1,15 @@
+{
+  "story": "tane-nz",
+  "title": "Tāne and the First Light",
+  "approval": "User explicitly requested uploading the completed V33 film unchanged to the established Pūrākau Pixels Instagram account",
+  "destination": "Instagram Reel via existing Buffer channel @purakaupixel",
+  "source_build_run_id": 40794388100,
+  "source_build_head_sha": "fbd9ac1cdb53f980527c2c439d567ae2572cc7ab",
+  "source_artifact_id": 12862439809,
+  "source_artifact_name": "tane-first-light-review-film",
+  "source_artifact_sha256": "9586329ebeaa7d79f1734c57f91fad90a1073c0fbd7412c8acb544e748990732",
+  "review_video_filename": "tane-nz-V33-detailed.mp4",
+  "character_animation_version": "V33",
+  "narrator": "en-GB-RyanNeural",
+  "publishing_policy": "Upload exact already rendered artifact only; do not re-render or modify frames/audio; protect against duplicate Instagram posts"
+}
