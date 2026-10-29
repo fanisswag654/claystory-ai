@@ -1,4 +1,4 @@
-name: Pūrākau Pixels — create new story and ask WhatsApp approval
+name: Pūrākau Pixels — generate animation and request Telegram approval
 
 on:
   workflow_dispatch:
@@ -20,20 +20,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  generate_for_whatsapp:
-    # DISABLED until the user configures Meta, template and OpenAI API.
+  generate_for_telegram:
+    # DISABLED until Telegram BotFather, webhook, OpenAI API and reviewer are configured.
     # An unconfigured schedule never generates or publishes any post.
-    if: vars.PURAKAU_AUTOMATION_ENABLED == 'true'
+    if: vars.PURAKAU_TELEGRAM_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 110
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_MODEL: ${{ vars.PURAKAU_OPENAI_MODEL || 'gpt-5-mini' }}
-      WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
-      WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
-      WHATSAPP_REVIEW_TO: ${{ secrets.WHATSAPP_REVIEW_TO }}
-      WHATSAPP_REVIEW_TEMPLATE: ${{ vars.WHATSAPP_REVIEW_TEMPLATE || 'purakau_review_video_v1' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
       REQUESTED_TOPIC: ${{ inputs.topic || '' }}
 
     steps:
@@ -50,12 +48,12 @@ jobs:
           python - <<'PY'
           import os
           names=[
-            "OPENAI_API_KEY","WHATSAPP_ACCESS_TOKEN",
-            "WHATSAPP_PHONE_NUMBER_ID","WHATSAPP_REVIEW_TO",
+            "OPENAI_API_KEY","TELEGRAM_BOT_TOKEN",
+            "TELEGRAM_REVIEW_CHAT_ID",
           ]
           missing=[name for name in names if not os.getenv(name)]
           if missing:
-              raise RuntimeError("Do not generate until WhatsApp and story generation secrets are configured: "+", ".join(missing))
+              raise RuntimeError("Do not generate until Telegram and story-generation secrets are configured: "+", ".join(missing))
           print("Review-only automation prerequisites are present (secret values hidden)")
           PY
 
@@ -76,10 +74,10 @@ jobs:
           history=json.loads(Path("automation/output/instagram-history.json").read_text())
           review_tags=[r["tagName"] for r in releases if r["tagName"].startswith("auto-review-")]
           # Don't continue to another story until the last candidate has a
-          # definitive WhatsApp-approved/rejected decision stored in the ledger.
+          # definitive Telegram-approved/rejected decision stored in the ledger.
           pending=[tag for tag in review_tags if "review:"+tag not in history]
           if pending:
-              raise RuntimeError("A previously sent WhatsApp video is still awaiting your response. Refusing to create a new one: "+pending[0])
+              raise RuntimeError("A previously generated review is still awaiting your Telegram approval. No new story: "+pending[0])
           topics=json.loads(Path("automation/story_briefs.json").read_text())["topics"]
           used=[topic["id"] for topic in topics if any(
               tag.startswith("auto-review-"+topic["id"]+"-")
@@ -94,11 +92,12 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
           python -m pip install --upgrade pip
-          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2' 'requests>=2.32,<3'
+          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2' 'requests>=2.32,<3' 'flask>=3,<4'
           python -m playwright install --with-deps chromium
           python -m py_compile automation/prepare_story.py automation/make_audio.py \
             automation/render_candidate.py automation/finalize_proposal.py \
-            automation/whatsapp_send.py automation/approve_publish.py \
+            automation/telegram_send.py automation/telegram_webhook.py \
+            automation/approve_publish_telegram.py automation/approve_publish.py \
             automation/approval_webhook.py
           python -m unittest discover -s automation -p 'test_*.py' -v
 
@@ -132,11 +131,11 @@ jobs:
             automation/output/proposal.json \
             automation/output/story.json \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Pūrākau Pixels — WhatsApp review ONLY — $TAG" \
-            --notes "Original AI-assisted film awaiting explicit signed WhatsApp approval. NOT approved for Instagram. Source briefs require te reo and cultural review."
+            --title "Pūrākau Pixels — Telegram review ONLY — $TAG" \
+            --notes "Original AI-assisted film awaiting explicit signed Telegram approval. NOT approved for Instagram. Source briefs require te reo and cultural review."
           echo "Public review asset created; nothing has been sent to Instagram."
 
-      - name: Deliver the actual MP4 to WhatsApp with Approve/Reject buttons
+      - name: Deliver the actual MP4 to Telegram with Approve/Reject buttons
         run: |
           python - <<'PY'
           import sys
@@ -146,17 +145,17 @@ jobs:
           proposal=json.load(open("automation/output/proposal.json"))
           verify_public_release(proposal["video_url"])
           PY
-          python automation/whatsapp_send.py automation/output/proposal.json
+          python automation/telegram_send.py automation/output/proposal.json
 
       - name: Explain next step
         if: success()
         run: |
           {
-            echo "## New Pūrākau Pixels video sent for WhatsApp review"
+            echo "## New Pūrākau Pixels video sent for Telegram review"
             echo ""
-            echo "The actual narrated MP4 was sent using a video-header WhatsApp template."
-            echo "Only an authenticated Approve button from your exact approved number"
-            echo "can initiate a separate Instagram posting workflow."
+            echo "The exact rendered MP4 was sent to your verified private Telegram chat."
+            echo "Only an authenticated Approve button from your exact Telegram account"
+            echo "can initiate the separate Instagram posting workflow."
             echo ""
             echo "**Reject / no reply = no Instagram posting.**"
             echo "Confirm Māori pronunciation and cultural correctness before approving."
