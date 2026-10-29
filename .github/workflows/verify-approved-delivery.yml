@@ -23,6 +23,10 @@ jobs:
           import sys,json
           sys.path.insert(0,"scripts")
           from instagram_reels import buffer_api
+          post=buffer_api('query { post(input: { id: "6ae38e34b3aaeefe23224b5b" }) { id channelId status shareMode dueAt } }')["post"]
+          if not post or post["channelId"]!="6ae277352f1f5ed648046667":
+              raise RuntimeError("Existing post account mismatch")
+          print("EXISTING_APPROVED_POST",json.dumps(post))
           schema=buffer_api('query { __schema { queryType { fields { name args { name type { kind name ofType { kind name } } } type { kind name ofType { kind name } } } } } }')
           fields=schema["__schema"]["queryType"]["fields"]
           print(json.dumps([f for f in fields if "post" in f["name"].lower()],indent=2))
