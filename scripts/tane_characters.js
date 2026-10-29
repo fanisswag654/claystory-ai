@@ -146,6 +146,10 @@
     rect(c,x+6,y-8,3,4,palette.hair);
     rect(c,x-5,y-10,5,2,palette.hairShine);
     rect(c,x+2,y-10,3,1,palette.hairShine);
+    // Two loose locks respond to the same exact film clock as the limbs.
+    const hairShift=Math.round(Math.sin(t*3.2+x*.3)*1.5);
+    rect(c,x-10+hairShift,y-8,2,6,palette.hair);
+    rect(c,x+7+hairShift,y-6,2,4,palette.hairShine);
     const blink=(Math.sin(t*.83+x*1.17)>.985);
     const scared=expression==='fear'||expression==='surprise';
     const angry=expression==='angry'||expression==='strain';
@@ -162,13 +166,21 @@
       if(scared)rect(c,x+2,y-2,2,1,'#f3e4d5');
     }
     rect(c,x,y+1,2,2,palette.shade); // nose
+    const mouthBeat=Math.sin(t*(expression==='angry'?7.3:3.7)+x*.19)>.12;
     if(expression==='surprise'||expression==='fear'){
       rect(c,x-1,y+4,3,3,palette.eyes);
+      if(mouthBeat)rect(c,x,y+5,1,1,palette.lit);
     }else if(angry){
-      stroke(c,x-3,y+5,x+3,y+4,palette.eyes,1);
+      // Animated effort/shouting, with a visible closed and open mouth pose.
+      if(mouthBeat){
+        rect(c,x-3,y+4,6,3,palette.eyes);
+        rect(c,x-1,y+5,3,1,palette.lit);
+      }else{
+        stroke(c,x-3,y+5,x+3,y+4,palette.eyes,1);
+      }
     }else if(expression==='joy'||expression==='wonder'){
       rect(c,x-3,y+4,6,1,palette.eyes);
-      rect(c,x-2,y+5,4,1,palette.eyes);
+      rect(c,x-2,y+5,4,mouthBeat?2:1,palette.eyes);
     }else{
       stroke(c,x-2,y+4,x+3,y+4,palette.shade,1);
     }
@@ -253,6 +265,10 @@
       rect(c,side.hand[0]-3,side.hand[1]-3,6,6,palette.skin);
       rect(c,side.hand[0]-2,side.hand[1]-2,2,3,palette.lit);
       rect(c,side.hand[0]+2,side.hand[1]-1,2,2,palette.shade);
+      // Three visible fingertip accents make grabbing/reaching legible.
+      rect(c,side.hand[0]-3,side.hand[1]+2,1,2,palette.shade);
+      rect(c,side.hand[0],side.hand[1]+3,1,2,palette.shade);
+      rect(c,side.hand[0]+3,side.hand[1]+2,1,2,palette.shade);
     }
   }
 
