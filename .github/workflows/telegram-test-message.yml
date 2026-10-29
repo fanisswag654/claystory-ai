@@ -1,0 +1,79 @@
+name: Telegram — safe private delivery test (NO Instagram)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send_test_message:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
+      TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Deliver test message only to the private Telegram reviewer
+        run: |
+          python -m pip install 'requests>=2.32,<3'
+          python - <<'PY'
+          import os
+          import re
+          import requests
+          token = os.getenv("TELEGRAM_BOT_TOKEN","")
+          chat_id = os.getenv("TELEGRAM_REVIEW_CHAT_ID","")
+          user_id = os.getenv("TELEGRAM_APPROVER_USER_ID","")
+          if not re.fullmatch(r"[0-9]{5,16}:[A-Za-z0-9_-]{25,80}",token):
+              raise SystemExit("Telegram bot token is missing or malformed in GitHub Secrets")
+          if not re.fullmatch(r"[0-9]{5,20}",chat_id):
+              raise SystemExit("Private reviewer chat ID missing or invalid in GitHub Secrets")
+          if not re.fullmatch(r"[0-9]{5,20}",user_id):
+              raise SystemExit("Trusted approver user ID missing or invalid in GitHub Secrets")
+          # In a Telegram 1:1 bot conversation, the private chat ID is the
+          # numeric Telegram user ID. Reject a group/channel or incorrect ID.
+          if chat_id != user_id:
+              raise SystemExit("Private chat ID and expected reviewer user ID differ; refuse delivery")
+
+          def call(method, payload):
+              try:
+                  response = requests.post(
+                      "https://api.telegram.org/bot"+token+"/"+method,
+                      json=payload,timeout=30,
+                  )
+                  if response.status_code != 200:
+                      raise RuntimeError("Telegram API returned HTTP "+str(response.status_code))
+                  obj = response.json()
+              except (requests.RequestException,ValueError) as exc:
+                  raise RuntimeError("Telegram "+method+" request failed (token hidden)") from None
+              if not obj.get("ok"):
+                  raise RuntimeError("Telegram "+method+" failed (token hidden)")
+              return obj.get("result")
+
+          bot = call("getMe",{})
+          if not bot or not bot.get("is_bot"):
+              raise RuntimeError("Expected an official Telegram bot account")
+          target = call("getChat",{"chat_id":chat_id})
+          if str(target.get("id")) != chat_id or target.get("type") != "private":
+              raise RuntimeError("Configured chat is not the intended private Telegram conversation")
+          message = call("sendMessage",{
+              "chat_id":chat_id,
+              "text":"🌿 Pūrākau Pixels Telegram connection test ✅\n\n"
+                     "Your private review bot is linked to GitHub and can deliver messages.\n"
+                     "This is only a delivery test; NO animation has been approved "
+                     "or sent to Instagram.\n\n"
+                     "Next: configure the final signed Approve/Reject security gate "
+                     "and send a video preview."
+          })
+          if str(message.get("chat",{}).get("id")) != chat_id:
+              raise RuntimeError("Unexpected Telegram recipient, review delivery not verified")
+          print("SUCCESS: Telegram confirmed delivery to the configured private review chat.")
+          print("No GitHub dispatch events, Render approvals, Buffer or Instagram calls were made.")
+          PY
