@@ -1,0 +1,184 @@
+name: Publish user-approved Tāne V33 Reel to Instagram now
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'instagram-tane-publish.trigger'
+
+concurrency:
+  group: claystory-instagram-reels
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish_unchanged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      INSTAGRAM_CHANNEL_ID: ${{ secrets.INSTAGRAM_CHANNEL_ID }}
+      INSTAGRAM_USERNAME: purakaupixel
+      IG_MODE: draft
+      TANE_APPROVED_MP4: publish-staging/tane-nz-V33-detailed.mp4
+    steps:
+      - name: Checkout publisher (do not modify or rerender animation)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install publication dependencies and test duplicate protection
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install 'requests>=2.32,<3'
+          python -m py_compile scripts/instagram_reels.py scripts/publish_approved_tane.py scripts/test_publish_approved_tane.py
+          python -m unittest discover -s scripts -p 'test_publish_approved_tane.py' -v
+          gh --version
+
+      - name: Verify exact successful V33 source run and approved artifact identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          approved=json.loads(Path("config/instagram-approved-tane.json").read_text())
+          assert approved["source_build_run_id"] == 40794388100
+          assert approved["source_build_head_sha"] == "fbd9ac1cdb53f980527c2c439d567ae2572cc7ab"
+          assert approved["source_artifact_id"] == 12862439809
+          assert approved["source_artifact_sha256"] == "9586329ebeaa7d79f1734c57f91fad90a1073c0fbd7412c8acb544e748990732"
+          assert approved["review_video_filename"] == "tane-nz-V33-detailed.mp4"
+          print("Approval record identifies the original V33 rendered film")
+          PY
+          RUN="40794388100"
+          ART="12862439809"
+          DATA="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN}")"
+          echo "$DATA" | jq -e '.status=="completed" and .conclusion=="success" and .head_sha=="fbd9ac1cdb53f980527c2c439d567ae2572cc7ab"' >/dev/null
+          META="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ART}")"
+          echo "$META" | jq -e '.name=="tane-first-light-review-film" and .expired==false and .workflow_run.id==40794388100' >/dev/null
+          echo "$META" | jq -e '.digest=="sha256:9586329ebeaa7d79f1734c57f91fad90a1073c0fbd7412c8acb544e748990732"' >/dev/null
+          mkdir -p publish-staging
+          gh run download "$RUN" --repo "$GITHUB_REPOSITORY" \
+             --name tane-first-light-review-film --dir publish-staging
+          test -s publish-staging/tane-nz-V33-detailed.mp4
+          test -s publish-staging/film-report.json
+          echo "Downloaded original review artifact with no alteration."
+
+      - name: Host exact MP4 bytes in versioned GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          VIDEO="publish-staging/tane-nz-V33-detailed.mp4"
+          SHA="$(sha256sum "$VIDEO" | cut -d' ' -f1)"
+          TAG="instagram-tane-nz-v33-${SHA}"
+          echo "Video SHA-256: $SHA"
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,"scripts")
+          from publish_approved_tane import approved_asset
+          _,sha,url=approved_asset()
+          print("Approved release URL:",url)
+          PY
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            mkdir -p /tmp/tane-release-check
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+              -p tane-nz-V33-detailed.mp4 -D /tmp/tane-release-check
+            EXISTING="$(sha256sum /tmp/tane-release-check/tane-nz-V33-detailed.mp4 | cut -d' ' -f1)"
+            if [ "$SHA" != "$EXISTING" ]; then
+              echo "Existing release asset differs from approved MP4; aborting" >&2
+              exit 1
+            fi
+            echo "Reusing identical release."
+          else
+            gh release create "$TAG" "$VIDEO" --repo "$GITHUB_REPOSITORY" \
+              --target fbd9ac1cdb53f980527c2c439d567ae2572cc7ab \
+              --title "Tāne and the First Light V33 — approved film" \
+              --notes "Original unchanged cinematic Tāne film approved for @purakaupixel Instagram. Exact MP4 from successful Actions run 40794388100. Different iwi preserve different story details."
+            echo "Created publicly accessible release with unchanged MP4."
+          fi
+
+      - name: Restore Buffer posting history for idempotent upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+          git show origin/instagram-publish-history:instagram-post-history.json > instagram-post-history.json
+
+      - name: Upload unchanged Tāne V33 to Instagram through Buffer Publish Now
+        run: python scripts/publish_approved_tane.py
+
+      - name: Record Buffer result without claiming Instagram is already live
+        if: success()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          data=json.load(open("instagram-post-history.json"))
+          records=[v for k,v in data.items()
+                   if k.startswith("tane-nz:") and k.endswith(":shareNow")]
+          if len(records)!=1:
+              raise RuntimeError("Expected one final Tāne submission")
+          record=records[0]
+          print("## Tāne V33 — submitted to Instagram through Buffer")
+          print("")
+          print("- Exact approved movie uploaded without re-rendering or changing audio.")
+          print("- Destination: **@purakaupixel** on Instagram.")
+          print("- Buffer post ID: " + record["buffer_post_id"])
+          print("- Buffer status: **" + str(record.get("buffer_status")) + "**")
+          print("- Share mode: **Publish Now** (not just a draft).")
+          print("- Final Instagram publication must be verified in Buffer or Instagram.")
+          print("- Repeat attempts refuse a duplicate Tāne Reel.")
+          PY
+
+      - name: Persist Buffer history even if Publish Now partially fails
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -s instagram-post-history.json ]; then
+            echo "No Buffer history to persist."
+            exit 0
+          fi
+          cp instagram-post-history.json "$RUNNER_TEMP/tane-instagram-post-history.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            cd "$GITHUB_WORKSPACE"
+            git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
+            git worktree remove --force "$RUNNER_TEMP/tane-instagram-history" 2>/dev/null || true
+            git worktree add --detach "$RUNNER_TEMP/tane-instagram-history" origin/instagram-publish-history
+            cd "$RUNNER_TEMP/tane-instagram-history"
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          incoming=json.loads((Path(os.environ["RUNNER_TEMP"])/"tane-instagram-post-history.json").read_text())
+          target=Path("instagram-post-history.json")
+          existing=json.loads(target.read_text()) if target.exists() else {}
+          existing.update(incoming)
+          target.write_text(json.dumps(existing,ensure_ascii=False,indent=2,sort_keys=True)+"\n")
+          PY
+            git add instagram-post-history.json
+            if git diff --cached --quiet; then
+              echo "Instagram history unchanged (no duplicate)."
+              exit 0
+            fi
+            git commit -m "Record explicitly approved Tāne V33 Instagram Reel"
+            if git push origin HEAD:instagram-publish-history; then
+              exit 0
+            fi
+            if [ "$attempt" = "5" ]; then
+              echo "Cannot persist Buffer post ID. Verify in Buffer before rerun." >&2
+              exit 1
+            fi
+            sleep 3
+          done
