@@ -1,0 +1,46 @@
+name: Pūrākau Pixels automation — offline security and animation tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'automation/**'
+      - '.github/workflows/auto-purakau-review.yml'
+      - '.github/workflows/auto-purakau-decision.yml'
+      - '.github/workflows/auto-purakau-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  safe-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline unit test and browser libraries
+        run: |
+          python -m pip install 'flask>=3,<4' 'requests>=2.32,<3' 'playwright>=1.50,<2'
+          python -m playwright install --with-deps chromium
+      - name: Compile approval, video and story source code
+        run: |
+          python -m compileall -q automation
+          python -m unittest discover -s automation -p 'test_pipeline.py' -v
+      - name: Test distinct story scenes in actual browser with no API keys
+        run: python automation/test_scene_browser.py
+      - name: Confirm automation remains disabled by default
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          generate=Path(".github/workflows/auto-purakau-review.yml").read_text()
+          decision=Path(".github/workflows/auto-purakau-decision.yml").read_text()
+          assert "vars.PURAKAU_AUTOMATION_ENABLED == 'true'" in generate
+          assert "vars.PURAKAU_AUTOMATION_ENABLED == 'true'" in decision
+          print("Validated: No Meta, OpenAI or Instagram activity without setup and manual activation")
+          PY
