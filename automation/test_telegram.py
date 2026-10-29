@@ -23,6 +23,7 @@ import telegram_send
 # telegram_webhook at the top level would construct a SECOND module object.
 from automation import telegram_webhook
 import approve_publish_telegram
+import telegram_video_smoke
 
 USER = "123456789"
 CHAT = "123456789"
@@ -147,6 +148,76 @@ class TelegramWebhook(unittest.TestCase):
             )
         self.assertEqual(reply.status_code, 200, reply.get_json())
         send.assert_called_once()
+
+    def test_test_buttons_do_not_match_live_approvals(self):
+        sha = hashlib.sha256(b"separate approval video").hexdigest()
+        proposal = fake_proposal(sha)
+        old = button_payload(proposal)
+        old["callback_query"]["message"]["caption"] = (
+            "🧪 " + telegram_webhook.TEST_PREVIEW_MARKER
+        )
+        old["callback_query"]["data"] = "test_preview:approve:v33"
+        action = telegram_webhook.parse_preview_test(old, USER, CHAT)
+        self.assertEqual(action["action"], "approve")
+        self.assertIsNone(telegram_webhook.parse_callback(old, USER, CHAT))
+        self.assertEqual(
+            telegram_video_smoke.TEST_CALLBACKS["approve"],
+            "test_preview:approve:v33",
+        )
+
+    def test_test_button_cannot_work_for_wrong_user_or_unrelated_video(self):
+        data = button_payload(self.proposal)
+        data["callback_query"]["data"] = "test_preview:reject:v33"
+        data["callback_query"]["message"]["caption"] = (
+            "🧪 " + telegram_webhook.TEST_PREVIEW_MARKER
+        )
+        self.assertIsNone(telegram_webhook.parse_preview_test(data, "12300000", CHAT))
+        self.assertIsNone(telegram_webhook.parse_preview_test(data, USER, "12300000"))
+        data["callback_query"]["message"]["caption"] = "Random other Telegram video"
+        self.assertIsNone(telegram_webhook.parse_preview_test(data, USER, CHAT))
+        data["callback_query"]["message"]["caption"] = (
+            "🧪 " + telegram_webhook.TEST_PREVIEW_MARKER
+        )
+        data["callback_query"]["message"].pop("video")
+        self.assertIsNone(telegram_webhook.parse_preview_test(data, USER, CHAT))
+
+    def test_test_button_acknowledges_only_without_github_dispatch(self):
+        data = button_payload(self.proposal)
+        data["callback_query"]["data"] = "test_preview:approve:v33"
+        data["callback_query"]["message"]["caption"] = (
+            "🧪 " + telegram_webhook.TEST_PREVIEW_MARKER
+        )
+        with patch.dict(os.environ, {
+            "TELEGRAM_WEBHOOK_SECRET": WEBHOOK_SECRET,
+            "TELEGRAM_BOT_TOKEN": "1234567890:" + "a" * 40,
+            "TELEGRAM_APPROVER_USER_ID": USER,
+            "TELEGRAM_REVIEW_CHAT_ID": CHAT,
+            "PURAKAU_APPROVAL_SIGNING_KEY": "",
+            "GITHUB_REVIEW_DISPATCH_TOKEN": "",
+        }), patch.object(telegram_webhook, "acknowledge_preview_test") as send, \
+             patch.object(telegram_webhook, "answer_callback") as toast, \
+             patch.object(telegram_webhook, "dispatch_decision") as dispatch:
+            response = approval_webhook.app.test_client().post(
+                "/webhook/telegram",
+                json=data,
+                headers={"X-Telegram-Bot-Api-Secret-Token": WEBHOOK_SECRET},
+            )
+        self.assertEqual(response.status_code, 200, response.get_json())
+        self.assertFalse(response.get_json()["instagram_publication"])
+        send.assert_called_once()
+        toast.assert_called_once()
+        dispatch.assert_not_called()
+
+    def test_test_video_link_and_fingerprint_hardcoded_to_existing_approved_film(self):
+        self.assertIn("instagram-tane-nz-v33", telegram_video_smoke.ORIGINAL_VIDEO_URL)
+        self.assertEqual(len(telegram_video_smoke.EXPECTED_SHA256), 64)
+        self.assertNotIn("auto-review-", telegram_video_smoke.ORIGINAL_VIDEO_URL)
+        markup = telegram_video_smoke.preview_keyboard()
+        self.assertEqual(len(markup["inline_keyboard"][0]), 2)
+        self.assertTrue(all(
+            x["callback_data"].startswith("test_preview:")
+            for x in markup["inline_keyboard"][0]
+        ))
 
     def test_valid_header_only(self):
         self.assertTrue(telegram_webhook.verify_secret_header(WEBHOOK_SECRET, WEBHOOK_SECRET))
