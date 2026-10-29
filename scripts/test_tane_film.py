@@ -50,11 +50,25 @@ class TaneFilmTests(unittest.TestCase):
         player=(ROOT/"tane.html").read_text(encoding="utf-8")
         animation=(ROOT/"scripts/tane_animation.js").read_text(encoding="utf-8")
         self.assertIn("scripts/tane_animation.js",player)
+        self.assertIn("scripts/tane_characters.js",player)
         self.assertIn("vendor/tween.umd.js",player)
+        self.assertIn("TaneCharacters.draw(p,",animation)
+        self.assertNotIn("function silhouette(",animation)
         self.assertIn("window.TaneFilm=",animation)
         self.assertIn("drawAt(t)",animation)
         self.assertIn("stories/tane.json",animation)
         self.assertNotIn("buffer_api",animation)
+
+    def test_actor_rigs_are_detailed_and_culturally_respectful(self):
+        actors=(ROOT/"scripts/tane_characters.js").read_text(encoding="utf-8")
+        for pose in ("idle","listen","argue","reach","strain","push","wonder","storm"):
+            self.assertIn(pose+": Object.freeze([",actors)
+        for name in ("tane","tawhirimatea","earth","ochre","river"):
+            self.assertIn(name+": Object.freeze({",actors)
+        for item in ("function face(", "function drawBracing(", "function arms(",
+                     "function costume(", "function legs("):
+            self.assertIn(item,actors)
+        self.assertIn("No moko",actors)
 
     def test_renderer_checks_audio_and_eight_distinct_scenes(self):
         renderer=(ROOT/"scripts/render_tane.py").read_text(encoding="utf-8")
