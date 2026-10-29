@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Create one source-grounded, eight-scene storyboard for HUMAN review.
 
-An OpenAI API key is required for automatic new narration. A curated topic
-brief supplies all allowed factual plot points, source URLs, visual beats and
-actions. The LLM writes fresh English narration rather than inventing cultural
-details. Cultural/te reo correctness still requires the user's approval.
+Two explicitly selected script sources are supported:
+  --mode curated: ORIGINAL checked-in scripts, no paid OpenAI API call.
+  --mode openai: newly drafted scripts via a separately billed OpenAI API.
+Both reuse the same source-backed visuals and strict storyboard validator.
+All cultural/te reo claims need human review before public sharing.
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 BRIEFS = ROOT / "automation" / "story_briefs.json"
+CURATED_SCRIPTS = ROOT / "automation" / "curated_scripts.json"
 OUTPUT = ROOT / "automation" / "candidate-story.json"
 
 
@@ -45,6 +47,26 @@ def next_topic(used: list[str], requested: str | None = None) -> dict:
         if topic["id"] not in used:
             return topic
     raise RuntimeError("All sourced stories have already been proposed. Expand the reviewed topic library before generating another.")
+
+
+def curated_script(topic: dict) -> list[dict]:
+    """Return an ORIGINAL, human-review-required script from checked-in JSON.
+
+    Never inspect OPENAI_API_KEY or contact any script-generation service.
+    A missing or malformed entry is a hard error, not a fallback to OpenAI.
+    """
+    content = json.loads(CURATED_SCRIPTS.read_text(encoding="utf-8"))
+    if content.get("version") != 1 or not isinstance(content.get("scripts"), dict):
+        raise ValueError("Unsupported curated script collection")
+    scripts = content["scripts"]
+    configured = {item["id"] for item in source_briefs()["topics"]}
+    if set(scripts) != configured:
+        raise ValueError("Curated scripts must match exactly the authorized source topics")
+    selected = scripts.get(topic["id"])
+    if not isinstance(selected, list):
+        raise ValueError("Missing reviewed script for selected curated story")
+    # This copies nothing from external prose and protects authoring constraints.
+    return validate_script(topic, selected)
 
 
 def extract_text(result: dict) -> str:
@@ -172,6 +194,8 @@ def build_candidate(topic: dict, script: list[dict]) -> dict:
 def main():
     parser = argparse.ArgumentParser(description="Generate a culturally reviewable short pūrākau from source-backed topics")
     parser.add_argument("--topic")
+    parser.add_argument("--mode", choices=("curated", "openai"), default="openai",
+                        help="curated uses original scripts WITHOUT a paid API; openai is separately billed")
     parser.add_argument("--used", type=Path, help="JSON array of previously proposed topic IDs")
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--dry-run", action="store_true")
@@ -185,7 +209,9 @@ def main():
             "status": "Ready; no API call or file change"
         }, ensure_ascii=False, indent=2))
         return
-    candidate = build_candidate(topic, generate_script(topic))
+    script = curated_script(topic) if args.mode == "curated" else generate_script(topic)
+    candidate = build_candidate(topic, script)
+    candidate["script_origin"] = "checked-in-curated-original" if args.mode == "curated" else "openai-human-review"
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(candidate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("Generated NEW review-only storyboard:", candidate["title"])
