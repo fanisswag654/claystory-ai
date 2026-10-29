@@ -1,4 +1,4 @@
-/* Pūrākau Pixels — Tāne and the First Light.
+/* Pūrākau Pixels — Tāne and the First Light, V33 Character Edition.
  * All art original, procedural 2D pixel animation. No borrowed game assets.
  * Deterministic time sampling for frame-exact, voice-synced MP4 export.
  * This is one telling; culturally sensitive names/interpretations need review.
@@ -62,35 +62,13 @@ function tree(x,y,size,t,detail=0){const sway=Math.sin(t*.7+x*.1)*size*.032;
 function forest(t,growth=1){for(let i=0;i<9;i++){
  const size=(19+(i%4)*9)*growth,y=246+i%3*7,x=10+i*20; if(size>2)tree(x,y,size,t,i%2)
  }for(let j=0;j<15;j++)sprout((j*37)%180,275+j%3*9,growth,t)}
-function silhouette(x,y,scale,t,pose='stand',color='#ab845f'){
- // Abstract human-like atua without moko, ritual clothing or borrowed motifs.
- p.save();p.translate(Math.round(x),Math.round(y));p.scale(scale,scale);
- const move=Math.sin(t*3+x)*1.2;
- const push=pose==='push',lift=pose==='lift',anger=pose==='wind';
- const sway=push?Math.sin(t*7)*1.6:move;
- const top=push?-6:-14;
- circle(sway,top-8,6,'#2f2c32');circle(sway,top-8,4.5,color);
- px(-5+sway,top-1,10,17,color);
- shape([[-7+sway,top+3],[7+sway,top+3],[8+sway,top+13],[-8+sway,top+13]],pose==='push'?'#698264':'#3b6558');
- if(push){
-   // Tāne lies upon the earth, bracing both feet against Ranginui.
-   line(0,top+12,-14,top+18,'#c19267',4);
-   line(-14,top+18,-21,top-5,'#c19267',5);
-   line(-21,top-5,-23,top-20,'#c19267',4);
-   line(2,top+12,12,top+19,'#c19267',4);
-   line(12,top+19,18,top-4,'#c19267',5);
-   line(18,top-4,21,top-22,'#c19267',4);
-   line(-5,top+5,-18,top+13,'#b3815c',3);
-   line(5,top+5,17,top+12,'#b3815c',3);
- }else{
-   line(-4,top+15,-8,top+29+move,'#9a7956',5);
-   line(4,top+15,8,top+29-move,'#9a7956',5);
-   line(-6,top+2,-12,top+12+sway,'#c29268',4);
-   line(6,top+2,12,top+12-sway,'#c29268',4);
-   if(lift){line(7,top+1,15,top-10,'#c29268',4);line(-7,top+1,-15,top-9,'#c29268',4)}
-   if(anger){line(7,top+1,19,top-7,'#c29268',4)}
- }
- p.restore()}
+// V33: all acting and facial detail is drawn by the independent, reusable
+// character rig. Keep its API separate from scenery so a real PNG sprite
+// sheet can be substituted later without altering the film timeline.
+function actor(role,x,y,scale,t,action='idle',expression='calm',phase=0,offset=0){
+ if(!window.TaneCharacters)throw new Error('Detailed V33 character animator missing');
+ return TaneCharacters.draw(p,{role,x,y,scale,t,action,expression,phase,offset});
+}
 function parentSky(y,t,detail=1){
  // Ranginui represented by a vast luminous dome, not a human caricature.
  p.save();p.translate(0,Math.round(y));const dark='#19263a';
@@ -167,29 +145,49 @@ function world(scene,phase,t){
   ellipse(90,166,77,18,'rgba(10,18,33,.75)');
   particles(t,scene,.2)
  }else if(scene===1){
-  for(let i=0;i<5;i++)silhouette(32+i*28,191+(i%2)*5,.58,t+i,'stand',['#ad815d'][0]);
+  // Characters vary in scale and position so face silhouettes remain distinct.
+  actor('earth',22,205,.72,t,'idle','calm',phase,.2);
+  actor('river',51,204,.82,t,'listen','wonder',phase,.6);
+  actor('tane',86,205,1.02,t,'wonder','wonder',phase,1.2);
+  actor('ochre',126,205,.83,t,'idle','calm',phase,.4);
+  actor('tawhirimatea',162,205,.77,t,'listen','fear',phase,.8);
   particles(t,scene,.2)
  }else if(scene===2){
-  for(let i=0;i<5;i++)silhouette(33+i*28,190,.65,t+i,i===4?'wind':'stand');
-  windBands(t,.35);
-  circle(145,153,7,'rgba(211,218,232,.11)');
+  // Differentiated body language during the disagreement:
+  // Tāne listens, a brother considers the idea, Tāwhirimātea argues.
+  actor('earth',24,208,.76,t,'listen','calm',phase,.8);
+  actor('river',53,208,.90,t,'reach','wonder',phase,.1);
+  actor('tane',90,208,1.16,t,'listen','concerned',phase,1.1);
+  actor('tawhirimatea',147,207,1.24,t,'argue','angry',phase,.3);
+  windBands(t,.35+phase*.35);
+  circle(148,145,7,'rgba(211,218,232,.18)');
  }else if(scene===3){
-  for(let i=0;i<3;i++){
-   const struggle=Math.sin(t*8+i)*2;
-   silhouette(48+i*43,193-struggle,.76,t+i,'lift');
-   for(let k=0;k<5;k++)px(21+i*50+k*5,147-(k%3)*3,2,2,'#566a74');
+  // Each brother now reaches independently with bent elbows and braced knees.
+  const strength=ease(phase*2,'out');
+  actor('ochre',41,207,1.10,t,'strain','strain',phase,.11);
+  actor('river',90,207,1.24,t,'strain','strain',phase,.59);
+  actor('earth',140,207,1.10,t,'reach','fear',phase,1.27);
+  for(let i=0;i<15;i++) {
+   const dx=17+i*11,up=Math.sin(t*6+i*.89)*3*strength;
+   px(dx,149+up,2,2,'#77818c');
   }
  }else if(scene===4){
   // Tāne lying back; vertical foot pressure is shown by anchored dust/glints.
-  silhouette(91,200,.95,t,'push');
-  for(let j=0;j<9;j++){
-   const x=50+j*10,y=161+Math.sin(t*8+j)*3;
+  // Tāne's signature hero pose now has a horizontally braced torso,
+  // flexing knees, visible palms, a strained face and sky-pressing soles.
+  actor('tane',87,202,1.18,t,'push','strain',phase);
+  for(let j=0;j<12;j++){
+   const x=34+j*10,y=151+Math.sin(t*8+j)*3;
    if(j%2===0)px(x,y,2,2,'#c2b78a');
   }
   windBands(t,.21)
  }else if(scene===5){
   const lift=ease(phase,'cinematic');
-  silhouette(87,208,.88,t,phase<.52?'push':'lift');
+  if(phase<.56){
+   actor('tane',83,209,1.27,t,'push','strain',phase);
+  }else{
+   actor('tane',89,221,1.36,t,'wonder','joy',phase);
+  }
   p.save();p.globalAlpha=lift;
   forest(t,.12+.6*lift);
   p.restore();
@@ -199,10 +197,13 @@ function world(scene,phase,t){
   }
  }else if(scene===6){
   forest(t,1);
-  silhouette(94,168-phase*80,.72,t,'wind');
-  p.save();p.globalAlpha=.35;ellipse(90,115-phase*78,36,13,'#2c4662');p.restore()
+  // Tāwhirimātea storms upward into the sky, differentiated by his wind cape.
+  const ascend=ease(phase,'cinematic')*89;
+  actor('tawhirimatea',95+Math.sin(t*4)*3,218-ascend,1.18,t,'storm','angry',phase,.17);
+  p.save();p.globalAlpha=.35;ellipse(91,150-ascend,36,13,'#2c4662');p.restore()
  }else{
   forest(t,ease(phase*2));
+  actor('tane',32,238,.77,t,'wonder','joy',phase,.49);
   for(let k=0;k<7;k++)bird(12+k*27+(t*.5)%15,87+(k%3)*15,t,k%2?.4:.7);
   particles(t,scene,1);
   for(let j=0;j<12;j++)sprout(12+j*15,270+j%3*4,ease(phase*1.4),t);
@@ -315,6 +316,6 @@ async function init(){
  frameAt(0);
  $('status').textContent='Eight scenes ready. Review-only animation; watch the GitHub MP4 to hear the soundtrack.';
 }
-window.TaneFilm={ready:init(),drawAt(t){return frameAt(t)},sceneAt(t){return sceneAt(t)},getTotal(){return durations.reduce((a,b)=>a+b,0)},getStory(){return story},getDurations(){return durations.slice()},stop};
+window.TaneFilm={ready:init(),version:33,drawAt(t){return frameAt(t)},sceneAt(t){return sceneAt(t)},getTotal(){return durations.reduce((a,b)=>a+b,0)},getStory(){return story},getDurations(){return durations.slice()},characters:()=>window.TaneCharacters,stop};
 window.TaneFilm.ready.catch(error=>{$('status').textContent='Unable to load film: '+error.message;console.error(error)});
 })();
