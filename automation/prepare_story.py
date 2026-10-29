@@ -64,7 +64,7 @@ def generate_script(topic: dict) -> list[dict]:
         "type": "object",
         "properties": {
             "scenes": {
-                "type": "array", "minItems": 8, "maxItems": 8,
+                "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
