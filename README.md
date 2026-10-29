@@ -29,6 +29,33 @@ prevent repeated scheduling of unchanged videos. See
 [INSTAGRAM_AUTOMATION.md](INSTAGRAM_AUTOMATION.md) for setup, safe tests and
 cultural review requirements.
 
+## New automation — WhatsApp video approval before Instagram
+
+ClayStory now contains a **disabled-by-default** weekly workflow for
+source-grounded new Māori pūrākau. It drafts new narration from a curated
+source library through a separately billed OpenAI API, renders a fresh
+cinematic V31-voice and V33-style 9:16 pixel animation, and sends the
+**actual finished MP4** to the account owner's WhatsApp via Meta's approved
+video-message template.
+
+The owner can tap **Approve** or **Reject** in WhatsApp. An authenticated
+webhook verifies the sender and template button response, signs the result
+and triggers a separate GitHub workflow. **No reply or Reject means NO
+Instagram upload.** Approve verifies the exact original MP4 SHA-256 and
+posts it to @purakaupixel through the existing Buffer integration, with
+duplicate prevention. The system only uses sourced briefs, not invented
+sacred narratives, and the user must check cultural accuracy and pronunciation.
+
+**External setup is not finished yet.** It needs Meta WhatsApp Business
+credentials/template, a confirmed Render workspace for the webhook, and
+GitHub Actions secrets. Until an end-to-end test and the explicit
+`PURAKAU_AUTOMATION_ENABLED=true` switch, no scheduled posts occur.
+
+Full setup: [WHATSAPP_AUTOMATION_SETUP.md](WHATSAPP_AUTOMATION_SETUP.md).
+Workflows: [generate and request approval](.github/workflows/auto-purakau-review.yml),
+[process WhatsApp decision](.github/workflows/auto-purakau-decision.yml),
+[offline tests](.github/workflows/auto-purakau-tests.yml).
+
 ## New original film — Tāne and the First Light
 
 **V33 detailed-character upgrade:** The Tāne film now features a separate
