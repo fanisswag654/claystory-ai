@@ -15,8 +15,9 @@ recipient opt-in, and may incur Meta messaging charges.
 ## Intended system
 
 1. A scheduled GitHub Action runs once a week and chooses a **never-before-
-   used** source-backed Māori story brief. The initial library includes
-   Māui/Mahuika (fire) and Rūaumoko (earthquakes), with Te Ara / DOC
+   used** source-backed Māori story brief. The initial library includes four unique traditions: Māui/Mahuika
+   (fire), Rūaumoko (earthquakes), Rātā and the forest tree, and Tāne's
+   three kete. They are grounded in Te Ara, government education and DOC
    references. Previously animated Tāne and Māui/Giant Fish stories are not
    silently recycled.
 2. An OpenAI API call writes **fresh, short English narration** based only
@@ -166,8 +167,8 @@ potential charges.
   mythology. There is no claim that one iwi's account represents all iwi.
 - A user should inspect the script, pronunciation, imagery, caption and
   culturally sensitive details in the video before approving.
-- Only two curated briefs are available initially. After they have both
-  been proposed, generation stops instead of recycling or inventing lore.
+- Four curated briefs are available initially. After all four have been
+  proposed, generation stops instead of recycling or inventing lore.
   Add more fact-checked source briefs over time for sustainable automation.
 - Never mix an Instagram authorization into the OpenAI story-generation
   stage; approvals are separate and cryptographically validated.
