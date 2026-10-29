@@ -31,7 +31,7 @@ jobs:
       - name: Compile approval, video and story source code
         run: |
           python -m compileall -q automation
-          python -m unittest discover -s automation -p 'test_pipeline.py' -v
+          python -m unittest discover -s automation -p 'test_*.py' -v
       - name: Test distinct story scenes in actual browser with no API keys
         run: python automation/test_scene_browser.py
       - name: Confirm automation remains disabled by default
@@ -40,7 +40,9 @@ jobs:
           from pathlib import Path
           generate=Path(".github/workflows/auto-purakau-review.yml").read_text()
           decision=Path(".github/workflows/auto-purakau-decision.yml").read_text()
-          assert "vars.PURAKAU_AUTOMATION_ENABLED == 'true'" in generate
-          assert "vars.PURAKAU_AUTOMATION_ENABLED == 'true'" in decision
-          print("Validated: No Meta, OpenAI or Instagram activity without setup and manual activation")
+          assert "vars.PURAKAU_TELEGRAM_ENABLED == 'true'" in generate
+          assert "vars.PURAKAU_TELEGRAM_ENABLED == 'true'" in decision
+          assert "purakau_telegram_decision" in decision
+          assert "automation/telegram_send.py" in generate
+          print("Validated: Telegram review and Instagram posting remain OFF until explicitly activated")
           PY
