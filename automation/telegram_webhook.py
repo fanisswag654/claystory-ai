@@ -169,6 +169,71 @@ def answer_callback(callback_id: str, bot_token: str, explanation: str) -> None:
         pass
 
 
+TEST_PREVIEW_MARKER = "PŪRĀKAU PIXELS VIDEO TEST ONLY — NO INSTAGRAM"
+TEST_PREVIEW_ACTIONS = {
+    "test_preview:approve:v33": "approve",
+    "test_preview:reject:v33": "reject",
+}
+
+
+def parse_preview_test(update: dict, user_id: str, chat_id: str) -> dict | None:
+    """Safe review-button smoke test, NEVER a signed publishing receipt."""
+    if not user_id or not chat_id:
+        return None
+    query = update.get("callback_query")
+    if not isinstance(query, dict):
+        return None
+    data = query.get("data")
+    if data not in TEST_PREVIEW_ACTIONS:
+        return None
+    sender = query.get("from", {})
+    message = query.get("message", {})
+    if not isinstance(message, dict):
+        return None
+    chat = message.get("chat", {})
+    if (
+        str(sender.get("id", "")) != user_id
+        or str(chat.get("id", "")) != chat_id
+        or chat.get("type") != "private"
+        or not message.get("video")
+        or TEST_PREVIEW_MARKER not in (message.get("caption") or "")
+        or not CALLBACK_ID.fullmatch(str(query.get("id", "")))
+    ):
+        return None
+    return {
+        "action": TEST_PREVIEW_ACTIONS[data],
+        "callback_id": str(query["id"]),
+        "chat_id": chat_id,
+    }
+
+
+def acknowledge_preview_test(test: dict, token: str) -> None:
+    """Telegram-only confirmation; NO GitHub, Buffer or Instagram calls."""
+    if not re.fullmatch(r"[0-9]{5,16}:[A-Za-z0-9_-]{25,80}", token):
+        raise RuntimeError("Render Telegram bot token must be valid for test acknowledgments")
+    action = test["action"].upper()
+    content = (
+        f"🧪 {action} TEST RECEIVED ✅\n\n"
+        "Your Telegram video preview buttons are working.\n"
+        "This was a TEST ONLY. Nothing has been approved "
+        "for publishing and nothing has been sent to Instagram.\n\n"
+        "The automatic publishing switch remains OFF."
+    )
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        data=json.dumps({
+            "chat_id": test["chat_id"],
+            "text": content,
+        }).encode("utf-8"),
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as response:
+        result = json.load(response)
+    if not result.get("ok"):
+        raise RuntimeError("Telegram refused safe preview test acknowledgment")
+
+
 def identify_private_chat(update: dict) -> dict | None:
     """BotFather onboarding: /start tells each user their own IDs privately.
 
@@ -236,6 +301,24 @@ def telegram_updates():
         return jsonify(error="Invalid Telegram JSON"), 400
     if not isinstance(payload, dict):
         return jsonify(error="Unexpected Telegram update"), 400
+
+    trusted_user = os.getenv("TELEGRAM_APPROVER_USER_ID", "")
+    trusted_chat = os.getenv("TELEGRAM_REVIEW_CHAT_ID", "")
+    test_button = parse_preview_test(payload, trusted_user, trusted_chat)
+    if test_button is not None:
+        # A preview TEST button cannot enter the normal signed approval route,
+        # cannot send any repository_dispatch, and cannot call Buffer.
+        try:
+            acknowledge_preview_test(
+                test_button, os.getenv("TELEGRAM_BOT_TOKEN", "")
+            )
+            answer_callback(
+                test_button["callback_id"], os.getenv("TELEGRAM_BOT_TOKEN", ""),
+                "TEST ONLY: Telegram button works. Nothing has been published."
+            )
+        except (RuntimeError, urllib.error.URLError, OSError):
+            return jsonify(error="Test acknowledgment could not be sent"), 503
+        return jsonify(test_acknowledged=True, instagram_publication=False), 200
 
     # Allow the reviewer to discover their numeric private chat/user IDs
     # safely by sending /start to the bot after its webhook is registered.
