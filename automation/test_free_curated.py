@@ -64,6 +64,28 @@ class CuratedScriptTests(unittest.TestCase):
             prepare_story.next_topic([], "not-a-curated-story")
 
 
+class FreeWorkflowDependencies(unittest.TestCase):
+    def test_requests_installed_before_preview_preflight_import(self):
+        workflow = (
+            Path(__file__).resolve().parents[1]
+            / ".github/workflows/free-curated-purakau.yml"
+        ).read_text(encoding="utf-8")
+        pip_step = workflow.index(
+            "name: Install preflight dependency before importing Telegram preview code"
+        )
+        pip_command = workflow.index("python -m pip install 'requests>=2.32,<3'")
+        preflight = workflow.index(
+            "name: Check free-run identity and original curated script BEFORE rendering"
+        )
+        preview_import = workflow.index("from telegram_free_preview import verified_private_credentials")
+        self.assertLess(pip_step, pip_command)
+        self.assertLess(pip_command, preflight)
+        self.assertLess(preflight, preview_import)
+        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertNotIn("secrets.OPENAI_API_KEY", workflow)
+        self.assertNotIn("secrets.BUFFER_API_KEY", workflow)
+
+
 class FreePreviewDeliveryTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
