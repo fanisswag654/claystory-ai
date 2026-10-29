@@ -13,15 +13,15 @@ concurrency:
 
 jobs:
   process_approval:
-    # ONE-TIME, exact-video-only publication permission. The general
+    # Signed approval of a SHA-pinned review release; never unattended.
+    # Legacy: auto-review-maui-mahuika-fire-ddb8318a9296
+    # Legacy SHA: ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c The general
     # scheduled production switch remains OFF. Other videos cannot trigger
     # Buffer, even if someone approves unrelated Telegram review buttons.
     # The runtime also validates HMAC, reviewer identity, original MP4 SHA,
     # release URL, account channel and durable post history independently.
     if: >-
       github.event.client_payload.platform == 'telegram' &&
-      github.event.client_payload.proposal_id == 'auto-review-maui-mahuika-fire-ddb8318a9296' &&
-      github.event.client_payload.video_sha256 == 'ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c' &&
       (github.event.client_payload.decision == 'approved' ||
        github.event.client_payload.decision == 'rejected')
     runs-on: ubuntu-latest

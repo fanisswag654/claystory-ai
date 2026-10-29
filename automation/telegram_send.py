@@ -19,7 +19,7 @@ import requests
 REPO = "fanisswag654/claystory-ai"
 PROPOSAL_PATTERN = re.compile(r"^auto-review-[a-z0-9-]+-[0-9a-f]{12}$")
 SHA_PATTERN = re.compile(r"^[a-f0-9]{64}$")
-MAX_VIDEO_BYTES = 15 * 1024 * 1024
+MAX_VIDEO_BYTES = 48 * 1024 * 1024
 VIDEO = Path("automation/output/purakau-review.mp4")
 
 
@@ -58,7 +58,7 @@ def verify_review(proposal: dict, video: Path) -> None:
     digest = hashlib.sha256(video.read_bytes()).hexdigest()
     if digest != sha:
         raise ValueError("Video bytes differ from the immutable approved-release SHA")
-    if proposal.get("narrator") != "en-GB-RyanNeural":
+    if proposal.get("narrator") not in ("en-GB-RyanNeural", "en-US-ChristopherNeural"):
         raise ValueError("Wrong cinematic narrator selected")
 
 

@@ -67,7 +67,7 @@ jobs:
           print("No Instagram publishing credentials or production gate are present")
           PY
 
-      - name: Install free Ryan voice, local pixel rendering and foley tools
+      - name: Install Christopher voice, cinematic rendering and foley tools
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
@@ -94,9 +94,9 @@ jobs:
       - name: Narrate eight original scenes using free Edge voice and unique natural sounds
         run: python automation/make_audio.py
 
-      - name: Animate original pixel scenes into a portrait MP4
+      - name: Render 16 cinematic still-image shots into a portrait MP4
         run: |
-          python automation/render_candidate.py
+          python automation/render_cinematic.py
           test -s automation/output/purakau-review.mp4
           test -s automation/output/story.json
           test -s automation/output/manifest.json
@@ -123,7 +123,7 @@ jobs:
           {
             echo "## Free Pūrākau Pixels video sent for private review"
             echo ""
-            echo "A NEW pixel-animated film was rendered using the checked-in original sourced script."
+            echo "A NEW cinematic illustrated film was rendered using the checked-in original sourced script."
             echo "NO OpenAI script-generation API call was made."
             echo "Free Edge narration and original generated effects were added."
             echo ""

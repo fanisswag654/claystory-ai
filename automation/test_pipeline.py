@@ -152,7 +152,7 @@ class SignedApprovalSafety(unittest.TestCase):
             "proposal_id":self.tag,"video_sha256":self.sha,
             "video_url":f"https://github.com/fanisswag654/claystory-ai/releases/download/{self.tag}/purakau-review.mp4",
             "status":"pending","title":"Māui and Mahuika","story_id":"maui-mahuika-fire",
-            "narrator":"en-GB-RyanNeural",
+            "narrator":"en-US-ChristopherNeural","style":"cinematic-stills-v1",
             "sources":[{"url":"https://teara.govt.nz/en/1966/maui-legends-of/page-5"}],
             "created_at":datetime.now(timezone.utc).isoformat()
         }
@@ -205,7 +205,7 @@ class SignedApprovalSafety(unittest.TestCase):
     def test_final_proposal_link_is_bound_to_video_sha(self):
         meta={"story_id":"maui-mahuika-fire","video_sha256":self.sha,
               "title":"Māui and Mahuika","sources":self.proposal["sources"],
-              "narrator":"en-GB-RyanNeural","bytes":len(self.file.read_bytes())}
+              "narrator":"en-US-ChristopherNeural","style":"cinematic-stills-v1","bytes":len(self.file.read_bytes())}
         candidate=finalize_proposal.build_proposal(meta)
         self.assertEqual(candidate["proposal_id"],self.tag)
         self.assertEqual(candidate["status"],"pending")

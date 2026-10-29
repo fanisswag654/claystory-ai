@@ -41,7 +41,7 @@ def fake_proposal(sha: str) -> dict:
         "title": "Māui and Mahuika: The Secret of Fire",
         "story_id": "maui-mahuika-fire",
         "status": "pending",
-        "narrator": "en-GB-RyanNeural",
+        "narrator": "en-US-ChristopherNeural", "style":"cinematic-stills-v1",
         "sources": [{"url": "https://teara.govt.nz/en/1966/maui-legends-of/page-5"}],
         "created_at": datetime.now(timezone.utc).isoformat(),
     }

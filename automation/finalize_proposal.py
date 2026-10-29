@@ -36,11 +36,12 @@ def build_proposal(meta: dict) -> dict:
         "video_url":source+"/purakau-review.mp4",
         "sources":meta["sources"],
         "narrator":meta["narrator"],
+        "style":meta.get("style","pixel"),
         "bytes":meta["bytes"],
         "created_at":datetime.now(timezone.utc).isoformat(),
         "required_review":["full video","cultural accuracy",
                            "te reo Māori pronunciation","Instagram publication"],
-        "publication":"Never without verified WhatsApp approval."
+        "publication":"Never without verified Telegram approval."
     }
 
 

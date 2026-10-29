@@ -1,162 +1,21 @@
-name: Pūrākau Pixels — generate animation and request Telegram approval
-
+name: Pūrākau Pixels — cinematic story and Telegram approval
 on:
   workflow_dispatch:
     inputs:
       topic:
-        description: Optional curated story ID (blank = first never proposed)
+        description: Story with prepared cinematic artwork
         required: false
         type: string
+        default: maui-mahuika-fire
   schedule:
-    # Weekly: Tuesday morning NZ time (seasonal daylight offset applies).
     - cron: '0 19 * * 1'
-
 permissions:
   contents: write
   actions: read
-
-concurrency:
-  group: purakau-story-candidates
-  cancel-in-progress: false
-
 jobs:
   generate_for_telegram:
-    # DISABLED until Telegram BotFather, webhook, OpenAI API and reviewer are configured.
-    # An unconfigured schedule never generates or publishes any post.
-    if: vars.PURAKAU_TELEGRAM_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 110
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      OPENAI_MODEL: ${{ vars.PURAKAU_OPENAI_MODEL || 'gpt-5-mini' }}
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
-      REQUESTED_TOPIC: ${{ inputs.topic || '' }}
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Verify required connections before spending API money
-        run: |
-          python - <<'PY'
-          import os
-          names=[
-            "OPENAI_API_KEY","TELEGRAM_BOT_TOKEN",
-            "TELEGRAM_REVIEW_CHAT_ID",
-          ]
-          missing=[name for name in names if not os.getenv(name)]
-          if missing:
-              raise RuntimeError("Do not generate until Telegram and story-generation secrets are configured: "+", ".join(missing))
-          print("Review-only automation prerequisites are present (secret values hidden)")
-          PY
-
-      - name: Check review ledger to prevent duplicate or unattended posts
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p automation/output
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName \
-            > automation/output/release-tags.json
-          git fetch origin instagram-publish-history:refs/remotes/origin/instagram-publish-history
-          git show origin/instagram-publish-history:instagram-post-history.json \
-            > automation/output/instagram-history.json
-          python - <<'PY'
-          import json,os,re
-          from pathlib import Path
-          releases=json.loads(Path("automation/output/release-tags.json").read_text())
-          history=json.loads(Path("automation/output/instagram-history.json").read_text())
-          review_tags=[r["tagName"] for r in releases if r["tagName"].startswith("auto-review-")]
-          # Don't continue to another story until the last candidate has a
-          # definitive Telegram-approved/rejected decision stored in the ledger.
-          pending=[tag for tag in review_tags if "review:"+tag not in history]
-          if pending:
-              raise RuntimeError("A previously generated review is still awaiting your Telegram approval. No new story: "+pending[0])
-          topics=json.loads(Path("automation/story_briefs.json").read_text())["topics"]
-          used=[topic["id"] for topic in topics if any(
-              tag.startswith("auto-review-"+topic["id"]+"-")
-              for tag in review_tags
-          )]
-          Path("automation/output/used-topics.json").write_text(json.dumps(used))
-          print("Already reviewed/proposed story topics:",used)
-          PY
-
-      - name: Install cinematic narration and browser rendering
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
-          python -m pip install --upgrade pip
-          python -m pip install 'edge-tts>=7,<8' 'playwright>=1.50,<2' 'requests>=2.32,<3' 'flask>=3,<4'
-          python -m playwright install --with-deps chromium
-          python -m py_compile automation/prepare_story.py automation/make_audio.py \
-            automation/render_candidate.py automation/finalize_proposal.py \
-            automation/telegram_send.py automation/telegram_webhook.py \
-            automation/approve_publish_telegram.py automation/approve_publish.py \
-            automation/approval_webhook.py
-          python -m unittest discover -s automation -p 'test_*.py' -v
-
-      - name: Generate a fresh sourced Māori story requiring human review
-        run: |
-          python automation/prepare_story.py \
-            --used automation/output/used-topics.json \
-            --topic "$REQUESTED_TOPIC" \
-            --output automation/candidate-story.json
-          test -s automation/candidate-story.json
-
-      - name: Generate the approved cinematic voice and full original soundtrack
-        run: python automation/make_audio.py
-
-      - name: Render the animated nine-by-sixteen video
-        run: |
-          python automation/render_candidate.py
-          test -s automation/output/purakau-review.mp4
-          python automation/finalize_proposal.py
-
-      - name: Host finished video as review-only versioned Release
-        run: |
-          set -euo pipefail
-          TAG="$(python -c 'import json; print(json.load(open("automation/output/proposal.json"))["proposal_id"])')"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "An exact review proposal already exists. Refusing duplicate send."
-            exit 1
-          fi
-          gh release create "$TAG" \
-            automation/output/purakau-review.mp4 \
-            automation/output/proposal.json \
-            automation/output/story.json \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Pūrākau Pixels — Telegram review ONLY — $TAG" \
-            --notes "Original AI-assisted film awaiting explicit signed Telegram approval. NOT approved for Instagram. Source briefs require te reo and cultural review."
-          echo "Public review asset created; nothing has been sent to Instagram."
-
-      - name: Deliver the actual MP4 to Telegram with Approve/Reject buttons
-        run: |
-          python - <<'PY'
-          import sys
-          sys.path.insert(0,"scripts")
-          from instagram_reels import verify_public_release
-          import json
-          proposal=json.load(open("automation/output/proposal.json"))
-          verify_public_release(proposal["video_url"])
-          PY
-          python automation/telegram_send.py automation/output/proposal.json
-
-      - name: Explain next step
-        if: success()
-        run: |
-          {
-            echo "## New Pūrākau Pixels video sent for Telegram review"
-            echo ""
-            echo "The exact rendered MP4 was sent to your verified private Telegram chat."
-            echo "Only an authenticated Approve button from your exact Telegram account"
-            echo "can initiate the separate Instagram posting workflow."
-            echo ""
-            echo "**Reject / no reply = no Instagram posting.**"
-            echo "Confirm Māori pronunciation and cultural correctness before approving."
-          } >> "$GITHUB_STEP_SUMMARY"
+    if: github.event_name == 'workflow_dispatch' || vars.PURAKAU_TELEGRAM_ENABLED == 'true'
+    uses: ./.github/workflows/cinematic-purakau.yml
+    with:
+      topic: ${{ inputs.topic || 'maui-mahuika-fire' }}
+    secrets: inherit

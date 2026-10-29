@@ -1,0 +1,88 @@
+name: Pūrākau Pixels — cinematic stills and Christopher to Telegram
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: Story with eight prepared cinematic images
+        type: string
+        default: maui-mahuika-fire
+  workflow_call:
+    inputs:
+      topic:
+        type: string
+        default: maui-mahuika-fire
+  push:
+    branches: [main]
+    paths: ['automation/cinematic-system.json']
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: purakau-story-candidates
+  cancel-in-progress: false
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REQUESTED_TOPIC: ${{ inputs.topic || 'maui-mahuika-fire' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
+      TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      INSTAGRAM_CHANNEL_ID: '6ae277352f1f5ed648046667'
+      INSTAGRAM_USERNAME: purakaupixel
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install free voice and film tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install 'requests>=2.32,<3' 'edge-tts>=7,<8' 'flask>=3,<4' 'playwright>=1.50,<2'
+          python -m compileall -q automation
+          python -m unittest discover -s automation -p 'test_*.py' -q
+      - name: Check artwork, private reviewer and destination before rendering
+        run: |
+          python - <<'PY'
+          import os,sys
+          sys.path[:0]=["automation","scripts"]
+          from cinematic_assets import verify_assets
+          from telegram_free_preview import verified_private_credentials
+          from instagram_reels import instagram_channel
+          verify_assets(os.environ["REQUESTED_TOPIC"])
+          verified_private_credentials(os.environ)
+          assert instagram_channel()["id"]=="6ae277352f1f5ed648046667"
+          PY
+      - name: Curated script, fresh Christopher speech and 16 cinematic shots
+        run: |
+          python automation/prepare_story.py --mode curated --topic "$REQUESTED_TOPIC" --output automation/candidate-story.json
+          python automation/make_audio.py
+          python automation/render_cinematic.py
+          python automation/finalize_proposal.py
+      - name: Pin exact MP4 as a review release and send real Telegram buttons
+        run: |
+          set -euo pipefail
+          TAG="$(python -c 'import json;print(json.load(open("automation/output/proposal.json"))["proposal_id"])')"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Exact video already proposed; refusing duplicate delivery."
+            exit 0
+          fi
+          gh release create "$TAG" automation/output/purakau-review.mp4 automation/output/proposal.json automation/output/story.json --repo "$GITHUB_REPOSITORY" --latest=false --title "Cinematic Pūrākau — awaiting Telegram approval" --notes "Christopher at natural pitch; sixteen cinematic shots. Only the authorized Telegram approval can publish this exact SHA-verified film."
+          python automation/telegram_send.py automation/output/proposal.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cinematic-purakau-review
+          path: |
+            automation/output/purakau-review.mp4
+            automation/output/proposal.json
+            automation/output/manifest.json
+            automation/output/story.json
+            automation/output/timing.json
+          retention-days: 14

@@ -1,0 +1,19 @@
+{
+  "style": "cinematic-stills-v1",
+  "narrator": "en-US-ChristopherNeural",
+  "pitch_hz": 0,
+  "rate_percent": -8,
+  "shots_per_scene": 2,
+  "artwork": {
+    "maui-mahuika-fire": {
+      "scene-01.jpg": "310c317cddb2aa14547434a9a3cd3433bb3b3b6c70d7786aa7ea8a4f0339e72e",
+      "scene-02.jpg": "6a4d55f37daf44c8ddd675bae4c2d886be891695bbc57dabbcbd435a06b59221",
+      "scene-03.jpg": "553dc80ce447a1aca3abee1972d1ac3db7c5d66f987c3d1907baea9564fed10e",
+      "scene-04.jpg": "4fe4e895786be799ddec2773e61fdb7887ba0888e435d1ad3d1b5489b04e8719",
+      "scene-05.jpg": "07593602a49847b2e30cbb54f600a9109b3db2b6a415a1489f38e8f011989f1b",
+      "scene-06.jpg": "9851f084f0aea9bb242a9456b44ecd2146bdfb750e604e59e1d0fe3bb123abc3",
+      "scene-07.jpg": "6f2dffdd43c19cf920d6494a01bf48553fb6ccb51598a2c95e0155f1439e9a6e",
+      "scene-08.jpg": "ef93666639a8b54ccf712f7ef9ef134b552e26f7d4242645131cd95eea4181e5"
+    }
+  }
+}

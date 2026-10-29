@@ -21,11 +21,11 @@ KEY="auto-review"
 
 
 async def make_voice(story):
-    profile=PROFILES["cinematic"]
+    profile=dict(PROFILES["warm"], rates=(-8,)*8, pitches=(0,)*8, pauses=(.35,)*8)
     for i,scene in enumerate(story["scenes"]):
         target=ROOT_OUT/f"{KEY}-{i+1}.mp3"
         with tempfile.TemporaryDirectory(prefix="purakau-new-") as tmp:
-            print(f"Generating cinematic NEW narration scene {i+1}/8",flush=True)
+            print(f"Generating Christopher NEW narration scene {i+1}/8",flush=True)
             await generate_edge(scene["narration"],target,profile["model"],i,
                                 profile,Path(tmp))
         if tane_sound.seconds(target)<3:
@@ -39,7 +39,10 @@ def main():
     if len(story["scenes"])!=8 or story["review_status"]!="pending-human-approval":
         raise ValueError("Only a pending, eight-scene review candidate can be rendered")
     ROOT_OUT.mkdir(parents=True,exist_ok=True)
+    from cinematic_assets import verify_assets
+    verify_assets(story["key"])
     profile=asyncio.run(make_voice(story))
+    story["narrator"]=profile["model"]
     durations=[round(tane_sound.seconds(ROOT_OUT/f"{KEY}-{i+1}.mp3")+
                      (.17 if i<7 else .28),3) for i in range(8)]
     if any(not 4<=x<=42 for x in durations):
@@ -54,7 +57,7 @@ def main():
     tane_sound.master_mix(durations)
 
     timing={"story":story["key"],"durations":durations,
-            "voice":profile["model"],"revision":"AutoReview1",
+            "voice":profile["model"],"revision":"CinematicStills1","pitch_hz":0,
             "approval":"pending; never publish without WhatsApp approval"}
     (ROOT_OUT/"timing.json").write_text(
         json.dumps(timing,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"

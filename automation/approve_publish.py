@@ -74,8 +74,14 @@ def validate_original_file(proposal: dict, file: Path) -> None:
     url=f"https://github.com/{REPO}/releases/download/{tag}/purakau-review.mp4"
     if proposal.get("video_url")!=url or proposal.get("status")!="pending":
         raise ValueError("Proposal URL or review state does not match immutable release")
-    if proposal.get("narrator")!="en-GB-RyanNeural":
+    if proposal.get("narrator")not in ("en-GB-RyanNeural","en-US-ChristopherNeural"):
         raise ValueError("Cinematic narrator identity changed")
+    legacy=(tag=="auto-review-maui-mahuika-fire-ddb8318a9296" and sha=="ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c")
+    if not legacy:
+        from cinematic_assets import verify_assets,STYLE,VOICE
+        if proposal.get("narrator")!=VOICE or proposal.get("style")!=STYLE:
+            raise ValueError("Only the installed cinematic Christopher system may publish new films")
+        verify_assets(proposal.get("story_id",""))
     created=datetime.fromisoformat(proposal["created_at"])
     if created.tzinfo is None or datetime.now(timezone.utc)-created>timedelta(days=14):
         raise ValueError("WhatsApp review expired after 14 days")
@@ -90,13 +96,13 @@ def validate_original_file(proposal: dict, file: Path) -> None:
 def caption(proposal: dict) -> str:
     name=proposal["title"].strip()
     if not name or len(name)>120:raise ValueError("Invalid caption title")
-    return (name+" 🌿✨\n\nA new original pixel-animated retelling "
+    return (name+" 🌿✨\n\nAn original cinematic illustrated retelling "
             "of a Māori pūrākau, with cinematic AI narration and "
             "original environmental sounds.\n\n"
             "This reflects one telling; traditions may differ between iwi. "
             "Pronunciation and story reviewed by the account owner.\n\n"
             "Pūrākau Pixels | Stories of Aotearoa\n"
-            "#PurakauPixels #Purakau #MaoriStories #PixelArt #Aotearoa")
+            "#PurakauPixels #Purakau #MaoriStories #CinematicStories #Aotearoa")
 
 
 def submit_approved(proposal: dict, history: dict) -> dict:
@@ -109,6 +115,8 @@ def submit_approved(proposal: dict, history: dict) -> dict:
     if published_key in history:
         print("Already submitted to Buffer (no duplicate)",history[published_key]["buffer_post_id"])
         return history
+    if any(isinstance(v,dict) and v.get("video_sha256")==sha and v.get("mode")=="shareNow" for v in history.values()):
+        raise ValueError("These exact video bytes were already submitted; no duplicate")
     verify_public_release(url)
     channel=instagram_channel()
     if channel["id"]!=TRUSTED_CHANNEL:

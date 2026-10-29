@@ -26,7 +26,7 @@ TEST_PREVIEW_ACTIONS = {
 }
 
 OUT = ROOT / "automation" / "output"
-MAX_VIDEO_BYTES = 15 * 1024 * 1024
+MAX_VIDEO_BYTES = 48 * 1024 * 1024
 TOKEN_PATTERN = re.compile(r"^[0-9]{5,16}:[A-Za-z0-9_-]{25,80}$")
 USER_PATTERN = re.compile(r"^[0-9]{5,20}$")
 
@@ -51,13 +51,14 @@ def verify_curated_film(video: Path, story_path: Path, manifest_path: Path) -> d
     if topic is None:
         raise ValueError("Unknown source-backed curated story")
     authoritative = build_candidate(topic, curated_script(topic))
-    expected = {**authoritative, "script_origin": "checked-in-curated-original"}
+    expected = {**authoritative, "script_origin": "checked-in-curated-original", "narrator": story.get("narrator")}
     if story != expected:
         raise ValueError("Candidate does not exactly match the checked-in curated script")
     if (
         manifest.get("story_id") != topic["id"]
         or manifest.get("title") != topic["title"]
-        or manifest.get("narrator") != "en-GB-RyanNeural"
+        or manifest.get("narrator") not in ("en-GB-RyanNeural","en-US-ChristopherNeural")
+        or story.get("narrator") != manifest.get("narrator")
         or manifest.get("status") != "pending-human-approval"
         or manifest.get("sources") != topic["sources"]
         or manifest.get("video_file") != "purakau-review.mp4"
@@ -94,7 +95,7 @@ def send_free_preview(video: Path = OUT / "purakau-review.mp4",
     caption = (
         f"🧪 {TEST_PREVIEW_MARKER}\n\n"
         f"🎬 NEW FREE CURATED PŪRĀKAU\n{story['title']}\n\n"
-        "This is a newly generated pixel-art film with the free "
+        "This is a newly generated cinematic still-image film with the free "
         "prewritten, source-backed narration and original sound effects.\n"
         "Please check te reo Māori pronunciation, cultural details, visuals and audio.\n\n"
         "Both buttons are PREVIEW TESTS ONLY.\n"
