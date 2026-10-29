@@ -18,6 +18,7 @@ import urllib.error
 import urllib.request
 
 from flask import Blueprint, jsonify, request
+from automation.telegram_bridge_probe import make_probe
 
 bot = Blueprint("telegram_review", __name__)
 REPO = "fanisswag654/claystory-ai"
@@ -234,6 +235,56 @@ def acknowledge_preview_test(test: dict, token: str) -> None:
         raise RuntimeError("Telegram refused safe preview test acknowledgment")
 
 
+def parse_bridge_check(update: dict, user_id: str, chat_id: str) -> dict | None:
+    """Only /check sent by the exact trusted owner in a private chat qualifies."""
+    if not user_id or not chat_id or user_id != chat_id:
+        return None
+    message = update.get("message")
+    if not isinstance(message, dict):
+        return None
+    sender = message.get("from", {})
+    chat = message.get("chat", {})
+    content = str(message.get("text") or "").split()
+    command = content[0].split("@")[0] if content else ""
+    mid = message.get("message_id")
+    if (
+        command != "/check"
+        or len(content) != 1
+        or sender.get("is_bot") is True
+        or str(sender.get("id", "")) != user_id
+        or str(chat.get("id", "")) != chat_id
+        or chat.get("type") != "private"
+        or not isinstance(mid, int) or mid < 1
+    ):
+        return None
+    return {"user_id": user_id, "chat_id": chat_id, "message_id": mid}
+
+
+def dispatch_bridge_probe(receipt: dict, token: str) -> None:
+    """Only a safe dedicated diagnostic event. Never a publishing dispatch."""
+    if not token or not token.startswith(("github_pat_", "ghp_")):
+        raise RuntimeError("Render GitHub review dispatch token is not configured")
+    body = {
+        "event_type": "purakau_telegram_probe",
+        "client_payload": receipt,
+    }
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{REPO}/dispatches",
+        data=json.dumps(body).encode("utf-8"),
+        method="POST",
+        headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Content-Type": "application/json",
+            "User-Agent": "ClayStory-Telegram-BridgeProbe/1.0",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        if resp.status != 204:
+            raise RuntimeError("GitHub did not accept the diagnostic repository dispatch")
+
+
 def identify_private_chat(update: dict) -> dict | None:
     """BotFather onboarding: /start tells each user their own IDs privately.
 
@@ -319,6 +370,23 @@ def telegram_updates():
         except (RuntimeError, urllib.error.URLError, OSError):
             return jsonify(error="Test acknowledgment could not be sent"), 503
         return jsonify(test_acknowledged=True, instagram_publication=False), 200
+
+    bridge = parse_bridge_check(payload, trusted_user, trusted_chat)
+    if bridge is not None:
+        # /check uses a separate repository_dispatch event with zero publishing
+        # privileges, even if the production switch is disabled.
+        try:
+            signing = os.getenv("PURAKAU_APPROVAL_SIGNING_KEY", "")
+            receipt = make_probe(
+                bridge["user_id"], bridge["chat_id"],
+                bridge["message_id"], signing,
+            )
+            dispatch_bridge_probe(
+                receipt, os.getenv("GITHUB_REVIEW_DISPATCH_TOKEN", "")
+            )
+        except (ValueError, RuntimeError, urllib.error.URLError, OSError):
+            return jsonify(error="Bridge probe was not accepted by GitHub"), 503
+        return jsonify(bridge_probe_queued=True, instagram_publication=False), 200
 
     # Allow the reviewer to discover their numeric private chat/user IDs
     # safely by sending /start to the bot after its webhook is registered.
