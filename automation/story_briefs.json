@@ -96,6 +96,111 @@
         "reach",
         "wonder"
       ]
+    },
+    {
+      "id": "rata-and-the-tree",
+      "title": "Rātā and the Tree That Returned",
+      "theme": "forest",
+      "hero_role": "ochre",
+      "support_role": "tane",
+      "known_names": [
+        "Rātā",
+        "Tāne",
+        "hākuturi"
+      ],
+      "sources": [
+        {
+          "title": "Te Ara — Māori relationship with the forest (Rātā tradition)",
+          "url": "https://teara.govt.nz/en/te-ngahere-forest-lore/page-1"
+        },
+        {
+          "title": "New Zealand Curriculum — Rātā me te Rākau",
+          "url": "https://newzealandcurriculum.tahurangi.education.govt.nz/r-t-me-te-r-kau/5637164861.p"
+        }
+      ],
+      "facts": [
+        "Rātā enters the forest seeking a tree to make a waka.",
+        "He fells a tree and begins preparing it for the canoe.",
+        "When he returns, the tree is standing upright again.",
+        "He cuts it again and is puzzled to find it restored.",
+        "The hākuturi, guardians of the forest in the form of living creatures, restore the tree.",
+        "Rātā learns that he did not follow the appropriate tikanga respecting the forest.",
+        "In one telling, after he pays respect the forest guardians allow him to use the tree.",
+        "The story is remembered as teaching respect and care for the natural world."
+      ],
+      "visuals": [
+        "forest",
+        "village",
+        "forest",
+        "forest",
+        "night",
+        "forest",
+        "council",
+        "ocean"
+      ],
+      "actions": [
+        "idle",
+        "reach",
+        "strain",
+        "wonder",
+        "listen",
+        "wonder",
+        "reach",
+        "wonder"
+      ]
+    },
+    {
+      "id": "tane-three-kete",
+      "title": "Tāne and the Three Baskets of Knowledge",
+      "theme": "earth",
+      "hero_role": "tane",
+      "support_role": "river",
+      "known_names": [
+        "Tāne",
+        "Ranginui",
+        "te kete-tuatea",
+        "te kete-tuauri",
+        "te kete-aronui"
+      ],
+      "sources": [
+        {
+          "title": "Te Ara — Ranginui as knowledge and life",
+          "url": "https://teara.govt.nz/en/ranginui-the-sky/page-2"
+        },
+        {
+          "title": "Te Ara — Education in traditional Māori society",
+          "url": "https://teara.govt.nz/en/maori-education-matauranga/page-1"
+        }
+      ],
+      "facts": [
+        "One tradition describes Tāne journeying through the heavens in search of knowledge.",
+        "Tāne ascends towards the highest of the twelve heavens.",
+        "In one account the destination is Te Tihi-o-Manono at Te Toi-o-ngā-rangi.",
+        "He retrieves three baskets of knowledge, known as kete wānanga.",
+        "Their names include te kete-tuatea, te kete-tuauri and te kete-aronui.",
+        "Interpretations of the three baskets vary in Māori scholarship and across traditions.",
+        "The tale links knowledge, learning and the origins of life with Ranginui and Tāne."
+      ],
+      "visuals": [
+        "night",
+        "mountains",
+        "sky",
+        "sky",
+        "cavern",
+        "dawn",
+        "forest",
+        "village"
+      ],
+      "actions": [
+        "idle",
+        "reach",
+        "reach",
+        "strain",
+        "wonder",
+        "wonder",
+        "reach",
+        "wonder"
+      ]
     }
   ],
   "requirements": {
