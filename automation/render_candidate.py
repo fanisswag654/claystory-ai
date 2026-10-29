@@ -29,6 +29,28 @@ class Quiet(SimpleHTTPRequestHandler):
     def log_message(self,*args): pass
 
 
+def build_manifest(storyboard: dict, timing: dict, video: Path, total: float,
+                   digest: str) -> dict:
+    """Build review metadata from the SAME storyboard loaded by render().
+
+    Keep this independent of browser/video rendering so that unit tests can
+    catch undefined variables and missing required fields in seconds.
+    """
+    return {
+        "story_id": storyboard["key"],
+        "title": storyboard["title"],
+        "video_file": video.name,
+        "video_sha256": digest,
+        "duration": round(total, 2),
+        "bytes": video.stat().st_size,
+        "status": "pending-human-approval",
+        "sources": storyboard["sources"],
+        "fps": FPS,
+        "narrator": timing["voice"],
+        "warning": storyboard["cultural_warning"],
+    }
+
+
 def render():
     storyboard=json.loads((OUT/"story.json").read_text(encoding="utf-8"))
     timing=json.loads((OUT/"timing.json").read_text(encoding="utf-8"))
@@ -113,17 +135,11 @@ def render():
             if abs(float(report["format"]["duration"])-total)>.65:
                 raise RuntimeError("Narration and picture lengths differ")
             sha=hashlib.sha256(video.read_bytes()).hexdigest()
-            metadata={"story_id":story["key"],"title":story["title"],
-                      "video_file":video.name,"video_sha256":sha,
-                      "duration":round(total,2),"bytes":video.stat().st_size,
-                      "status":"pending-human-approval",
-                      "sources":story["sources"],"fps":FPS,
-                      "narrator":timing["voice"],
-                      "warning":story["cultural_warning"]}
+            metadata=build_manifest(storyboard, timing, video, total, sha)
             (OUT/"manifest.json").write_text(
                 json.dumps(metadata,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"
             )
-            print("Ready for WhatsApp human review:",story["title"],sha,flush=True)
+            print("Ready for Telegram human review:",storyboard["title"],sha,flush=True)
             browser.close()
             return video
     finally:
