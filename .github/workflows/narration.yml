@@ -35,7 +35,7 @@ jobs:
     concurrency:
       group: claystory-narration-push
       cancel-in-progress: false
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
