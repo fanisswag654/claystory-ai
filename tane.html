@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101a2b">
+<title>Tāne and the First Light • Pūrākau Pixels</title>
+<style>
+:root{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;color:#f5ecd9;background:#101927}
+*{box-sizing:border-box}body{margin:0;padding:18px}main{max-width:940px;margin:auto}
+h1{font-size:clamp(1.4rem,5vw,2.1rem);margin:6px 0 2px;color:#f4d5a0}
+h2{font-size:1.1rem;margin:0 0 10px;color:#ead39f}
+p{color:#c3c9c5;line-height:1.55}a{color:#f1c681}
+header{margin:15px 0 18px}small{color:#a4b5b4}nav{display:flex;gap:15px;flex-wrap:wrap}
+.layout{display:grid;grid-template-columns:minmax(270px,420px) 1fr;gap:25px;align-items:start}
+canvas{width:100%;max-width:420px;display:block;margin:auto;border:2px solid #6f6b57;
+ box-shadow:0 12px 52px #040914;background:#132436;image-rendering:pixelated;aspect-ratio:9/16}
+.panel{background:#1b2a35;border:1px solid #3a4c58;border-radius:16px;padding:20px}
+.controls{display:flex;gap:9px;margin:12px 0}button,select{font:inherit;border:1px solid #9d9c81;border-radius:9px;padding:11px 14px;background:#263c4d;color:#f7efdd;min-height:45px}
+button:active{transform:scale(.99)}button:hover{background:#36546a}
+label{display:block;margin:16px 0 7px;color:#d0ddcf;font-weight:600}
+input[type=range]{width:100%;accent-color:#e8bd79}
+#scene-label{font-weight:700;color:#f1d399}
+details{border-top:1px solid #405565;margin-top:15px;padding-top:15px}
+summary{cursor:pointer;color:#e7c99a}ul{padding-left:22px}li{margin-bottom:8px}
+footer{margin:30px auto 15px;color:#b7c2be;font-size:.85rem;max-width:900px}
+@media(max-width:730px){.layout{grid-template-columns:1fr}.panel{margin-top:0}canvas{max-width:370px}}
+</style>
+</head>
+<body><main>
+<header><small>PŪRĀKAU PIXELS • NEW FILM • REVIEW ONLY</small>
+<h1>Tāne and the First Light</h1>
+<p>Eight scenes • original 9:16 pixel animation • cinematic male narration • original atmosphere</p>
+<nav><a href="./">ClayStory home</a><a href="https://github.com/fanisswag654/claystory-ai/actions/workflows/tane-first-light.yml">Review MP4 and narration</a></nav>
+</header>
+<div class="layout"><div>
+<canvas id="tane-stage" width="540" height="960" aria-label="Animated 9:16 Tāne and the First Light film"></canvas>
+</div>
+<div class="panel">
+<h2>Preview the story</h2>
+<p id="status" aria-live="polite">Loading the original eight-scene animation…</p>
+<div class="controls"><button id="play" type="button">Play with sound</button><button id="stop" type="button">Restart</button></div>
+<label for="timeline">Timeline</label><input id="timeline" type="range" min="0" max="88" step=".03" value="0">
+<label for="jump">Jump to a scene</label>
+<select id="jump">
+<option value="0">1 — Before the light</option>
+<option value="1">2 — The children</option>
+<option value="2">3 — A hard choice</option>
+<option value="3">4 — The first attempts</option>
+<option value="4">5 — Tāne's strength</option>
+<option value="5">6 — Te Ao Mārama</option>
+<option value="6">7 — The storm</option>
+<option value="7">8 — A living world</option>
+</select>
+<p>Now showing: <span id="scene-label">Before the light</span></p>
+<p>The finished voice-synchronized MP4 is available as a <strong>GitHub Actions review artifact</strong> once the film build finishes. The browser preview may be silent until its soundtrack is deployed separately.</p>
+<details><summary>Story and cultural context</summary>
+<p>This is one creative retelling of Ranginui, Papatūānuku, Tāne and Tāwhirimātea. Accounts differ between iwi and narrators. The film symbolizes the earth and sky through landscape rather than claiming to reproduce sacred traditional images.</p>
+<ul>
+<li><a href="https://teara.govt.nz/en/ranginui-the-sky">Te Ara — Ranginui</a></li>
+<li><a href="https://environment.govt.nz/te-ao-maori/te-timatanga-o-te-ao-maori/">Ministry for the Environment — Te tīmatanga o te ao Māori</a></li>
+<li><a href="https://eng.mataurangamaori.tki.org.nz/Support-materials/Te-Reo-Maori/Maori-Myths-Legends-and-Contemporary-Stories/Tawhirimatea">Mātauranga Māori — Tāwhirimātea</a></li>
+</ul><p>Pronunciation of all te reo Māori names needs checking before public posting.</p></details>
+</div></div>
+<footer>Original ClayStory animation. New Reel not approved or scheduled for Instagram. No copyrighted game sprites or film imagery used.</footer>
+</main>
+<script src="vendor/tween.umd.js"></script>
+<script src="scripts/v29_motion.js"></script>
+<script src="scripts/tane_animation.js"></script>
+</body></html>
