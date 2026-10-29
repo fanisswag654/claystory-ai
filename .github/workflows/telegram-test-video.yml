@@ -31,8 +31,9 @@ jobs:
           info=response.json()
           if info.get("service")!="claystory-review-approval":
               raise RuntimeError("Review webhook is not active yet")
-          if not info.get("telegram_configured",False):
-              raise RuntimeError("Telegram private reviewer IDs or final approval signing keys are missing on Render; preview test can still run once Render is ready")
+          # The production gate intentionally is NOT configured yet:
+          # video preview tests must work before signing keys or PAT setup.
+          print("Production approvals enabled:", bool(info.get("telegram_configured",False)))
           print("Telegram approval web service is awake.")
           PY
       - name: Verify and send existing approved Tāne film with TEST ONLY buttons
