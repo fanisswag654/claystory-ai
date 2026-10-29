@@ -98,7 +98,7 @@ def send_free_preview(video: Path = OUT / "purakau-review.mp4",
         "prewritten, source-backed narration and original sound effects.\n"
         "Please check te reo Māori pronunciation, cultural details, visuals and audio.\n\n"
         "Both buttons are PREVIEW TESTS ONLY.\n"
-        "APPROVE = save your feedback in Telegram; it does NOT publish.\n"
+        "APPROVE = confirm your preview choice in Telegram; it does NOT publish.\n"
         "REJECT = feedback only; it does NOT publish.\n"
         "No reply = no action. Instagram publishing remains OFF."
     )
