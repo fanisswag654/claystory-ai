@@ -23,3 +23,10 @@ class CinematicSafety(unittest.TestCase):
   with patch.object(approve_publish,"buffer_api") as api,self.assertRaisesRegex(ValueError,"no duplicate"):
    approve_publish.submit_approved(p,{"old":{"video_sha256":"a"*64,"mode":"shareNow"}})
   api.assert_not_called()
+
+class SupersededReview(unittest.TestCase):
+ def test_replaced_video_is_not_publishable(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp);(root/"cinematic-system.json").write_text(json.dumps({"artwork":{},"superseded_video_sha256":["a"*64]}))
+   with patch.object(cinematic_assets,"ROOT",root),self.assertRaisesRegex(ValueError,"superseded"):
+    cinematic_assets.verify_assets("mataora-niwareka-moko","a"*64)

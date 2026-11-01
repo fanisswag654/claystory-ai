@@ -62,6 +62,23 @@ jobs:
           verified_private_credentials(os.environ)
           assert instagram_channel()["id"]=="6ae277352f1f5ed648046667"
           PY
+      - name: Retire approval buttons on drafts replaced by this edit
+        run: |
+          python - <<'PY'
+          import json,os,sys,requests
+          sys.path.insert(0,"automation")
+          from telegram_free_preview import verified_private_credentials
+          token,chat=verified_private_credentials(os.environ)
+          config=json.load(open("automation/cinematic-system.json"))
+          for message_id in config.get("superseded_telegram_message_ids",[]):
+              if not isinstance(message_id,int) or message_id<1:raise ValueError("Invalid replaced draft ID")
+              response=requests.post(
+                  "https://api.telegram.org/bot"+token+"/editMessageCaption",
+                  json={"chat_id":chat,"message_id":message_id,
+                        "caption":"SUPERSEDED DRAFT — a revised film with a new hook, gentle camera pans and updated mataora artwork replaces this video. Please use the latest review video.",
+                        "reply_markup":{"inline_keyboard":[]}},timeout=30)
+              print("Replaced Telegram draft",message_id,"button removal HTTP",response.status_code)
+          PY
       - name: Curated script, fresh Christopher speech and 16 cinematic shots
         run: |
           python automation/prepare_story.py --mode curated --topic "$REQUESTED_TOPIC" --output automation/candidate-story.json

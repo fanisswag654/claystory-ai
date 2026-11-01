@@ -81,7 +81,7 @@ def validate_original_file(proposal: dict, file: Path) -> None:
         from cinematic_assets import verify_assets,STYLE,VOICE
         if proposal.get("narrator")!=VOICE or proposal.get("style")!=STYLE:
             raise ValueError("Only the installed cinematic Christopher system may publish new films")
-        verify_assets(proposal.get("story_id",""))
+        verify_assets(proposal.get("story_id",""),proposal.get("video_sha256"))
     created=datetime.fromisoformat(proposal["created_at"])
     if created.tzinfo is None or datetime.now(timezone.utc)-created>timedelta(days=14):
         raise ValueError("WhatsApp review expired after 14 days")

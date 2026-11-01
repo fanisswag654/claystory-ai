@@ -4,8 +4,10 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 STYLE="cinematic-stills-v1"
 VOICE="en-US-ChristopherNeural"
-def verify_assets(key):
+def verify_assets(key,video_sha=None):
     config=json.loads((ROOT/"cinematic-system.json").read_text())
+    if video_sha and video_sha in config.get("superseded_video_sha256",[]):
+        raise ValueError("This draft was superseded; approve the latest Telegram video instead")
     entries=config["artwork"].get(key)
     if not re.fullmatch(r"[a-z0-9-]+",key) or not entries or len(entries)!=8:
         raise ValueError("Cinematic artwork needed for "+str(key)+". Prepare eight images in ChatGPT before running this story.")

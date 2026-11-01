@@ -19,13 +19,19 @@
       "scene-01.jpg": "ef4f10d773e643a661d70e35de8de64627d2039d6a5f2dd4dd85b4e1f4dd9ef6",
       "scene-02.jpg": "88d24a7c646388b242051ecd0a957e0ca9fa2c9d5e6ab19c31edd4f3a39515c6",
       "scene-03.jpg": "94fcc069ba1640a078aa19f4a15fc81ef47849eb6109a06f41fd506dc13dc146",
-      "scene-04.jpg": "b574901cc63171f39a6f9ea365e87c9b51243f5547d172f4db6eb68a7913367a",
-      "scene-05.jpg": "5bb4eb89b673d1e35cfecc5b9f4f4393e9f9a711b1937172e1236eea4f5bf48c",
-      "scene-06.jpg": "0a4e6fa1479d9d173b643648db3d2a381e1143986647a631e613b7e3221cca2e",
-      "scene-07.jpg": "15632f7bad39a3dd16bb0929a70426664abe829400366ce46e30180cf3f605ce",
-      "scene-08.jpg": "050046032e3ed7f1ea249019d0f27afbfbfdc204c5c12573c354db008f6678a4"
+      "scene-04.jpg": "f970b84ffcd9d0b86e6bd7f3c1d3bf3db40d1ccaa6592b0abe0fa306bfb238cc",
+      "scene-05.jpg": "a557d8add37f13e8a4a962973362d6da82ef1e30f3ca945a5a27014262e97479",
+      "scene-06.jpg": "912772b05041411fa49204dcabb2efda9b75a6e328af40579575084f415b2898",
+      "scene-07.jpg": "7ebea673e972a9a4a9ecd0fdfe6145e677795779f6873437625f26c8a37e0a83",
+      "scene-08.jpg": "85e64f5f551eabc07af0a8c1246ac9fdf3e8a41724c131a15edc4c87756fa5a5"
     }
   },
-  "render_revision": "portrait-contain-v3",
-  "next_review_topic": "mataora-niwareka-moko"
+  "render_revision": "portrait-gentle-pan-v4",
+  "next_review_topic": "mataora-niwareka-moko",
+  "superseded_video_sha256": [
+    "035b1d9eff5294b774784843c89a4b5ce0a069998563cea16645a2718615fb6d"
+  ],
+  "superseded_telegram_message_ids": [
+    20
+  ]
 }

@@ -42,3 +42,30 @@ class ProportionalFitting(unittest.TestCase):
      if g>180 and r<70 and b<70:green+=1
     self.assertGreater(green,20)
     self.assertAlmostEqual((max(xs)-min(xs)+1)/(max(ys)-min(ys)+1),1,delta=.015)
+
+class GentleCameraPan(unittest.TestCase):
+ def test_motion_preserves_roundness_and_moves_only_slightly(self):
+  import subprocess,tempfile
+  from pathlib import Path
+  from render_cinematic import image_fit_filter
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp);src=p/"circle.ppm";dst=p/"motion.rgb";w,h=360,640
+   raw=bytearray()
+   for y in range(h):
+    for x in range(w):
+     raw.extend((255,0,0) if (x-180)**2+(y-320)**2<=40**2 else (0,0,0))
+   src.write_bytes(f"P6\n{w} {h}\n255\n".encode()+raw)
+   subprocess.run(["ffmpeg","-nostdin","-hide_banner","-loglevel","error","-y","-loop","1","-i",str(src),"-vf",image_fit_filter(2,0),"-frames:v","2","-pix_fmt","rgb24","-f","rawvideo",str(dst)],check=True)
+   frames=dst.read_bytes();size=1080*1920*3
+   self.assertEqual(len(frames),size*2)
+   centres=[]
+   for frame in (frames[:size],frames[size:]):
+    xs=[];ys=[]
+    for y in range(740,1150):
+     for x in range(300,800):
+      n=(y*1080+x)*3;r,g,b=frame[n:n+3]
+      if r>180 and g<70 and b<70:xs.append(x);ys.append(y)
+    self.assertAlmostEqual((max(xs)-min(xs)+1)/(max(ys)-min(ys)+1),1,delta=.015)
+    centres.append(((max(xs)+min(xs))/2,(max(ys)+min(ys))/2))
+   self.assertGreater(centres[0][0]-centres[1][0],5)
+   self.assertLess(centres[0][0]-centres[1][0],30)
