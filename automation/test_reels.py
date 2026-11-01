@@ -16,3 +16,29 @@ class ReelsExport(unittest.TestCase):
  def test_unsupported_pixel_format_rejected(self):
   self.probe["streams"][0]["pix_fmt"]="yuv444p"
   with self.assertRaises(ValueError):validate_reel(self.probe,67)
+
+class ProportionalFitting(unittest.TestCase):
+ def test_circle_and_full_image_survive_different_aspects(self):
+  import subprocess,tempfile
+  from pathlib import Path
+  from render_cinematic import image_fit_filter
+  # A red circle on each source detects anisotropic scaling in the actual
+  # FFmpeg output, while green corners detect accidental cropping.
+  for w,h in ((640,360),(360,640),(400,400)):
+   with self.subTest(source=(w,h)),tempfile.TemporaryDirectory() as tmp:
+    p=Path(tmp);src=p/"source.ppm";out=p/"out.ppm";radius=60
+    raw=bytearray()
+    for y in range(h):
+     for x in range(w):
+      circle=(x-w/2)**2+(y-h/2)**2<=radius**2
+      corner=(x<8 or x>=w-8) and (y<8 or y>=h-8)
+      raw.extend((255,0,0) if circle else ((0,255,0) if corner else (0,0,0)))
+    src.write_bytes(f"P6\n{w} {h}\n255\n".encode()+raw)
+    subprocess.run(["ffmpeg","-nostdin","-hide_banner","-loglevel","error","-y","-i",str(src),"-vf",image_fit_filter(),"-frames:v","1","-pix_fmt","rgb24","-f","rawvideo",str(out)],check=True)
+    pixels=out.read_bytes();xs=[];ys=[];green=0
+    for i in range(0,len(pixels),3):
+     r,g,b=pixels[i:i+3]
+     if r>180 and g<70 and b<70:xs.append((i//3)%1080);ys.append((i//3)//1080)
+     if g>180 and r<70 and b<70:green+=1
+    self.assertGreater(green,20)
+    self.assertAlmostEqual((max(xs)-min(xs)+1)/(max(ys)-min(ys)+1),1,delta=.015)

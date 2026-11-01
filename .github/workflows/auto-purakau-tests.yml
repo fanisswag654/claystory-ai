@@ -26,6 +26,8 @@ jobs:
           python-version: '3.11'
       - name: Install offline unit test and browser libraries
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
           python -m pip install 'flask>=3,<4' 'requests>=2.32,<3' 'playwright>=1.50,<2'
           python -m playwright install --with-deps chromium
       - name: Compile approval, video and story source code

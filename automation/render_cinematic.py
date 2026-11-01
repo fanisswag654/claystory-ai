@@ -8,6 +8,12 @@ import hashlib
 from fractions import Fraction
 FPS=30
 
+def image_fit_filter():
+    # Fit the entire image using one scale factor; never stretch to fill.
+    return ('setsar=1,scale=1080:1920:force_original_aspect_ratio=decrease:force_divisible_by=2,'
+            'setsar=1,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,format=yuv420p')
+
+
 def validate_reel(probe,total):
     visual=next((s for s in probe["streams"] if s["codec_type"]=="video"),None)
     audio=next((s for s in probe["streams"] if s["codec_type"]=="audio"),None)
@@ -35,7 +41,7 @@ def main():
     artwork=verify_assets(story["key"])
     timing=json.loads((ROOT/"timing.json").read_text())
     if timing["voice"]!=VOICE or len(durations)!=8:raise ValueError("Wrong voice or scene clock")
-    clips=ROOT/'cinematic-clips';clips.mkdir(exist_ok=True)
+    clips=ROOT/'cinematic-fit-v3-clips';clips.mkdir(exist_ok=True)
     start=0;events=[];frames=0
     for i,(scene,duration) in enumerate(zip(story['scenes'],durations)):
         words=scene['narration'].split()
@@ -55,10 +61,7 @@ def main():
                 check=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration',str(path)],capture_output=True)
                 if check.returncode==0:continue
                 path.unlink()
-            z=(f'1.01+0.045*on/{n}' if j==0 else f'1.16-0.035*on/{n}')
-            filt=(f'scale=2160:3840:force_original_aspect_ratio=increase,crop=2160:3840,'
-                  f"zoompan=z='{z}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=1080x1920:fps={FPS},"
-                  'setsar=1,format=yuv420p')
+            filt=image_fit_filter()
             run(['-loop','1','-framerate',str(FPS),'-i',str(artwork[i]),'-vf',filt,
                  '-frames:v',str(n),'-an','-c:v','libx264','-preset','veryfast',
                  '-crf','24','-threads','2','-movflags','+faststart',str(path)])
@@ -91,7 +94,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     metadata={"story_id":story["key"],"title":story["title"],"video_file":video.name,
       "video_sha256":hashlib.sha256(video.read_bytes()).hexdigest(),"duration":round(start,3),
       "bytes":video.stat().st_size,"status":"pending-human-approval","sources":story["sources"],
-      "width":1080,"height":1920,"layout":"reels-safe-v2",
+      "width":1080,"height":1920,"layout":"portrait-contain-v3","image_fit":"contain-no-distortion",
       "fps":FPS,"narrator":VOICE,"style":STYLE,"image_count":8,"shot_count":16,
       "warning":story["cultural_warning"]}
     (ROOT/'manifest.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
