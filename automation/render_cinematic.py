@@ -5,7 +5,18 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent/"output"
 from cinematic_assets import verify_assets, STYLE, VOICE
 import hashlib
+from fractions import Fraction
 FPS=30
+
+def validate_reel(probe,total):
+    visual=next((s for s in probe["streams"] if s["codec_type"]=="video"),None)
+    audio=next((s for s in probe["streams"] if s["codec_type"]=="audio"),None)
+    if not visual or not audio:raise ValueError("Reel requires video and narration audio")
+    if (visual.get("width"),visual.get("height"))!=(1080,1920):raise ValueError("Reel must be full-screen 1080x1920 portrait")
+    if visual.get("codec_name")!="h264" or visual.get("pix_fmt")!="yuv420p" or audio.get("codec_name")!="aac":raise ValueError("Reel requires H.264 yuv420p and AAC")
+    if Fraction(visual.get("r_frame_rate","0"))!=30:raise ValueError("Reel requires 30fps")
+    if total<3 or abs(float(visual["duration"])-total)>.1 or abs(float(audio["duration"])-total)>.1:raise ValueError("Incomplete Reel video/audio clock")
+
 def run(args):
     for attempt in range(2):
         subprocess.run(['ffmpeg','-nostdin','-xerror','-hide_banner','-loglevel','error','-y',*args],check=True)
@@ -28,12 +39,12 @@ def main():
     start=0;events=[];frames=0
     for i,(scene,duration) in enumerate(zip(story['scenes'],durations)):
         words=scene['narration'].split()
-        chunks=[words[j:j+7] for j in range(0,len(words),7)]
+        chunks=[words[j:j+6] for j in range(0,len(words),6)]
         consumed=0
         for chunk in chunks:
             a=start+duration*consumed/len(words)
             consumed+=len(chunk);b=start+duration*consumed/len(words)
-            text='\\N'.join(textwrap.wrap(' '.join(chunk),29))
+            text='\\N'.join(textwrap.wrap(' '.join(chunk),24))
             events.append(f'Dialogue: 0,{stamp(a)},{stamp(b)},Caption,,0,0,0,,{text}')
         # Measured original narration timing, rounded on a continuous 30fps clock.
         end_frame=round((start+duration)*FPS)
@@ -60,29 +71,27 @@ PlayResY: 1920
 WrapStyle: 0
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Caption,DejaVu Sans,53,&H00FFFFFF,&H00FFFFFF,&H00100D09,&H90000000,-1,0,0,0,100,100,0,0,1,3,1,2,90,90,265,1
-Style: Brand,DejaVu Sans,29,&H0099C4E8,&H00FFFFFF,&H00100D09,&H90000000,0,0,0,0,100,100,3,0,1,1,0,8,70,70,120,1
+Style: Caption,DejaVu Sans,48,&H00FFFFFF,&H00FFFFFF,&H00100D09,&H90000000,-1,0,0,0,100,100,0,0,1,3,1,2,96,200,390,1
+Style: Brand,DejaVu Sans,26,&H0099C4E8,&H00FFFFFF,&H00100D09,&H90000000,0,0,0,0,100,100,3,0,1,1,0,8,96,200,210,1
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 '''
-    events.append(f'Dialogue: 1,0:00:00.00,{stamp(start)},Brand,,0,0,0,,PŪRĀKAU PIXELS  /  STORIES OF AOTEAROA')
+    events.append(f'Dialogue: 1,0:00:00.00,{stamp(start)},Brand,,0,0,0,,PŪRĀKAU PIXELS')
     (ROOT/'captions.ass').write_text(header+'\n'.join(events)+'\n')
     (ROOT/'concat.txt').write_text(''.join(f"file '{(clips/f'{i:02}.mp4').as_posix()}'\n" for i in range(16)))
     run(['-f','concat','-safe','0','-i',str(ROOT/'concat.txt'),'-i',str(ROOT/'auto-review-mix-balanced.mp3'),
          '-map','0:v:0','-map','1:a:0','-vf',f"ass='{ROOT/'captions.ass'}'",
-         '-c:v','libx264','-preset','veryfast','-crf','24','-threads','2','-c:a','aac',
+         '-c:v','libx264','-preset','veryfast','-crf','24','-threads','2','-pix_fmt','yuv420p','-c:a','aac',
          '-b:a','160k','-t',str(start),'-movflags','+faststart',
          str(ROOT/'purakau-review.mp4')])
     video=ROOT/'purakau-review.mp4'
     if video.stat().st_size>48*1024*1024:raise RuntimeError("Video exceeds Telegram review limit")
     probe=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_streams','-of','json',str(video)]))
-    visual=next(s for s in probe['streams'] if s['codec_type']=='video')
-    audio=next(s for s in probe['streams'] if s['codec_type']=='audio')
-    if abs(float(visual['duration'])-start)>.1 or abs(float(audio['duration'])-start)>.1:
-        raise RuntimeError("Incomplete video/audio clock")
+    validate_reel(probe,start)
     metadata={"story_id":story["key"],"title":story["title"],"video_file":video.name,
       "video_sha256":hashlib.sha256(video.read_bytes()).hexdigest(),"duration":round(start,3),
       "bytes":video.stat().st_size,"status":"pending-human-approval","sources":story["sources"],
+      "width":1080,"height":1920,"layout":"reels-safe-v2",
       "fps":FPS,"narrator":VOICE,"style":STYLE,"image_count":8,"shot_count":16,
       "warning":story["cultural_warning"]}
     (ROOT/'manifest.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
