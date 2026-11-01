@@ -169,6 +169,48 @@
         "caption": "ONE TRADITION",
         "narration": "This is one telling of Tāne and the three baskets of knowledge. Different traditions and Māori scholars offer different interpretations."
       }
+    ],
+    "mataora-niwareka-moko": [
+      {
+        "title": "MATAORA AND NIWAREKA",
+        "caption": "THE ORIGINS OF TĀ MOKO",
+        "narration": "Where does the story of tā moko begin? One pūrākau tells of Mataora, a man of the living world, and Niwareka, a woman from Rarohenga."
+      },
+      {
+        "title": "NIWAREKA LEAVES",
+        "caption": "A BROKEN RELATIONSHIP",
+        "narration": "They married, but Mataora struck Niwareka in anger. She left for her own people in Rarohenga, and he followed, ashamed of what he had done."
+      },
+      {
+        "title": "THE JOURNEY BELOW",
+        "caption": "SEEKING NIWAREKA",
+        "narration": "Mataora journeyed into Rarohenga to find Niwareka. There he encountered her father Uetonga, a master of tā moko whose markings would not rub away."
+      },
+      {
+        "title": "PAINT AND PERMANENCE",
+        "caption": "UETONGA'S LESSON",
+        "narration": "Uetonga showed how easily Mataora's painted facial designs could be wiped away. Mataora asked to receive lasting moko, and to learn from him."
+      },
+      {
+        "title": "RECEIVING MOKO",
+        "caption": "HUMILITY AND REMORSE",
+        "narration": "Receiving moko was painful. In this telling, Niwareka came to see Mataora and recognised the cloak she had woven for him."
+      },
+      {
+        "title": "A PROMISE TO CHANGE",
+        "caption": "NIWAREKA'S CHOICE",
+        "narration": "After his face healed, Mataora promised he would never harm Niwareka again. She agreed to return with him to the world above."
+      },
+      {
+        "title": "KNOWLEDGE RETURNS",
+        "caption": "TĀ MOKO AND TĀNIKO",
+        "narration": "Mataora carried knowledge of tā moko back to the living world. Niwareka also brought the art of tāniko, a tradition of fine patterned weaving."
+      },
+      {
+        "title": "A LIVING TRADITION",
+        "caption": "MORE THAN DECORATION",
+        "narration": "This is one traditional account of tā moko's origins. The art carries identity and meaning, and its stories and practices differ among Māori communities."
+      }
     ]
   }
 }

@@ -18,9 +18,9 @@ import telegram_webhook
 
 
 class CuratedScriptTests(unittest.TestCase):
-    def test_exactly_four_grounded_original_eight_scene_scripts(self):
+    def test_all_grounded_original_eight_scene_scripts(self):
         briefs = prepare_story.source_briefs()["topics"]
-        self.assertEqual(len(briefs), 4)
+        self.assertGreaterEqual(len(briefs), 5)
         for topic in briefs:
             with self.subTest(topic=topic["id"]):
                 scenes = prepare_story.curated_script(topic)

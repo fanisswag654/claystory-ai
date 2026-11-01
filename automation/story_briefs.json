@@ -201,6 +201,69 @@
         "reach",
         "wonder"
       ]
+    },
+    {
+      "id": "mataora-niwareka-moko",
+      "title": "Mataora and Niwareka: The Origins of Tā Moko",
+      "theme": "moko",
+      "hero_role": "ochre",
+      "support_role": "earth",
+      "known_names": [
+        "Mataora",
+        "Niwareka",
+        "Uetonga",
+        "Rarohenga",
+        "tā moko",
+        "tāniko"
+      ],
+      "sources": [
+        {
+          "title": "Te Papa — Tā moko: The art and practice of Māori tattoo",
+          "url": "https://www.tepapa.govt.nz/digital-museum/explore-digital-museum/ta-moko"
+        },
+        {
+          "title": "Rawinia Higgins — Origins of tā moko, Te Ara",
+          "url": "https://teara.govt.nz/en/ta-moko-maori-tattooing/page-1"
+        },
+        {
+          "title": "National Library — What’s in a tūpuna name?",
+          "url": "https://natlib.govt.nz/blog/posts/whats-in-a-tupuna-name"
+        },
+        {
+          "title": "Te Papa — Tāmoko: history, practice, and meanings",
+          "url": "https://www.tepapa.govt.nz/digital-museum/explore-digital-museum/maori/tamoko-maori-tattoos-history-practice-and-meanings"
+        }
+      ],
+      "facts": [
+        "In one pūrākau Mataora marries Niwareka, a tūrehu from Rarohenga.",
+        "Mataora strikes Niwareka; she leaves for Rarohenga and he follows in remorse.",
+        "Niwareka's father Uetonga is a master of tā moko.",
+        "Uetonga demonstrates that Mataora's painted facial marks can be wiped off.",
+        "Mataora receives lasting moko; the process is painful and Niwareka recognises his woven cloak.",
+        "After healing, Mataora promises not to harm her again; Niwareka agrees to return with him.",
+        "Mataora brings knowledge of tā moko to the living world; Niwareka brings tāniko in this account.",
+        "Tā moko can communicate identity and meaning; this is one traditional account, not a single historical invention date or an explanation of every design."
+      ],
+      "visuals": [
+        "village",
+        "forest",
+        "cavern",
+        "village",
+        "village",
+        "river",
+        "forest",
+        "village"
+      ],
+      "actions": [
+        "idle",
+        "idle",
+        "wonder",
+        "reach",
+        "idle",
+        "idle",
+        "idle",
+        "wonder"
+      ]
     }
   ],
   "requirements": {

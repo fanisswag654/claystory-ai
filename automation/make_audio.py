@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate exact cinematic Ryan narration for one NEW source-backed story.
+"""Generate natural Christopher narration for one NEW source-backed story.
 
 The original V31 voice renderer and sound mixer are reused with fresh scene
 text and measured timings; no previous film soundtrack is copied.
@@ -53,7 +53,11 @@ def main():
     tane_sound.KEY=KEY
     tane_sound.out=ROOT_OUT
     tane_sound.merge_voice(durations)
-    tane_sound.original_soundscape(durations)
+    if story["key"]=="mataora-niwareka-moko":
+        from moko_soundscape import make_soundscape
+        make_soundscape(ROOT_OUT,KEY,durations)
+    else:
+        tane_sound.original_soundscape(durations)
     tane_sound.master_mix(durations)
 
     timing={"story":story["key"],"durations":durations,
