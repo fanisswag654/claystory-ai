@@ -52,6 +52,9 @@ def main():
     if story["key"]=="mataora-niwareka-moko":
         from moko_soundscape import make_soundscape
         make_soundscape(ROOT_OUT,KEY,durations)
+    elif story["key"]=="rata-and-the-tree":
+        from forest_soundscape import make_soundscape
+        make_soundscape(ROOT_OUT,KEY,durations)
     else:
         tane_sound.original_soundscape(durations)
     tane_sound.master_mix(durations)

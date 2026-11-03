@@ -6,10 +6,11 @@ import cinematic_assets,approve_publish
 class CinematicSafety(unittest.TestCase):
  def test_real_asset_set_and_voice(self):
   self.assertEqual(len(cinematic_assets.verify_assets("maui-mahuika-fire")),8)
+  self.assertEqual(len(cinematic_assets.verify_assets("rata-and-the-tree")),8)
   self.assertEqual(cinematic_assets.VOICE,"voicestudio:kittentts:expr-voice-3-m")
  def test_unknown_story_never_uses_wrong_art(self):
   with self.assertRaisesRegex(ValueError,"artwork needed"):
-   cinematic_assets.verify_assets("rata-and-the-tree")
+   cinematic_assets.verify_assets("ruaumoko-earthquakes")
  def test_tampered_art_fails_closed(self):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp);key="maui-mahuika-fire";folder=root/"art"/key;folder.mkdir(parents=True)

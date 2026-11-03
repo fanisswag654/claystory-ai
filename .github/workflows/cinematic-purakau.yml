@@ -26,7 +26,7 @@ permissions:
   contents: write
   actions: read
 concurrency:
-  group: purakau-story-candidates
+  group: purakau-story-candidates-${{ inputs.topic || github.sha }}
   cancel-in-progress: false
 jobs:
   review:
