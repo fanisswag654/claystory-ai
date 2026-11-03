@@ -1,6 +1,6 @@
 {
   "style": "cinematic-stills-v1",
-  "narrator": "en-US-ChristopherNeural",
+  "narrator": "voicestudio:kittentts:expr-voice-3-m",
   "pitch_hz": 0,
   "rate_percent": -8,
   "shots_per_scene": 2,
@@ -33,5 +33,16 @@
   ],
   "superseded_telegram_message_ids": [
     20
-  ]
+  ],
+  "narration_engine": {
+    "provider": "VoiceStudio",
+    "engine": "KittenTTS",
+    "checkpoint": "KittenML/kitten-tts-mini-0.8",
+    "preset": "Bruno",
+    "voice_id": "expr-voice-3-m",
+    "speed": 0.92,
+    "sentence_pause": 0.35,
+    "pitch_shift": false,
+    "source_commit": "429f1e5bb2703ac5b928ab8ba6f60159167e9c44"
+  }
 }

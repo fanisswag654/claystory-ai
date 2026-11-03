@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
-"""Generate natural Christopher narration for one NEW source-backed story.
+"""Generate VoiceStudio male narration for one NEW source-backed story.
 
-The original V31 voice renderer and sound mixer are reused with fresh scene
-text and measured timings; no previous film soundtrack is copied.
+VoiceStudio synthesizes fresh scene text; the original sound mixer uses the
+measured timings. No previous film soundtrack is copied.
 """
 from __future__ import annotations
-import asyncio
 import json
 from pathlib import Path
 import sys
-import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 import tane_sound
-from v31_storyteller import PROFILES, generate_edge
 
 ROOT_OUT=ROOT/"automation"/"output"
 KEY="auto-review"
 
 
-async def make_voice(story):
-    profile=dict(PROFILES["warm"], rates=(-8,)*8, pitches=(0,)*8, pauses=(.35,)*8)
+def make_voice(story):
+    from voicestudio_voice import generate_scene
+    profile=None
     for i,scene in enumerate(story["scenes"]):
         target=ROOT_OUT/f"{KEY}-{i+1}.mp3"
-        with tempfile.TemporaryDirectory(prefix="purakau-new-") as tmp:
-            print(f"Generating Christopher NEW narration scene {i+1}/8",flush=True)
-            await generate_edge(scene["narration"],target,profile["model"],i,
-                                profile,Path(tmp))
+        print(f"Generating VoiceStudio male narration scene {i+1}/8",flush=True)
+        profile=generate_scene(scene["narration"],target)
         if tane_sound.seconds(target)<3:
             raise RuntimeError("Narration scene was too short; refusing candidate")
     return profile
@@ -41,7 +37,7 @@ def main():
     ROOT_OUT.mkdir(parents=True,exist_ok=True)
     from cinematic_assets import verify_assets
     verify_assets(story["key"])
-    profile=asyncio.run(make_voice(story))
+    profile=make_voice(story)
     story["narrator"]=profile["model"]
     durations=[round(tane_sound.seconds(ROOT_OUT/f"{KEY}-{i+1}.mp3")+
                      (.17 if i<7 else .28),3) for i in range(8)]
@@ -61,8 +57,8 @@ def main():
     tane_sound.master_mix(durations)
 
     timing={"story":story["key"],"durations":durations,
-            "voice":profile["model"],"revision":"CinematicStills1","pitch_hz":0,
-            "approval":"pending; never publish without WhatsApp approval"}
+            "voice":profile["model"],"revision":"VoiceStudio1","pitch_hz":0,"narration_engine":profile,
+            "approval":"pending; never publish without verified Telegram approval"}
     (ROOT_OUT/"timing.json").write_text(
         json.dumps(timing,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"
     )

@@ -1,4 +1,4 @@
-"""Build a private style-comparison film from eight supplied stills and new Christopher narration."""
+"""Build a private style-comparison film from eight supplied stills and VoiceStudio narration."""
 import json, math, os, subprocess, textwrap
 from pathlib import Path
 
@@ -111,7 +111,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
       "width":1080,"height":1920,"layout":"portrait-depthflow-v1" if motion=="depthflow" else "portrait-gentle-pan-v4",
       "image_fit":"proportional-depth-parallax" if motion=="depthflow" else "proportional-pan",
       "motion_renderer":motion,"pan_overscan":0.033333 if motion=="gentle-pan" else None,
-      "fps":FPS,"narrator":VOICE,"style":STYLE,"image_count":8,"shot_count":len(clip_paths),
+      "fps":FPS,"narrator":VOICE,"narration_engine":timing.get("narration_engine",{}),"style":STYLE,"image_count":8,"shot_count":len(clip_paths),
       "warning":story["cultural_warning"]}
     (ROOT/'manifest.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
     print('Finished cinematic film',start,'seconds',flush=True)

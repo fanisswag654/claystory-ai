@@ -1,4 +1,4 @@
-name: Pūrākau Pixels — cinematic stills and Christopher to Telegram
+name: Pūrākau Pixels — DepthFlow and VoiceStudio to Telegram
 on:
   workflow_dispatch:
     inputs:
@@ -35,6 +35,10 @@ jobs:
     env:
       PURAKAU_MOTION: ${{ inputs.motion || 'depthflow' }}
       LIBGL_ALWAYS_SOFTWARE: '1'
+      ORT_DISABLE_TELEMETRY: '1'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      OMNIVOICE_ANALYTICS_DISABLED: '1'
+      VOICESTUDIO_SOURCE: .voicestudio
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REQUESTED_TOPIC: ${{ inputs.topic || '' }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -47,6 +51,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Check out the pinned VoiceStudio narration engine
+        uses: actions/checkout@v4
+        with:
+          repository: debpalash/VoiceStudio
+          ref: 429f1e5bb2703ac5b928ab8ba6f60159167e9c44
+          path: .voicestudio
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -57,6 +68,10 @@ jobs:
           python -m pip install 'requests>=2.32,<3' 'edge-tts>=7,<8' 'flask>=3,<4' 'playwright>=1.50,<2'
           python -m compileall -q automation
           python -m unittest discover -s automation -p 'test_*.py' -q
+      - name: Install VoiceStudio CPU narration
+        run: |
+          python -m pip install 'torch==2.7.1+cpu' 'torchvision==0.22.1+cpu' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r automation/requirements-voicestudio.txt
       - name: Install DepthFlow for the selected parallax renderer
         if: env.PURAKAU_MOTION == 'depthflow'
         run: |
@@ -95,7 +110,7 @@ jobs:
                         "reply_markup":{"inline_keyboard":[]}},timeout=30)
               print("Replaced Telegram draft",message_id,"button removal HTTP",response.status_code)
           PY
-      - name: Curated script, Christopher speech and selected cinematic motion
+      - name: Curated script, VoiceStudio speech and selected cinematic motion
         run: |
           python automation/prepare_story.py --mode curated --topic "$REQUESTED_TOPIC" --output automation/candidate-story.json
           python automation/make_audio.py
@@ -109,7 +124,7 @@ jobs:
             echo "Exact video already proposed; refusing duplicate delivery."
             exit 0
           fi
-          gh release create "$TAG" automation/output/purakau-review.mp4 automation/output/proposal.json automation/output/story.json --repo "$GITHUB_REPOSITORY" --latest=false --title "Cinematic Pūrākau — awaiting Telegram approval" --notes "Christopher at natural pitch; portrait cinematic motion. Only the authorized Telegram approval can publish this exact SHA-verified film."
+          gh release create "$TAG" automation/output/purakau-review.mp4 automation/output/proposal.json automation/output/story.json --repo "$GITHUB_REPOSITORY" --latest=false --title "Cinematic Pūrākau — awaiting Telegram approval" --notes "VoiceStudio male narration at natural pitch; portrait cinematic motion. Only the authorized Telegram approval can publish this exact SHA-verified film."
           python automation/telegram_send.py automation/output/proposal.json
       - uses: actions/upload-artifact@v4
         if: always()

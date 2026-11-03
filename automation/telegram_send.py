@@ -58,7 +58,8 @@ def verify_review(proposal: dict, video: Path) -> None:
     digest = hashlib.sha256(video.read_bytes()).hexdigest()
     if digest != sha:
         raise ValueError("Video bytes differ from the immutable approved-release SHA")
-    if proposal.get("narrator") not in ("en-GB-RyanNeural", "en-US-ChristopherNeural"):
+    from cinematic_assets import REVIEW_VOICES
+    if proposal.get("narrator") not in ("en-GB-RyanNeural", *REVIEW_VOICES):
         raise ValueError("Wrong cinematic narrator selected")
 
 

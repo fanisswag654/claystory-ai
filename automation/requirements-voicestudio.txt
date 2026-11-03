@@ -1,0 +1,4 @@
+# VoiceStudio KittenTTS backend; CPU torch is installed first by the workflow.
+kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8/kittentts-0.8.0-py3-none-any.whl
+onnxruntime==1.31.1
+soundfile>=0.13,<1

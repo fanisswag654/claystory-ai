@@ -29,21 +29,39 @@ are pinned. DepthFlow uses AGPL-3.0; the Small depth model uses Apache-2.0.
 Sources: https://github.com/BrokenSource/DepthFlow and
 https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf .
 
-## VoiceStudio
+## VoiceStudio narrator (active)
 
-https://github.com/debpalash/VoiceStudio supports local speech generation,
-voice design and voice cloning, plus a headless backend and automation APIs.
-It is usable as a separate narration backend; it is not a hosted free TTS API.
-Its server/model needs its own execution environment. CPU execution is
-supported but may be slow. The repository also offers an iPad preview app
-requiring signing/sideloading, which is optional for our cloud workflow.
+New films use **Bruno**, the built-in male preset `expr-voice-3-m`, through
+VoiceStudio's actual `KittenTTSBackend`. The application source is checked out
+at `429f1e5bb2703ac5b928ab8ba6f60159167e9c44`. The 80 MB
+`KittenML/kitten-tts-mini-0.8` model runs on CPU inside GitHub Actions;
+no hosted backend, credential, paid API, voice clone or iPad installation is
+required. Model weights are Apache-2.0; VoiceStudio is AGPL-3.0.
 
-The accepted `en-US-ChristopherNeural` narrator stays in production. Before
-switching to VoiceStudio, choose a model and permitted voice, test a deep calm
-male sample and Māori pronunciation, then integrate the measured scene audio
-into `make_audio.py`. New timing must come from the actual generated files.
-VoiceStudio app licensing is AGPL-3.0; each model and voice has separate terms.
-No paid OpenAI API is needed. No voice is cloned automatically.
+We compared the same passage across all four male presets: Bruno had the
+lowest median voiced pitch in that test (about 117 Hz). This is a measured
+property of the generated sample, not a guarantee of perceived quality.
+Speed is 0.92 with 0.35-second sentence pauses. No pitch-shift filter is used.
+Every scene's duration is measured from its new MP3 before captions and film
+rendering. The previous Christopher narrator remains eligible only as a known
+narrator for SHA-bound private reviews already issued.
 
-Inspected upstream sources: README.md, docs/speech-platform.md and the project's
-current local speech platform documentation (2026-11-03).
+KittenTTS is English-only; Māori words still require fluent human review.
+Do not infer cultural pronunciation accuracy from successful rendering.
+Telegram Approve still authorizes only the exact new MP4. Earlier approvals
+never authorize an updated soundtrack or a newly rendered video.
+
+ONNX Runtime telemetry is disabled before process/library initialization with
+`ORT_DISABLE_TELEMETRY=1`, and through its API. VoiceStudio analytics and HF
+telemetry are also disabled. Only the selected public model downloads are
+needed for speech generation. Output routes through VoiceStudio's
+`mark_synthetic` hook; its optional AudioSeal behavior remains upstream's.
+
+The `VoiceStudio — free CPU male narrator test` workflow creates a short real
+Bruno sample without Telegram, Buffer, publishing permissions or secrets.
+The cinematic workflow installs this same pinned backend for all eight scenes.
+
+Sources:
+- https://github.com/debpalash/VoiceStudio/blob/main/docs/engines/kittentts.md
+- https://huggingface.co/KittenML/kitten-tts-mini-0.8
+- https://github.com/microsoft/onnxruntime/blob/main/docs/Privacy.md

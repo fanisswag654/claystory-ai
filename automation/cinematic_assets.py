@@ -3,7 +3,9 @@ import hashlib,json,re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 STYLE="cinematic-stills-v1"
-VOICE="en-US-ChristopherNeural"
+# Keep the previous narrator eligible for already-issued SHA-bound reviews.
+VOICE="voicestudio:kittentts:expr-voice-3-m"
+REVIEW_VOICES=(VOICE,"en-US-ChristopherNeural")
 def verify_assets(key,video_sha=None):
     config=json.loads((ROOT/"cinematic-system.json").read_text())
     if video_sha and video_sha in config.get("superseded_video_sha256",[]):

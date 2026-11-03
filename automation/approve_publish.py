@@ -74,13 +74,14 @@ def validate_original_file(proposal: dict, file: Path) -> None:
     url=f"https://github.com/{REPO}/releases/download/{tag}/purakau-review.mp4"
     if proposal.get("video_url")!=url or proposal.get("status")!="pending":
         raise ValueError("Proposal URL or review state does not match immutable release")
-    if proposal.get("narrator")not in ("en-GB-RyanNeural","en-US-ChristopherNeural"):
+    from cinematic_assets import REVIEW_VOICES
+    if proposal.get("narrator") not in ("en-GB-RyanNeural",*REVIEW_VOICES):
         raise ValueError("Cinematic narrator identity changed")
     legacy=(tag=="auto-review-maui-mahuika-fire-ddb8318a9296" and sha=="ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c")
     if not legacy:
-        from cinematic_assets import verify_assets,STYLE,VOICE
-        if proposal.get("narrator")!=VOICE or proposal.get("style")!=STYLE:
-            raise ValueError("Only the installed cinematic Christopher system may publish new films")
+        from cinematic_assets import verify_assets,STYLE,REVIEW_VOICES
+        if proposal.get("narrator") not in REVIEW_VOICES or proposal.get("style")!=STYLE:
+            raise ValueError("Only installed cinematic narrators may publish new films")
         verify_assets(proposal.get("story_id",""),proposal.get("video_sha256"))
     created=datetime.fromisoformat(proposal["created_at"])
     if created.tzinfo is None or datetime.now(timezone.utc)-created>timedelta(days=14):
