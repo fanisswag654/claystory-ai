@@ -109,7 +109,7 @@ jobs:
             echo "Exact video already proposed; refusing duplicate delivery."
             exit 0
           fi
-          gh release create "$TAG" automation/output/purakau-review.mp4 automation/output/proposal.json automation/output/story.json --repo "$GITHUB_REPOSITORY" --latest=false --title "Cinematic Pūrākau — awaiting Telegram approval" --notes "Christopher at natural pitch; sixteen cinematic shots. Only the authorized Telegram approval can publish this exact SHA-verified film."
+          gh release create "$TAG" automation/output/purakau-review.mp4 automation/output/proposal.json automation/output/story.json --repo "$GITHUB_REPOSITORY" --latest=false --title "Cinematic Pūrākau — awaiting Telegram approval" --notes "Christopher at natural pitch; portrait cinematic motion. Only the authorized Telegram approval can publish this exact SHA-verified film."
           python automation/telegram_send.py automation/output/proposal.json
       - uses: actions/upload-artifact@v4
         if: always()
