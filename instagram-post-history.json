@@ -102,6 +102,12 @@
     "verification_run_id": 40930241278,
     "video_sha256": "ddb8318a9296de8418643294e82dec8d7f52056278185bd470ceb3ec72ed107c"
   },
+  "review:auto-review-rata-and-the-tree-1c138cc61edc": {
+    "decision": "rejected",
+    "platform": "telegram",
+    "telegram_callback_id": "3362901895359520480",
+    "video_sha256": "1c138cc61edcf10ccc6d9fb9046d609beefdbb1d188976ffe717c77eda34618b"
+  },
   "tane-nz:9e2e1f720ccc8b3f641a32e8fe668d9ff30824a1e2eef87bc65725d1815a4f52:draft": {
     "buffer_post_id": "6ae29b84cc91be5434bd6212",
     "channel_id": "6ae277352f1f5ed648046667",
