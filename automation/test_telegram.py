@@ -99,8 +99,10 @@ class TelegramSender(unittest.TestCase):
         mock_reply.status_code = 200
         mock_reply.json.return_value = {
             "ok": True,
-            "result": {"message_id": 100, "chat": {"id": int(CHAT)},
-                       "video": {"file_id": "BAACAgQABotExample"}},
+            "result": {"message_id": 100, "chat": {"id": int(CHAT),"type":"private"},
+                       "video": {"file_id": "BAACAgQABotExample","width":1080,"height":1920},
+                       "reply_markup":telegram_send.review_keyboard(self.proposal['proposal_id']),
+                       "caption":'Review ID: '+self.proposal['proposal_id']},
         }
         with patch.dict(os.environ, {
             "TELEGRAM_BOT_TOKEN": "1234567890:" + "a" * 35,

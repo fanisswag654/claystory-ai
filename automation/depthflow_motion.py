@@ -13,7 +13,7 @@ from pathlib import Path
 
 FPS = 30
 DEPTH_MODEL = "depth-anything/Depth-Anything-V2-Small-hf"
-REVISION = "depthflow-gentle-v1"
+REVISION = "depthflow-character-v2"
 
 
 def camera_offset(progress, reverse=False):
@@ -48,9 +48,15 @@ def get_scene():
     @define
     class GentleScene(DepthScene):
         reverse_pan: bool = False
+        character_animator: object = None
+        duration_seconds: float = 1.0
 
         def update(self):
-            self.state.offset = camera_offset(min(1.0, max(0.0, self.tau)), self.reverse_pan)
+            progress = min(1.0, max(0.0, self.tau))
+            self.state.offset = camera_offset(progress, self.reverse_pan)
+            self.state.zoom = 0.985 - 0.018 * (progress*progress*(3-2*progress))
+            if self.character_animator is not None:
+                self.image.from_numpy(self.character_animator.frame(progress*self.duration_seconds))
 
     return GentleScene(backend="headless")
 
@@ -68,6 +74,13 @@ def _render_scene(image, output, frames, reverse=False, width=1080, height=1920)
     scene = get_scene()
     scene.reverse_pan = reverse
     scene.input(image=fitted)
+    from character_motion import for_artwork
+    scene.character_animator = for_artwork(fitted, image)
+    scene.duration_seconds = frames / FPS
+    if scene.character_animator is not None:
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.with_suffix('.motion.json').write_text(json.dumps(scene.character_animator.audit(), indent=2)+'\n')
     scene.state = DepthState(height=0.08, steady=0.30, isometric=0.60, zoom=0.98)
     scene.ffmpeg.h264(preset="veryfast", crf=22)
     output = Path(output)

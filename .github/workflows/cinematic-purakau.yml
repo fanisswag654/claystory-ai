@@ -43,6 +43,9 @@ jobs:
       REQUESTED_TOPIC: ${{ inputs.topic || '' }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
+      TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+      RECOVER_TELEGRAM_MESSAGE_ID: '23'
+      RECOVER_TELEGRAM_PROPOSAL_ID: auto-review-rata-and-the-tree-21a06148c5e6
       TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
       BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
       INSTAGRAM_CHANNEL_ID: '6ae277352f1f5ed648046667'
@@ -66,6 +69,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
           python -m pip install 'requests>=2.32,<3' 'edge-tts>=7,<8' 'flask>=3,<4' 'playwright>=1.50,<2'
+          python -m pip install -r automation/requirements-motion.txt
           python -m compileall -q automation
           python -m unittest discover -s automation -p 'test_*.py' -q
       - name: Install VoiceStudio CPU narration
@@ -93,6 +97,8 @@ jobs:
           verified_private_credentials(os.environ)
           assert instagram_channel()["id"]=="6ae277352f1f5ed648046667"
           PY
+      - name: Verify the existing Telegram bot, destination and Render callback
+        run: python automation/telegram_diagnostics.py
       - name: Retire approval buttons on drafts replaced by this edit
         run: |
           python - <<'PY'
@@ -110,6 +116,9 @@ jobs:
                         "reply_markup":{"inline_keyboard":[]}},timeout=30)
               print("Replaced Telegram draft",message_id,"button removal HTTP",response.status_code)
           PY
+      - name: Exercise animated texture upload and parallax before the full render
+        if: env.PURAKAU_MOTION == 'depthflow'
+        run: python automation/depthflow_motion.py --topic "$REQUESTED_TOPIC" --scene 3 --seconds 1 --width 180 --output automation/output/motion-smoke.mp4
       - name: Curated script, VoiceStudio speech and selected cinematic motion
         run: |
           python automation/prepare_story.py --mode curated --topic "$REQUESTED_TOPIC" --output automation/candidate-story.json
@@ -118,14 +127,8 @@ jobs:
           python automation/finalize_proposal.py
       - name: Pin exact MP4 as a review release and send real Telegram buttons
         run: |
-          set -euo pipefail
-          TAG="$(python -c 'import json;print(json.load(open("automation/output/proposal.json"))["proposal_id"])')"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Exact video already proposed; refusing duplicate delivery."
-            exit 0
-          fi
-          gh release create "$TAG" automation/output/purakau-review.mp4 automation/output/proposal.json automation/output/story.json --repo "$GITHUB_REPOSITORY" --latest=false --title "Cinematic Pūrākau — awaiting Telegram approval" --notes "VoiceStudio male narration at natural pitch; portrait cinematic motion. Only the authorized Telegram approval can publish this exact SHA-verified film."
-          python automation/telegram_send.py automation/output/proposal.json
+          python automation/verify_cinematic.py
+          python automation/deliver_cinematic.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -136,4 +139,9 @@ jobs:
             automation/output/manifest.json
             automation/output/story.json
             automation/output/timing.json
+            automation/output/captions.ass
+            automation/output/motion-audit.json
+            automation/output/quality-report.json
+            automation/output/telegram-delivery.json
+            automation/output/telegram-diagnostics.json
           retention-days: 14

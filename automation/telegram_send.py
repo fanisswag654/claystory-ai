@@ -93,13 +93,16 @@ def send_video(proposal: dict, video: Path = VIDEO) -> dict:
         raise ValueError("Invalid Telegram bot token format; check GitHub Actions Secret")
     verify_review(proposal, video)
     payload = message_payload(proposal, chat_id)
-    with video.open("rb") as file:
-        response = requests.post(
-            f"https://api.telegram.org/bot{token}/sendVideo",
-            data=payload,
-            files={"video": ("purakau-review.mp4", file, "video/mp4")},
-            timeout=(20, 210),
-        )
+    try:
+        with video.open("rb") as file:
+            response = requests.post(
+                f"https://api.telegram.org/bot{token}/sendVideo",
+                data=payload,
+                files={"video": ("purakau-review.mp4", file, "video/mp4")},
+                timeout=(20, 210),
+            )
+    except requests.RequestException:
+        raise RuntimeError('Telegram upload response unavailable; inspect delivery before retrying') from None
     if response.status_code != 200:
         raise RuntimeError(f"Telegram refused video delivery (HTTP {response.status_code}); "
                            "check bot /start, chat ID and file limits, without revealing the token")
@@ -111,12 +114,29 @@ def send_video(proposal: dict, video: Path = VIDEO) -> dict:
         raise RuntimeError("Telegram message went to an unexpected reviewer; stop automation")
     if not sent.get("video"):
         raise RuntimeError("Telegram did not return a video attachment")
+    validate_delivery_message(sent, proposal, chat_id)
     return {
         "telegram_message_id": sent["message_id"],
+        "video_sha256": proposal["video_sha256"],
+        "video_bytes": video.stat().st_size,
+        "width": sent["video"]["width"], "height": sent["video"]["height"],
+        "review_buttons_verified": True,
         "telegram_chat_id": str(sent["chat"]["id"]),
         "proposal_id": proposal["proposal_id"],
         "status": "delivered_for_review_not_approved",
     }
+
+
+def validate_delivery_message(sent, proposal, chat_id):
+    if str(sent.get('chat',{}).get('id')) != chat_id or sent.get('chat',{}).get('type') != 'private':
+        raise RuntimeError('Telegram did not confirm the private reviewer')
+    video = sent.get('video',{})
+    if (video.get('width'),video.get('height')) != (1080,1920):
+        raise RuntimeError('Telegram returned an incorrectly framed review video')
+    if sent.get('reply_markup') != review_keyboard(proposal['proposal_id']):
+        raise RuntimeError('Telegram did not confirm BOTH exact review buttons')
+    if proposal['proposal_id'] not in sent.get('caption',''):
+        raise RuntimeError('Telegram review caption lost its video identifier')
 
 
 def main() -> None:
@@ -124,6 +144,11 @@ def main() -> None:
         raise SystemExit("Usage: python automation/telegram_send.py automation/output/proposal.json")
     proposal = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
     result = send_video(proposal)
+    # Persist immediately; this receipt is safe for release assets and contains
+    # no token, private chat ID, user name, or Telegram file access identifier.
+    result.pop('telegram_chat_id',None)
+    receipt = Path(sys.argv[1]).with_name('telegram-delivery.json')
+    receipt.write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
     # Only public IDs are logged. Do not print token, private usernames or phone numbers.
     print("Review MP4 delivered to configured Telegram chat; message ID",
           result["telegram_message_id"], ". Not approved or published.", flush=True)

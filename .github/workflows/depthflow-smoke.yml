@@ -30,6 +30,7 @@ jobs:
           python -m pip install -r automation/requirements-depthflow.txt
       - name: Render verified Mataora artwork with real estimated depth
         run: |
+          python -m pip install -r automation/requirements-motion.txt
           python -m unittest discover -s automation -p test_depthflow.py -v
           time python automation/depthflow_motion.py --scene 5 --width 1080 --seconds 2
       - uses: actions/upload-artifact@v4

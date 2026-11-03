@@ -51,9 +51,10 @@ def main():
     if motion not in ("gentle-pan","depthflow"):raise ValueError("Unknown motion renderer")
     clips=ROOT/('depthflow-clips' if motion=="depthflow" else 'cinematic-pan-v4-clips')
     clips.mkdir(exist_ok=True)
-    clip_paths=[]
+    clip_paths=[];clip_frame_counts=[];scene_entries=[]
     start=0;events=[];frames=0
     for i,(scene,duration) in enumerate(zip(story['scenes'],durations)):
+        scene_entries.append(len(clip_paths))
         words=scene['narration'].split()
         chunks=[words[j:j+6] for j in range(0,len(words),6)]
         consumed=0
@@ -69,7 +70,7 @@ def main():
             from depthflow_motion import render_scene
             path=clips/f'{i:02}.mp4'
             render_scene(artwork[i],path,count,bool(i%2))
-            clip_paths.append(path)
+            clip_paths.append(path);clip_frame_counts.append(count)
             print(f'Encoded depth scene {i+1}/8',flush=True)
         else:
             for j,n in enumerate((first,count-first)):
@@ -78,9 +79,20 @@ def main():
                 run(['-loop','1','-framerate',str(FPS),'-i',str(artwork[i]),'-vf',filt,
                      '-frames:v',str(n),'-an','-c:v','libx264','-preset','veryfast',
                      '-crf','24','-threads','2','-movflags','+faststart',str(path)])
-                clip_paths.append(path)
+                clip_paths.append(path);clip_frame_counts.append(n)
                 print(f'Encoded shot {i*2+j+1}/16',flush=True)
         frames=end_frame;start+=duration
+    from cinematic_transitions import soften_entry
+    original_clips=clip_paths.copy()
+    for entry in scene_entries[1:]:
+        path=clips/f'transition-{entry:02}.mp4'
+        soften_entry(original_clips[entry-1],original_clips[entry],path,
+                     clip_frame_counts[entry-1],clip_frame_counts[entry])
+        clip_paths[entry]=path
+        print(f'Encoded narration-aligned dissolve {entry}',flush=True)
+    motion_audit=[json.loads(p.with_suffix('.motion.json').read_text())
+                  for p in original_clips if p.with_suffix('.motion.json').is_file()]
+    (ROOT/'motion-audit.json').write_text(json.dumps(motion_audit,indent=2)+'\n')
     header='''[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
@@ -108,9 +120,9 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     metadata={"story_id":story["key"],"title":story["title"],"video_file":video.name,
       "video_sha256":hashlib.sha256(video.read_bytes()).hexdigest(),"duration":round(start,3),
       "bytes":video.stat().st_size,"status":"pending-human-approval","sources":story["sources"],
-      "width":1080,"height":1920,"layout":"portrait-depthflow-v1" if motion=="depthflow" else "portrait-gentle-pan-v4",
+      "width":1080,"height":1920,"layout":"portrait-depthflow-character-v2" if motion=="depthflow" else "portrait-gentle-pan-v4",
       "image_fit":"proportional-depth-parallax" if motion=="depthflow" else "proportional-pan",
-      "motion_renderer":motion,"pan_overscan":0.033333 if motion=="gentle-pan" else None,
+      "motion_renderer":motion,"character_motion":motion_audit,"transition_count":7,"transition_frames":10,"pan_overscan":0.033333 if motion=="gentle-pan" else None,
       "fps":FPS,"narrator":VOICE,"narration_engine":timing.get("narration_engine",{}),"style":STYLE,"image_count":8,"shot_count":len(clip_paths),
       "warning":story["cultural_warning"]}
     (ROOT/'manifest.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
