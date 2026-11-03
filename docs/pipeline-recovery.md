@@ -79,3 +79,48 @@ The recovery workflow can re-validate an existing receipt without repeating
 its delivery. Do not change its request casually or treat test fixtures as a
 real Telegram approval. General scheduled story generation remains under its
 existing enable switch; this recovery did not enable a new posting schedule.
+
+## Portrait and subtitle revision — 4 November 2026
+
+The owner reported a visibly squashed player view. The previous check only
+required encoded width/height; it did not require explicit sample/display
+aspect metadata. The previous H.264 stream had no VUI aspect-ratio field.
+The revised pipeline now requires square pixels (`1:1` SAR), explicit `9:16`
+DAR and no rotation dependency, in addition to 1080×1920. It normalizes the
+base clip's H.264 and MP4 display metadata, uses only proportional portrait
+crops, and writes explicit aspect metadata again in the final export.
+Telegram receives a fresh upload with width/height explicitly supplied.
+
+The new edit contains **24 shots**: wide, medium and closer framing of each
+of the eight existing source illustrations. It preserves every narration
+frame, with 16 internal cuts and the seven existing scene dissolves. Captions
+are now 67 groups of at most three words, in a larger 64px font within the
+existing lower safe area. Original artwork, character motion and parallax
+are retained.
+
+The exact previous Bruno narration and forest sound mix were copied from the
+pinned source film, with an exact script/source check before audio reuse.
+Decoded audio SHA-256 is identical before and after the edit:
+`7a1cc87a2484cd4c74e0b7a93a56af49aa4530832553649f888e19309d666621`.
+
+Verified result:
+
+- Render/review run `41733993331` succeeded. The setup delay cleared before
+  the conditional retry ran; retry controller `41735328439` therefore did
+  not cancel the original job or start a duplicate. Future setup commands
+  have separate labels and bounded network waits.
+- Release `auto-review-rata-and-the-tree-ec20fc790e23`.
+- MP4 SHA-256 `ec20fc790e2356346f6e545c7c5b12656c32b4164430ba8871a91665acb1cd4d`.
+- 79.951 seconds, 17,926,632 bytes, 1080×1920, square pixels, 9:16 display,
+  30fps H.264/AAC. Full decode, 24-shot clock, 67 caption groups (max 3 words),
+  audio level and movement checks passed. Visual contact-sheet review showed
+  normal portrait proportions and the intended wider/closer reframing.
+- Telegram confirmed fresh review message **26**, 1080×1920 video and both
+  exact Approve/Reject callbacks. Receipt and quality report are release assets.
+- All 93 offline tests passed in CI, including a real H.264 fixture that has
+  9:16 pixel dimensions but incorrectly displays square. Fixing its aspect
+  metadata is verified not to alter its decoded pixels.
+- The earlier `1c138cc61edc` film was rejected by the owner and is now marked
+  superseded. The new `ec20fc790e23` film had no publishing decision at final
+  verification. Actual Instagram publishing still requires the owner's new
+  Telegram approval. No test approval was submitted.
