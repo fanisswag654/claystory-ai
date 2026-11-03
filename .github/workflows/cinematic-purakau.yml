@@ -142,5 +142,6 @@ jobs:
             automation/output/motion-audit.json
             automation/output/quality-report.json
             automation/output/telegram-delivery.json
+            automation/output/telegram-upload-checkpoint.json
             automation/output/telegram-diagnostics.json
           retention-days: 14

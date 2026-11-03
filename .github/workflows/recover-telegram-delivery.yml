@@ -1,0 +1,59 @@
+name: Pūrākau Pixels — recover exact rendered film to Telegram
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['automation/delivery-recovery.json']
+permissions:
+  contents: write
+concurrency:
+  group: purakau-telegram-delivery-recovery
+  cancel-in-progress: false
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_REVIEW_CHAT_ID: ${{ secrets.TELEGRAM_REVIEW_CHAT_ID }}
+      TELEGRAM_APPROVER_USER_ID: ${{ secrets.TELEGRAM_APPROVER_USER_ID }}
+      TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recover the original release and verify the same finished film
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install 'requests>=2.32,<3' 'flask>=3,<4' 'playwright>=1.50,<2'
+          python -m pip install -r automation/requirements-motion.txt
+          python -m unittest discover -s automation -p 'test_*.py' -q
+          TAG="$(python -c 'import json;print(json.load(open("automation/delivery-recovery.json"))["proposal_id"])')"
+          mkdir -p automation/output
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" -D automation/output
+          if [ -s automation/output/telegram-delivery.json ]; then
+            python - <<'PY'
+          import json,sys
+          sys.path.insert(0,'automation')
+          from deliver_cinematic import validate_receipt
+          validate_receipt(json.load(open('automation/output/telegram-delivery.json')),json.load(open('automation/output/proposal.json')))
+          print('Existing delivery receipt is verified; refusing duplicate recovery.')
+          PY
+            exit 0
+          fi
+          python automation/verify_cinematic.py
+          python automation/recover_telegram_delivery.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verified-telegram-recovery
+          path: |
+            automation/output/telegram-delivery.json
+            automation/output/telegram-upload-checkpoint.json
+            automation/output/telegram-diagnostics.json
+            automation/output/quality-report.json

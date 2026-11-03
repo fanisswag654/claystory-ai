@@ -80,6 +80,7 @@ def message_payload(proposal: dict, chat_id: str) -> dict:
             f"Review ID: {proposal['proposal_id']}"
         )[:1000],
         "supports_streaming": "true",
+        "width":1080,"height":1920,
         "reply_markup": json.dumps(review_keyboard(proposal["proposal_id"])),
     }
 
@@ -114,6 +115,17 @@ def send_video(proposal: dict, video: Path = VIDEO) -> dict:
         raise RuntimeError("Telegram message went to an unexpected reviewer; stop automation")
     if not sent.get("video"):
         raise RuntimeError("Telegram did not return a video attachment")
+    # Save a public-safe response checkpoint before strict validation. A
+    # metadata error must not lose the already accepted message identifier.
+    checkpoint = {
+        'proposal_id':proposal['proposal_id'],'video_sha256':proposal['video_sha256'],
+        'telegram_message_id':sent['message_id'],
+        'telegram_video_width':sent['video'].get('width'),
+        'telegram_video_height':sent['video'].get('height'),
+        'status':'upload_accepted_validation_pending',
+    }
+    (video.parent/'telegram-upload-checkpoint.json').write_text(json.dumps(checkpoint,indent=2)+'\n')
+    print('Telegram accepted upload checkpoint:',json.dumps(checkpoint),flush=True)
     validate_delivery_message(sent, proposal, chat_id)
     return {
         "telegram_message_id": sent["message_id"],
