@@ -42,9 +42,15 @@ def check_connection():
         raise RuntimeError('Telegram webhook excludes review button updates')
     recovered = None
     if os.getenv('RECOVER_TELEGRAM_MESSAGE_ID'):
-        from telegram_webhook import pending_proposal
         from telegram_send import message_payload, validate_delivery_message
-        proposal = pending_proposal(os.environ['RECOVER_TELEGRAM_PROPOSAL_ID'])
+        from telegram_send import PROPOSAL_PATTERN
+        tag = os.environ['RECOVER_TELEGRAM_PROPOSAL_ID']
+        if not PROPOSAL_PATTERN.fullmatch(tag):raise ValueError('Invalid recovery proposal')
+        proposal_response = requests.get('https://github.com/fanisswag654/claystory-ai/releases/download/'+tag+'/proposal.json',timeout=30)
+        proposal_response.raise_for_status()
+        proposal = proposal_response.json()
+        if proposal.get('proposal_id') != tag or not tag.endswith(proposal['video_sha256'][:12]):
+            raise ValueError('Recovery proposal identity mismatch')
         payload = message_payload(proposal,chat)
         payload['message_id'] = int(os.environ['RECOVER_TELEGRAM_MESSAGE_ID'])
         payload.pop('supports_streaming')

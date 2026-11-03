@@ -127,6 +127,7 @@ jobs:
           python automation/finalize_proposal.py
       - name: Pin exact MP4 as a review release and send real Telegram buttons
         run: |
+          RECOVER_TELEGRAM_MESSAGE_ID= python automation/telegram_diagnostics.py
           python automation/verify_cinematic.py
           python automation/deliver_cinematic.py
       - uses: actions/upload-artifact@v4
