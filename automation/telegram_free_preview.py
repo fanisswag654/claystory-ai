@@ -45,6 +45,7 @@ def verified_private_credentials(env: dict) -> tuple[str, str]:
 
 
 def verify_curated_film(video: Path, story_path: Path, manifest_path: Path) -> dict:
+    from cinematic_assets import REVIEW_VOICES
     story = json.loads(story_path.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     topic = next((t for t in source_briefs()["topics"] if t["id"] == story.get("key")), None)
@@ -57,7 +58,7 @@ def verify_curated_film(video: Path, story_path: Path, manifest_path: Path) -> d
     if (
         manifest.get("story_id") != topic["id"]
         or manifest.get("title") != topic["title"]
-        or manifest.get("narrator") not in ("en-GB-RyanNeural","en-US-ChristopherNeural")
+        or manifest.get("narrator") not in ("en-GB-RyanNeural",*REVIEW_VOICES)
         or story.get("narrator") != manifest.get("narrator")
         or manifest.get("status") != "pending-human-approval"
         or manifest.get("sources") != topic["sources"]

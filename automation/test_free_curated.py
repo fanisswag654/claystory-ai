@@ -140,6 +140,16 @@ class FreePreviewDeliveryTests(unittest.TestCase):
         self.assertEqual(metadata["key"], "maui-mahuika-fire")
         self.assertEqual(metadata["sha256"], self.manifest["video_sha256"])
 
+    def test_voicestudio_preview_stays_preview_only(self):
+        from cinematic_assets import VOICE
+        self.story["narrator"]=VOICE
+        self.manifest["narrator"]=VOICE
+        self.story_path.write_text(json.dumps(self.story,ensure_ascii=False))
+        self.manifest_path.write_text(json.dumps(self.manifest,ensure_ascii=False))
+        telegram_free_preview.verify_curated_film(self.video,self.story_path,self.manifest_path)
+        for button in telegram_free_preview.preview_keyboard()["inline_keyboard"][0]:
+            self.assertTrue(button["callback_data"].startswith("test_preview:"))
+
     def test_tampered_video_refused_before_telegram_send(self):
         self.video.write_bytes(self.video.read_bytes() + b"evil")
         with patch.object(telegram_free_preview.requests, "post") as send:
