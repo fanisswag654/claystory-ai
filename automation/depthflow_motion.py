@@ -30,6 +30,8 @@ def validate_clip(path, frames, width=1080, height=1920):
     video = next(s for s in probe["streams"] if s["codec_type"] == "video")
     if (video["width"], video["height"]) != (width, height):
         raise ValueError("DepthFlow returned incorrect portrait dimensions")
+    from video_geometry import validate_display
+    validate_display(video,width,height)
     if video.get("codec_name") != "h264" or video.get("pix_fmt") != "yuv420p":
         raise ValueError("DepthFlow clip must be H.264 yuv420p")
     if Fraction(video.get("r_frame_rate", "0")) != FPS:
@@ -88,6 +90,8 @@ def _render_scene(image, output, frames, reverse=False, width=1080, height=1920)
     # One full scene preserves camera continuity across the narration.
     scene.main(output=output, width=width, height=height, fps=FPS,
                time=frames / FPS, ssaa=1.0, turbo=False)
+    from video_geometry import normalize_display
+    normalize_display(output,width,height)
     validate_clip(output, frames, width, height)
     return output
 

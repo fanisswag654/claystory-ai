@@ -15,10 +15,10 @@ def soften_entry(previous, incoming, output, previous_frames, frames):
     # is subtracted from the film, captions or audio.
     filters = (
         '[0:v]setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=0.5,'
-        'trim=end_frame=11,settb=AVTB,format=yuv420p[hold];'
-        '[1:v]setpts=PTS-STARTPTS,settb=AVTB,format=yuv420p[next];'
+        'trim=end_frame=11,settb=AVTB,setsar=1,format=yuv420p[hold];'
+        '[1:v]setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[next];'
         f'[hold][next]xfade=transition=fade:duration={duration}:offset=0,'
-        f'trim=end_frame={frames},setpts=N/({FPS}*TB),format=yuv420p[v]'
+        f'trim=end_frame={frames},setpts=N/({FPS}*TB),setsar=1,setdar=9/16,format=yuv420p[v]'
     )
     subprocess.run([
         'ffmpeg','-nostdin','-hide_banner','-loglevel','error','-y',

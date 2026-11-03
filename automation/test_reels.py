@@ -2,7 +2,7 @@ import unittest
 from render_cinematic import validate_reel
 class ReelsExport(unittest.TestCase):
  def setUp(self):
-  self.probe={"streams":[{"codec_type":"video","codec_name":"h264","width":1080,"height":1920,"pix_fmt":"yuv420p","r_frame_rate":"30/1","duration":"67"},{"codec_type":"audio","codec_name":"aac","duration":"67"}]}
+  self.probe={"streams":[{"codec_type":"video","codec_name":"h264","width":1080,"height":1920,"pix_fmt":"yuv420p","r_frame_rate":"30/1","sample_aspect_ratio":"1:1","display_aspect_ratio":"9:16","duration":"67"},{"codec_type":"audio","codec_name":"aac","duration":"67"}]}
  def test_portrait_export(self):validate_reel(self.probe,67)
  def test_landscape_rejected(self):
   self.probe["streams"][0].update(width=1920,height=1080)

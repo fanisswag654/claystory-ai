@@ -27,6 +27,13 @@ def main():
         raise RuntimeError('Narration/soundtrack is silent or has an unexpected level')
     captions=(OUT/'captions.ass').read_text()
     caption_events=[line for line in captions.splitlines() if line.startswith('Dialogue: 0,')]
+    caption_word_counts=[len(line.split(',',9)[9].replace('\\N',' ').split()) for line in caption_events]
+    if any(n<1 or n>3 for n in caption_word_counts):
+        raise RuntimeError('Subtitles must show at most three words at a time')
+    if meta.get('shot_count')!=24 or len(meta.get('shot_list',[]))!=24:
+        raise RuntimeError('The revised film must contain 24 actual shots')
+    if sum(s['frames'] for s in meta['shot_list'])!=int(visual['nb_read_frames']):
+        raise RuntimeError('Shot edit dropped or repeated narration frames')
     if len(caption_events)<24 or 'PŪRĀKAU PIXELS' not in captions:
         raise RuntimeError('Missing narration captions or branding')
     if timing['voice']!=VOICE or timing['narration_engine']['pitch_hz']!=0:
@@ -49,7 +56,8 @@ def main():
     report={'status':'passed','video_sha256':hashlib.sha256(video.read_bytes()).hexdigest(),
             'duration_seconds':sum(timing['durations']),'width':1080,'height':1920,'fps':30,
             'video_codec':'h264','audio_codec':'aac','full_decode':'passed',
-            'caption_events':len(caption_events),'mean_audio_db':float(level[1]),
+            'sample_aspect_ratio':visual['sample_aspect_ratio'],'display_aspect_ratio':visual['display_aspect_ratio'],
+            'shots':meta['shot_count'],'subtitle_words_max':max(caption_word_counts),'caption_events':len(caption_events),'mean_audio_db':float(level[1]),
             'scene_frame_differences':changes,'character_motion_scenes':len(meta['character_motion']),
             'transitions':meta['transition_count'],'narrator':timing['voice'],
             'instagram_published':False}

@@ -3,7 +3,7 @@
   "narrator": "voicestudio:kittentts:expr-voice-3-m",
   "pitch_hz": 0,
   "rate_percent": -8,
-  "shots_per_scene": 2,
+  "shots_per_scene": 3,
   "artwork": {
     "maui-mahuika-fire": {
       "scene-01.jpg": "310c317cddb2aa14547434a9a3cd3433bb3b3b6c70d7786aa7ea8a4f0339e72e",
@@ -36,13 +36,15 @@
       "scene-08.jpg": "34dc0d585f7c1cde21b629281cb36402b604c537e271c3dce3106e0868d952ce"
     }
   },
-  "render_revision": "portrait-depthflow-character-v2.1",
+  "render_revision": "portrait-recut-24-shots-3-word-captions-v3",
   "next_review_topic": "rata-and-the-tree",
   "superseded_video_sha256": [
-    "035b1d9eff5294b774784843c89a4b5ce0a069998563cea16645a2718615fb6d"
+    "035b1d9eff5294b774784843c89a4b5ce0a069998563cea16645a2718615fb6d",
+    "1c138cc61edcf10ccc6d9fb9046d609beefdbb1d188976ffe717c77eda34618b"
   ],
   "superseded_telegram_message_ids": [
-    20
+    20,
+    23
   ],
   "narration_engine": {
     "provider": "VoiceStudio",
@@ -54,5 +56,10 @@
     "sentence_pause": 0.35,
     "pitch_shift": false,
     "source_commit": "429f1e5bb2703ac5b928ab8ba6f60159167e9c44"
+  },
+  "reuse_audio_review": {
+    "story_id": "rata-and-the-tree",
+    "proposal_id": "auto-review-rata-and-the-tree-1c138cc61edc",
+    "video_sha256": "1c138cc61edcf10ccc6d9fb9046d609beefdbb1d188976ffe717c77eda34618b"
   }
 }

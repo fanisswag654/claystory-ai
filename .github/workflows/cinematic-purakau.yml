@@ -110,7 +110,7 @@ jobs:
               response=requests.post(
                   "https://api.telegram.org/bot"+token+"/editMessageCaption",
                   json={"chat_id":chat,"message_id":message_id,
-                        "caption":"SUPERSEDED DRAFT — a revised film with a new hook, gentle camera pans and updated mataora artwork replaces this video. Please use the latest review video.",
+                        "caption":"SUPERSEDED REVIEW — an updated portrait edit replaces this film. Please use the latest Pūrākau Pixels review video; approval applies only to that exact edit.",
                         "reply_markup":{"inline_keyboard":[]}},timeout=30)
               print("Replaced Telegram draft",message_id,"button removal HTTP",response.status_code)
           PY
@@ -120,7 +120,7 @@ jobs:
       - name: Curated script, VoiceStudio speech and selected cinematic motion
         run: |
           python automation/prepare_story.py --mode curated --topic "$REQUESTED_TOPIC" --output automation/candidate-story.json
-          python automation/make_audio.py
+          python automation/prepare_review_audio.py
           python automation/render_cinematic.py
           python automation/finalize_proposal.py
       - name: Pin exact MP4 as a review release and send real Telegram buttons
@@ -139,6 +139,7 @@ jobs:
             automation/output/story.json
             automation/output/timing.json
             automation/output/captions.ass
+            automation/output/shot-list.json
             automation/output/motion-audit.json
             automation/output/quality-report.json
             automation/output/telegram-delivery.json

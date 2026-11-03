@@ -25,6 +25,8 @@ def validate_reel(probe,total):
     audio=next((s for s in probe["streams"] if s["codec_type"]=="audio"),None)
     if not visual or not audio:raise ValueError("Reel requires video and narration audio")
     if (visual.get("width"),visual.get("height"))!=(1080,1920):raise ValueError("Reel must be full-screen 1080x1920 portrait")
+    from video_geometry import validate_display
+    validate_display(visual)
     if visual.get("codec_name")!="h264" or visual.get("pix_fmt")!="yuv420p" or audio.get("codec_name")!="aac":raise ValueError("Reel requires H.264 yuv420p and AAC")
     if Fraction(visual.get("r_frame_rate","0"))!=30:raise ValueError("Reel requires 30fps")
     if total<3 or abs(float(visual["duration"])-total)>.1 or abs(float(audio["duration"])-total)>.1:raise ValueError("Incomplete Reel video/audio clock")
@@ -49,39 +51,40 @@ def main():
     if timing["voice"]!=VOICE or len(durations)!=8:raise ValueError("Wrong voice or scene clock")
     motion=os.environ.get("PURAKAU_MOTION","gentle-pan")
     if motion not in ("gentle-pan","depthflow"):raise ValueError("Unknown motion renderer")
-    clips=ROOT/('depthflow-clips' if motion=="depthflow" else 'cinematic-pan-v4-clips')
+    clips=ROOT/'portrait-recut-v3-clips'
     clips.mkdir(exist_ok=True)
-    clip_paths=[];clip_frame_counts=[];scene_entries=[]
+    from reel_edit import subtitle_groups, shot_plan, render_shot
+    clip_paths=[];clip_frame_counts=[];scene_entries=[];base_paths=[];shot_list=[]
     start=0;events=[];frames=0
     for i,(scene,duration) in enumerate(zip(story['scenes'],durations)):
         scene_entries.append(len(clip_paths))
         words=scene['narration'].split()
-        chunks=[words[j:j+6] for j in range(0,len(words),6)]
         consumed=0
-        for chunk in chunks:
+        for chunk in subtitle_groups(scene['narration']):
             a=start+duration*consumed/len(words)
             consumed+=len(chunk);b=start+duration*consumed/len(words)
-            text='\\N'.join(textwrap.wrap(' '.join(chunk),24))
+            text='\\N'.join(textwrap.wrap(' '.join(chunk),22,break_long_words=False,break_on_hyphens=False))
             events.append(f'Dialogue: 0,{stamp(a)},{stamp(b)},Caption,,0,0,0,,{text}')
-        # Measured original narration timing, rounded on a continuous 30fps clock.
         end_frame=round((start+duration)*FPS)
-        count=end_frame-frames;first=count//2
-        if motion=="depthflow":
+        count=end_frame-frames
+        base=clips/f'base-{i:02}.mp4'
+        if motion=='depthflow':
             from depthflow_motion import render_scene
-            path=clips/f'{i:02}.mp4'
-            render_scene(artwork[i],path,count,bool(i%2))
-            clip_paths.append(path);clip_frame_counts.append(count)
-            print(f'Encoded depth scene {i+1}/8',flush=True)
+            render_scene(artwork[i],base,count,bool(i%2))
         else:
-            for j,n in enumerate((first,count-first)):
-                path=clips/f'{i*2+j:02}.mp4'
-                filt=image_fit_filter(n,j,bool(i%2))
-                run(['-loop','1','-framerate',str(FPS),'-i',str(artwork[i]),'-vf',filt,
-                     '-frames:v',str(n),'-an','-c:v','libx264','-preset','veryfast',
-                     '-crf','24','-threads','2','-movflags','+faststart',str(path)])
-                clip_paths.append(path);clip_frame_counts.append(n)
-                print(f'Encoded shot {i*2+j+1}/16',flush=True)
+            run(['-loop','1','-framerate',str(FPS),'-i',str(artwork[i]),
+                 '-vf',image_fit_filter(count,0,bool(i%2)),
+                 '-frames:v',str(count),'-an','-c:v','libx264','-preset','veryfast',
+                 '-crf','22','-threads','2','-movflags','+faststart',str(base)])
+        base_paths.append(base)
+        for plan in shot_plan(story['key'],i,count):
+            path=clips/f'shot-{len(clip_paths):02}.mp4'
+            render_shot(base,path,plan)
+            shot_list.append({**plan,'scene':i+1,'file':path.name})
+            clip_paths.append(path);clip_frame_counts.append(plan['frames'])
+        print(f'Encoded scene {i+1}/8, three distinct portrait shots',flush=True)
         frames=end_frame;start+=duration
+    (ROOT/'shot-list.json').write_text(json.dumps(shot_list,indent=2)+'\n')
     from cinematic_transitions import soften_entry
     original_clips=clip_paths.copy()
     for entry in scene_entries[1:]:
@@ -91,7 +94,7 @@ def main():
         clip_paths[entry]=path
         print(f'Encoded narration-aligned dissolve {entry}',flush=True)
     motion_audit=[json.loads(p.with_suffix('.motion.json').read_text())
-                  for p in original_clips if p.with_suffix('.motion.json').is_file()]
+                  for p in base_paths if p.with_suffix('.motion.json').is_file()]
     (ROOT/'motion-audit.json').write_text(json.dumps(motion_audit,indent=2)+'\n')
     header='''[Script Info]
 ScriptType: v4.00+
@@ -100,7 +103,7 @@ PlayResY: 1920
 WrapStyle: 0
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Caption,DejaVu Sans,48,&H00FFFFFF,&H00FFFFFF,&H00100D09,&H90000000,-1,0,0,0,100,100,0,0,1,3,1,2,96,200,390,1
+Style: Caption,DejaVu Sans,64,&H00FFFFFF,&H00FFFFFF,&H00100D09,&H90000000,-1,0,0,0,100,100,0,0,1,3,1,2,96,200,390,1
 Style: Brand,DejaVu Sans,26,&H0099C4E8,&H00FFFFFF,&H00100D09,&H90000000,0,0,0,0,100,100,3,0,1,1,0,8,96,200,210,1
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
@@ -108,10 +111,13 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     events.append(f'Dialogue: 1,0:00:00.00,{stamp(start)},Brand,,0,0,0,,PŪRĀKAU PIXELS')
     (ROOT/'captions.ass').write_text(header+'\n'.join(events)+'\n')
     (ROOT/'concat.txt').write_text(''.join(f"file '{path.as_posix()}'\n" for path in clip_paths))
-    run(['-f','concat','-safe','0','-i',str(ROOT/'concat.txt'),'-i',str(ROOT/'auto-review-mix-balanced.mp3'),
-         '-map','0:v:0','-map','1:a:0','-vf',f"ass='{ROOT/'captions.ass'}'",
-         '-c:v','libx264','-preset','veryfast','-crf','24','-threads','2','-pix_fmt','yuv420p','-c:a','aac',
-         '-b:a','160k','-t',str(start),'-movflags','+faststart',
+    audio_source=ROOT/'auto-review-mix-balanced.m4a'
+    if not audio_source.is_file():audio_source=ROOT/'auto-review-mix-balanced.mp3'
+    audio_codec=['-c:a','copy'] if audio_source.suffix=='.m4a' else ['-c:a','aac','-b:a','160k']
+    run(['-f','concat','-safe','0','-i',str(ROOT/'concat.txt'),'-i',str(audio_source),
+         '-map','0:v:0','-map','1:a:0','-vf',f"ass='{ROOT/'captions.ass'}',setsar=1,setdar=9/16",
+         '-c:v','libx264','-preset','veryfast','-crf','24','-threads','2','-pix_fmt','yuv420p',*audio_codec,
+         '-aspect','9:16','-bsf:v','h264_metadata=sample_aspect_ratio=1/1','-t',str(start),'-movflags','+faststart',
          str(ROOT/'purakau-review.mp4')])
     video=ROOT/'purakau-review.mp4'
     if video.stat().st_size>48*1024*1024:raise RuntimeError("Video exceeds Telegram review limit")
@@ -120,9 +126,9 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     metadata={"story_id":story["key"],"title":story["title"],"video_file":video.name,
       "video_sha256":hashlib.sha256(video.read_bytes()).hexdigest(),"duration":round(start,3),
       "bytes":video.stat().st_size,"status":"pending-human-approval","sources":story["sources"],
-      "width":1080,"height":1920,"layout":"portrait-depthflow-character-v2" if motion=="depthflow" else "portrait-gentle-pan-v4",
+      "width":1080,"height":1920,"layout":"portrait-recut-24-shots-v3",
       "image_fit":"proportional-depth-parallax" if motion=="depthflow" else "proportional-pan",
-      "motion_renderer":motion,"character_motion":motion_audit,"transition_count":7,"transition_frames":10,"pan_overscan":0.033333 if motion=="gentle-pan" else None,
+      "motion_renderer":motion,"subtitle_words_max":3,"display_aspect_ratio":"9:16","sample_aspect_ratio":"1:1","shot_list":shot_list,"audio_source_review":timing.get("audio_source_review"),"character_motion":motion_audit,"transition_count":7,"transition_frames":10,"pan_overscan":0.033333 if motion=="gentle-pan" else None,
       "fps":FPS,"narrator":VOICE,"narration_engine":timing.get("narration_engine",{}),"style":STYLE,"image_count":8,"shot_count":len(clip_paths),
       "warning":story["cultural_warning"]}
     (ROOT/'manifest.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')

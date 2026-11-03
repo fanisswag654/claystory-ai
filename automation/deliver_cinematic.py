@@ -35,7 +35,7 @@ def main():
         (OUT/'telegram-delivery.json').write_text(json.dumps(receipt,indent=2)+'\n')
         print('Verified existing delivery receipt; Telegram message',receipt['telegram_message_id'])
         return
-    assets=[OUT/n for n in ('purakau-review.mp4','proposal.json','story.json','manifest.json','timing.json','captions.ass','motion-audit.json','quality-report.json')]
+    assets=[OUT/n for n in ('purakau-review.mp4','proposal.json','story.json','manifest.json','timing.json','captions.ass','motion-audit.json','quality-report.json','shot-list.json')]
     subprocess.run(['gh','release','create',tag,*map(str,assets),'--repo',REPO,
                     '--latest=false','--title','Pūrākau Pixels — awaiting Telegram approval',
                     '--notes','Original portrait artwork, VoiceStudio Bruno narration, authored character breathing/sway, DepthFlow parallax and narration-aligned dissolves. Telegram approval authorizes only these exact SHA-256-verified bytes.'],check=True)

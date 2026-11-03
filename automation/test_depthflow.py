@@ -24,7 +24,7 @@ class DepthMotion(unittest.TestCase):
 
     def test_incomplete_or_wrong_format_clip_rejected(self):
         v={'codec_type':'video','width':1080,'height':1920,'codec_name':'h264',
-           'pix_fmt':'yuv420p','nb_read_frames':'60','r_frame_rate':'30/1'}
+           'pix_fmt':'yuv420p','nb_read_frames':'60','r_frame_rate':'30/1','sample_aspect_ratio':'1:1','display_aspect_ratio':'9:16'}
         with patch('depthflow_motion.subprocess.check_output',return_value=json.dumps({'streams':[v]})):
             validate_clip('test.mp4',60)
         for update in ({'nb_read_frames':'59'},{'width':1920},{'pix_fmt':'yuv444p'},{'r_frame_rate':'24/1'}):
