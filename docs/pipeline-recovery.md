@@ -44,3 +44,38 @@ Run local checks with the existing test dependencies plus
 `automation/requirements-motion.txt`, then `python -m unittest discover -s
 automation -p 'test_*.py'`. OpenGL/model inference is checked by the small real
 DepthFlow render in the production workflow before the full film begins.
+
+## Verified result — 4 November 2026 (NZ time)
+
+- The upgraded render in Actions run `41728120929` completed successfully;
+  its final step caught Telegram's missing/incorrect inferred display metadata.
+  The full film had already passed decoding and content-clock checks. The
+  renderer was not run again to repair delivery.
+- Explicit `width=1080` and `height=1920` now accompany uploads. An accepted
+  upload's public-safe message ID and returned dimensions are checkpointed
+  **before** validation, so a validation failure cannot hide a sent message.
+- Recovery run `41732435541` succeeded. It updated the known Rātā review
+  message **23** in `@purakau_bot` with the new exact film, confirmed both
+  callback buttons, then downloaded Telegram's stored original and matched its
+  SHA-256 to the source MP4. A fresh reply notification points to that review.
+- Release: `auto-review-rata-and-the-tree-1c138cc61edc`.
+  SHA-256: `1c138cc61edcf10ccc6d9fb9046d609beefdbb1d188976ffe717c77eda34618b`.
+  `telegram-delivery.json`, `quality-report.json`, captions and motion evidence
+  are attached to that release. The film is 79.951 seconds, 1080×1920, 30fps,
+  H.264/AAC, with 36 caption segments and seven narration-aligned dissolves.
+- All eight scenes have authored movement evidence and distinct sampled video
+  frames. The 89 local tests passed, including preserving upload evidence when
+  Telegram returns bad dimensions. Existing approval and browser checks pass.
+- Render deploy `dep-dbl64cnb9u1s739g9s3g` is live for source commit `06b23b5`.
+  The callback is registered, the private reviewer matches, there were zero
+  pending webhook updates, and unsigned callback requests returned HTTP 403.
+- No production approval was forged or submitted. The publication ledger had
+  no entry for this new film at verification. Actual Instagram publication is
+  intentionally awaiting the owner's real Telegram approval, not exercised
+  as a test. The reason the earlier message was not visible on the user's
+  device remains unconfirmed; the earlier API receipt did confirm delivery.
+
+The recovery workflow can re-validate an existing receipt without repeating
+its delivery. Do not change its request casually or treat test fixtures as a
+real Telegram approval. General scheduled story generation remains under its
+existing enable switch; this recovery did not enable a new posting schedule.
