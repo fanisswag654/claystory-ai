@@ -1,0 +1,44 @@
+name: Pūrākau Pixels — retry a stalled setup on a fresh runner
+on:
+  push:
+    branches: [main]
+    paths: ['automation/retry-render.json']
+permissions:
+  contents: read
+  actions: write
+jobs:
+  retry_setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retry only if the named job is still stuck before rendering
+        run: |
+          python - <<'PY'
+          import datetime,json,os,subprocess,time
+          config=json.load(open('automation/retry-render.json'))
+          run=config['run_id']
+          if not isinstance(run,int):raise ValueError('Exact existing run ID required')
+          repo=os.environ['GITHUB_REPOSITORY']
+          def api(path):return json.loads(subprocess.check_output(['gh','api','repos/'+repo+path],text=True))
+          state=api('/actions/runs/'+str(run))
+          jobs=api('/actions/runs/'+str(run)+'/jobs')['jobs']
+          active=next((s for j in jobs for s in j['steps'] if s['status']=='in_progress'),None)
+          if state['status']=='completed' or not active or active['name']!='Install free voice and film tools':
+              print('Original run is no longer stalled in the specified setup step; no cancellation or duplicate render.')
+              raise SystemExit(0)
+          began=datetime.datetime.fromisoformat(active['started_at'].replace('Z','+00:00')).timestamp()
+          if time.time()-began<480:raise RuntimeError('Do not restart a setup that has not exceeded eight minutes')
+          subprocess.run(['gh','api','--method','POST','repos/'+repo+'/actions/runs/'+str(run)+'/cancel'],check=True)
+          for attempt in range(12):
+              if api('/actions/runs/'+str(run))['status']=='completed':break
+              time.sleep(5)
+          else:raise RuntimeError('Cancellation did not complete; do not start a duplicate')
+          subprocess.run(['gh','workflow','run','cinematic-purakau.yml','--repo',repo,'--ref','main',
+                          '-f','topic=rata-and-the-tree','-f','motion=depthflow'],check=True)
+          print('Stalled setup cancelled; exact Rātā recut dispatched on a fresh runner. No Telegram approval or Instagram action.')
+          PY
