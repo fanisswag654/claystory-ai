@@ -5,7 +5,18 @@ DepthFlow estimates depth from each verified original still and renders a
 continuous, restrained camera move per scene. Narration timing determines the
 exact frame count. Captions, original sound, 1080×1920 H.264/AAC export,
 SHA-verified Telegram review and approval-only Instagram publication still use
-the existing pipeline. DepthFlow does not generate character movement.
+the existing pipeline. DepthFlow supplies camera parallax. The Rātā artwork now also uses authored
+breathing, head/hand sway and bird motion from `automation/character_motion.py`.
+Those small 2.5D movements preserve the original artwork; they do not provide
+full-body acting or lip sync. Other story artwork keeps the established camera
+behavior until its own movement regions are authored and reviewed.
+
+Seven ten-frame dissolves join the eight scenes without shortening narration
+or shifting caption boundaries. `verify_cinematic.py` decodes the entire film,
+checks its clocks and audio level, and samples movement in every scene before
+Telegram delivery. The returned Telegram video, exact caption identifier and
+both callback buttons must be confirmed before a release delivery receipt can
+be written. A GitHub release without such a receipt is not delivery evidence.
 
 ## Free CPU test
 
