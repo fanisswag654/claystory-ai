@@ -1,0 +1,39 @@
+name: DepthFlow — free CPU parallax test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'automation/depthflow_motion.py'
+      - 'automation/requirements-depthflow.txt'
+      - '.github/workflows/depthflow-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install headless graphics and CPU depth estimator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg libegl1 libgl1-mesa-dri libgl1 libxkbcommon0
+          python -m pip install 'torch==2.7.1+cpu' 'torchvision==0.22.1+cpu' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r automation/requirements-depthflow.txt
+      - name: Render verified Mataora artwork with real estimated depth
+        run: |
+          python -m unittest discover -s automation -p test_depthflow.py -v
+          time python automation/depthflow_motion.py --scene 5 --width 1080 --seconds 2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: depthflow-parallax-test
+          path: automation/output/depthflow-smoke.mp4
+          retention-days: 14

@@ -6,11 +6,19 @@ on:
         description: Story with eight prepared cinematic images
         type: string
         default: ''
+      motion:
+        description: Camera motion engine
+        type: choice
+        options: [depthflow, gentle-pan]
+        default: depthflow
   workflow_call:
     inputs:
       topic:
         type: string
         default: ''
+      motion:
+        type: string
+        default: depthflow
   push:
     branches: [main]
     paths: ['automation/cinematic-system.json']
@@ -23,8 +31,10 @@ concurrency:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     env:
+      PURAKAU_MOTION: ${{ inputs.motion || 'depthflow' }}
+      LIBGL_ALWAYS_SOFTWARE: '1'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REQUESTED_TOPIC: ${{ inputs.topic || '' }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -39,7 +49,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install free voice and film tools
         run: |
           sudo apt-get update -qq
@@ -47,6 +57,12 @@ jobs:
           python -m pip install 'requests>=2.32,<3' 'edge-tts>=7,<8' 'flask>=3,<4' 'playwright>=1.50,<2'
           python -m compileall -q automation
           python -m unittest discover -s automation -p 'test_*.py' -q
+      - name: Install DepthFlow for the selected parallax renderer
+        if: env.PURAKAU_MOTION == 'depthflow'
+        run: |
+          sudo apt-get install -y -qq libegl1 libgl1-mesa-dri libgl1 libxkbcommon0
+          python -m pip install 'torch==2.7.1+cpu' 'torchvision==0.22.1+cpu' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r automation/requirements-depthflow.txt
       - name: Check artwork, private reviewer and destination before rendering
         run: |
           python - <<'PY'
@@ -79,7 +95,7 @@ jobs:
                         "reply_markup":{"inline_keyboard":[]}},timeout=30)
               print("Replaced Telegram draft",message_id,"button removal HTTP",response.status_code)
           PY
-      - name: Curated script, fresh Christopher speech and 16 cinematic shots
+      - name: Curated script, Christopher speech and selected cinematic motion
         run: |
           python automation/prepare_story.py --mode curated --topic "$REQUESTED_TOPIC" --output automation/candidate-story.json
           python automation/make_audio.py

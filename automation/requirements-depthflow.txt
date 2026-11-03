@@ -1,0 +1,7 @@
+# Install CPU PyTorch first using https://download.pytorch.org/whl/cpu.
+# DepthFlow 1.x imports typing.override and needs Python 3.12 in our workflow.
+depthflow==1.0.1
+shaderflow==0.13.0
+transformers>=4.51,<5
+torch==2.7.1+cpu
+torchvision==0.22.1+cpu

@@ -1,5 +1,5 @@
 """Build a private style-comparison film from eight supplied stills and new Christopher narration."""
-import json, math, subprocess, textwrap
+import json, math, os, subprocess, textwrap
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent/"output"
@@ -47,7 +47,11 @@ def main():
     artwork=verify_assets(story["key"])
     timing=json.loads((ROOT/"timing.json").read_text())
     if timing["voice"]!=VOICE or len(durations)!=8:raise ValueError("Wrong voice or scene clock")
-    clips=ROOT/'cinematic-pan-v4-clips';clips.mkdir(exist_ok=True)
+    motion=os.environ.get("PURAKAU_MOTION","gentle-pan")
+    if motion not in ("gentle-pan","depthflow"):raise ValueError("Unknown motion renderer")
+    clips=ROOT/('depthflow-clips' if motion=="depthflow" else 'cinematic-pan-v4-clips')
+    clips.mkdir(exist_ok=True)
+    clip_paths=[]
     start=0;events=[];frames=0
     for i,(scene,duration) in enumerate(zip(story['scenes'],durations)):
         words=scene['narration'].split()
@@ -61,17 +65,21 @@ def main():
         # Measured original narration timing, rounded on a continuous 30fps clock.
         end_frame=round((start+duration)*FPS)
         count=end_frame-frames;first=count//2
-        for j,n in enumerate((first,count-first)):
-            path=clips/f'{i*2+j:02}.mp4'
-            if path.exists():
-                check=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration',str(path)],capture_output=True)
-                if check.returncode==0:continue
-                path.unlink()
-            filt=image_fit_filter(n,j,bool(i%2))
-            run(['-loop','1','-framerate',str(FPS),'-i',str(artwork[i]),'-vf',filt,
-                 '-frames:v',str(n),'-an','-c:v','libx264','-preset','veryfast',
-                 '-crf','24','-threads','2','-movflags','+faststart',str(path)])
-            print(f'Encoded shot {i*2+j+1}/16',flush=True)
+        if motion=="depthflow":
+            from depthflow_motion import render_scene
+            path=clips/f'{i:02}.mp4'
+            render_scene(artwork[i],path,count,bool(i%2))
+            clip_paths.append(path)
+            print(f'Encoded depth scene {i+1}/8',flush=True)
+        else:
+            for j,n in enumerate((first,count-first)):
+                path=clips/f'{i*2+j:02}.mp4'
+                filt=image_fit_filter(n,j,bool(i%2))
+                run(['-loop','1','-framerate',str(FPS),'-i',str(artwork[i]),'-vf',filt,
+                     '-frames:v',str(n),'-an','-c:v','libx264','-preset','veryfast',
+                     '-crf','24','-threads','2','-movflags','+faststart',str(path)])
+                clip_paths.append(path)
+                print(f'Encoded shot {i*2+j+1}/16',flush=True)
         frames=end_frame;start+=duration
     header='''[Script Info]
 ScriptType: v4.00+
@@ -87,7 +95,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
 '''
     events.append(f'Dialogue: 1,0:00:00.00,{stamp(start)},Brand,,0,0,0,,PŪRĀKAU PIXELS')
     (ROOT/'captions.ass').write_text(header+'\n'.join(events)+'\n')
-    (ROOT/'concat.txt').write_text(''.join(f"file '{(clips/f'{i:02}.mp4').as_posix()}'\n" for i in range(16)))
+    (ROOT/'concat.txt').write_text(''.join(f"file '{path.as_posix()}'\n" for path in clip_paths))
     run(['-f','concat','-safe','0','-i',str(ROOT/'concat.txt'),'-i',str(ROOT/'auto-review-mix-balanced.mp3'),
          '-map','0:v:0','-map','1:a:0','-vf',f"ass='{ROOT/'captions.ass'}'",
          '-c:v','libx264','-preset','veryfast','-crf','24','-threads','2','-pix_fmt','yuv420p','-c:a','aac',
@@ -100,8 +108,10 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     metadata={"story_id":story["key"],"title":story["title"],"video_file":video.name,
       "video_sha256":hashlib.sha256(video.read_bytes()).hexdigest(),"duration":round(start,3),
       "bytes":video.stat().st_size,"status":"pending-human-approval","sources":story["sources"],
-      "width":1080,"height":1920,"layout":"portrait-gentle-pan-v4","image_fit":"proportional-pan","pan_overscan":0.033333,
-      "fps":FPS,"narrator":VOICE,"style":STYLE,"image_count":8,"shot_count":16,
+      "width":1080,"height":1920,"layout":"portrait-depthflow-v1" if motion=="depthflow" else "portrait-gentle-pan-v4",
+      "image_fit":"proportional-depth-parallax" if motion=="depthflow" else "proportional-pan",
+      "motion_renderer":motion,"pan_overscan":0.033333 if motion=="gentle-pan" else None,
+      "fps":FPS,"narrator":VOICE,"style":STYLE,"image_count":8,"shot_count":len(clip_paths),
       "warning":story["cultural_warning"]}
     (ROOT/'manifest.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
     print('Finished cinematic film',start,'seconds',flush=True)
