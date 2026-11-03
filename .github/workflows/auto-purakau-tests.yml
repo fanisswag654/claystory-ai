@@ -54,7 +54,11 @@ jobs:
           assert "purakau_telegram_decision" in decision
           cinematic=Path(".github/workflows/cinematic-purakau.yml").read_text()
           assert "./.github/workflows/cinematic-purakau.yml" in generate
-          assert "automation/telegram_send.py" in cinematic
+          assert "automation/deliver_cinematic.py" in cinematic
+          delivery=Path("automation/deliver_cinematic.py").read_text()
+          assert "automation/telegram_send.py" in delivery
+          assert "validate_receipt" in delivery
+          assert "Buffer" not in Path("automation/telegram_send.py").read_text().split('def send_video')[1].split('def main')[0]
           assert "OPENAI_API_KEY" not in cinematic
           assert "automation/render_cinematic.py" in cinematic
           print("Validated: automated story generation stays OFF; cinematic videos require signed Telegram approval; scheduled generation stays gated")
