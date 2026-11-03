@@ -83,6 +83,7 @@ class TelegramSender(unittest.TestCase):
         self.assertEqual(keys[1]["callback_data"], "reject:" + self.proposal["proposal_id"])
         self.assertTrue(all(len(k["callback_data"].encode()) <= 64 for k in keys))
         self.assertIn("No reply", payload["caption"])
+        self.assertEqual((payload["width"],payload["height"]),(1080,1920))
 
     def test_modified_video_never_sent(self):
         self.file.write_bytes(self.file.read_bytes() + b"-tampered")
@@ -112,6 +113,23 @@ class TelegramSender(unittest.TestCase):
         self.assertEqual(result["status"], "delivered_for_review_not_approved")
         self.assertEqual(result["telegram_message_id"], 100)
         self.assertEqual(api.call_args.kwargs["files"]["video"][0], "purakau-review.mp4")
+
+
+    def test_accepted_upload_id_survives_incorrect_display_metadata(self):
+        reply=MagicMock();reply.status_code=200
+        reply.json.return_value={'ok':True,'result':{'message_id':102,
+            'chat':{'id':int(CHAT),'type':'private'},
+            'video':{'file_id':'dummy','width':0,'height':0},
+            'reply_markup':telegram_send.review_keyboard(self.proposal['proposal_id']),
+            'caption':self.proposal['proposal_id']}}
+        with patch.dict(os.environ,{'TELEGRAM_BOT_TOKEN':'1234567890:'+'a'*35,
+                                    'TELEGRAM_REVIEW_CHAT_ID':CHAT}), \
+             patch.object(telegram_send.requests,'post',return_value=reply):
+            with self.assertRaisesRegex(RuntimeError,'framed'):
+                telegram_send.send_video(self.proposal,self.file)
+        checkpoint=json.loads((self.file.parent/'telegram-upload-checkpoint.json').read_text())
+        self.assertEqual(checkpoint['telegram_message_id'],102)
+        self.assertEqual(checkpoint['status'],'upload_accepted_validation_pending')
 
 
 class TelegramWebhook(unittest.TestCase):
